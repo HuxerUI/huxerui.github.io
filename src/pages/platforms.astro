@@ -1,0 +1,40 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import { platforms } from "../data/platforms";
+---
+
+<BaseLayout title="Platforms" description="HuxerUI platform support across Windows, macOS, Linux, Web, Android, and iOS.">
+  <div class="page-shell">
+    <header class="page-hero">
+      <div>
+        <div class="eyebrow">Platform adapters, shared runtime</div>
+        <h1>Native integration without six UI codebases.</h1>
+      </div>
+      <p>
+        Shared C++ owns composition through RenderScene. Each adapter owns the platform window or host view, event conversion,
+        text and system services, and rendering surface.
+      </p>
+    </header>
+    <section class="section" aria-label="Platform support">
+      <div class="platform-grid">
+        {platforms.map((platform) => (
+          <article class="platform-card">
+            <span class="platform-code">{platform.code}</span>
+            <h2>{platform.name}</h2>
+            <p><strong>{platform.stack}</strong></p>
+            <p>{platform.detail}</p>
+            <span class:list={["status", platform.status === "Planned" && "status--planned"]}>{platform.status}</span>
+          </article>
+        ))}
+      </div>
+    </section>
+    <aside class="callout">
+      <h2>Verify the exact boundary</h2>
+      <p>
+        Backend details and known limitations change as the framework evolves. The synchronized platform guide remains the
+        authoritative source for implementation status.
+      </p>
+      <a class="card-link" href="/docs/platform-support/">Read platform support</a>
+    </aside>
+  </div>
+</BaseLayout>

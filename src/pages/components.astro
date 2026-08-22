@@ -1,0 +1,39 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import { componentGroups } from "../data/components";
+---
+
+<BaseLayout title="Components" description="Explore HuxerUI controls, layouts, input, navigation, presentation, and graphics APIs.">
+  <div class="page-shell">
+    <header class="page-hero">
+      <div>
+        <div class="eyebrow">Public UI surface</div>
+        <h1>Components with one behavioral core.</h1>
+      </div>
+      <p>
+        HuxerUI components are controlled View factories backed by shared state, input, semantics, layout, and theme contracts.
+        The catalog below reflects the current public framework—not a future roadmap.
+      </p>
+    </header>
+    <section class="section" aria-label="Component groups">
+      <div class="card-grid">
+        {componentGroups.map((group) => (
+          <article class="content-card">
+            <h2>{group.name}</h2>
+            <p>{group.description}</p>
+            <ul>{group.items.map((item) => <li>{item}</li>)}</ul>
+            <a class="card-link" href={group.href}>Open canonical documentation</a>
+          </article>
+        ))}
+      </div>
+    </section>
+    <aside class="callout">
+      <h2>Need a custom primitive?</h2>
+      <p>
+        Start with ordinary component functions. HuxerUI also exposes custom layouts, retained NodeExtensions, root services,
+        PlatformModule, PlatformView, and platform-neutral PaintCommands at narrower extension boundaries.
+      </p>
+      <a class="card-link" href="/docs/extending-huxerui/">Extend HuxerUI</a>
+    </aside>
+  </div>
+</BaseLayout>

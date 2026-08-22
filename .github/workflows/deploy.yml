@@ -1,0 +1,86 @@
+name: Deploy GitHub Pages
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Resolve canonical HuxerUI content
+        run: npm run sync:content
+      - uses: mymindstorm/setup-emsdk@v14
+        with:
+          version: 4.0.19
+      - name: Prepare HuxerUI host tools
+        run: >-
+          chmod +x
+          .cache/huxerui/tools/prebuilt/linux/x86_64/hcg
+          .cache/huxerui/tools/prebuilt/linux/x86_64/hrc
+      - name: Configure Web examples
+        run: >-
+          emcmake cmake
+          -S .cache/huxerui
+          -B .cache/huxerui-web-build
+          -G Ninja
+          -DCMAKE_BUILD_TYPE=Release
+          -DHUXERUI_BUILD_SHARED=OFF
+          -DHUXERUI_BUILD_STATIC=ON
+          -DHUXERUI_BUILD_CLI=OFF
+          -DHUXERUI_BUILD_TESTS=OFF
+          -DHUXERUI_BUILD_EXAMPLES=ON
+      - name: Build Web examples
+        run: >-
+          cmake --build .cache/huxerui-web-build --parallel
+          --target
+          example_ui_gallery
+          example_canvas
+          example_tabs
+          example_navigation
+          example_theme
+          example_image
+          example_presentation
+      - name: Stage independent Web applications
+        env:
+          HUXERUI_WEB_BUILD_DIR: ${{ github.workspace }}/.cache/huxerui-web-build
+        run: npm run stage:examples
+      - name: Build website
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          HUXERUI_SOURCE_DIR: ${{ github.workspace }}/.cache/huxerui
+        run: npm run build
+      - name: Check generated links
+        run: npm run check:links
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    needs: build
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

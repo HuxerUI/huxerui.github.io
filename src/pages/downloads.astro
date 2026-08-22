@@ -1,0 +1,101 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import rawRelease from "../generated/release.json";
+
+interface ReleaseAsset {
+  name: string;
+  url: string;
+  bytes: number;
+  sha256?: string;
+  platform: string;
+  architecture: string;
+  format: string;
+}
+
+type ReleaseData =
+  | {
+      available: true;
+      releasesUrl: string;
+      tag: string;
+      name?: string;
+      publishedAt: string;
+      releaseUrl: string;
+      assets: ReleaseAsset[];
+    }
+  | {
+      available: false;
+      releasesUrl: string;
+      message: string;
+    };
+
+const release = rawRelease as ReleaseData;
+
+function formatBytes(bytes: number) {
+  const mebibytes = bytes / (1024 * 1024);
+  return `${mebibytes.toFixed(mebibytes >= 10 ? 1 : 2)} MiB`;
+}
+
+const labels: Record<string, string> = {
+  windows: "Windows",
+  macos: "macOS",
+  linux: "Linux",
+};
+---
+
+<BaseLayout title="Downloads" description="Download verified HuxerUI SDK archives and installation scripts.">
+  <div class="page-shell">
+    <header class="page-hero">
+      <div>
+        <div class="eyebrow">Portable SDK</div>
+        <h1>Install HuxerUI on your development host.</h1>
+      </div>
+      <p>
+        Release archives contain the CLI, CMake package, framework libraries, host code generators, built-in resources, and packaged
+        Android and Web target artifacts.
+      </p>
+    </header>
+
+    <section class="section">
+      {release.available ? (
+        <div class="download-panel">
+          <div>
+            <div class="eyebrow">Latest release</div>
+            <h2>{release.name || release.tag}</h2>
+            <p>Published {new Date(release.publishedAt).toLocaleDateString("en-US", { dateStyle: "long" })}</p>
+          </div>
+          {release.assets.map((asset) => (
+            <article class="download-asset">
+              <div>
+                <h3>{labels[asset.platform] ?? asset.platform} · {asset.architecture}</h3>
+                <p>{asset.name} · {formatBytes(asset.bytes)}</p>
+                {asset.sha256 && <div class="checksum">SHA-256 {asset.sha256}</div>}
+              </div>
+              <a class="button button--primary" href={asset.url}>Download</a>
+            </article>
+          ))}
+          <a class="card-link" href={release.releaseUrl}>Release notes and installers</a>
+        </div>
+      ) : (
+        <div class="callout">
+          <div class="eyebrow">Release channel</div>
+          <h2>SDK archives are not published yet.</h2>
+          <p>{release.message} Tagged releases will appear here automatically after the verified SDK workflow completes.</p>
+          <a class="card-link" href={release.releasesUrl}>View all Releases</a>
+        </div>
+      )}
+    </section>
+
+    <section class="section section-heading">
+      <div>
+        <div class="eyebrow">Build from source</div>
+        <h2>Use the repository packaging scripts.</h2>
+      </div>
+      <div>
+        <p>The current host, Android, and pinned Emscripten toolchains are required for a complete SDK archive.</p>
+        <div class="command">.\scripts\package_sdk.ps1</div>
+        <div class="command">sh scripts/package_sdk.sh</div>
+        <a class="card-link" href="/docs/getting-started/#package-the-sdk-from-source">Read packaging requirements</a>
+      </div>
+    </section>
+  </div>
+</BaseLayout>

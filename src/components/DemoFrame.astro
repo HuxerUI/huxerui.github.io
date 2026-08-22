@@ -1,0 +1,30 @@
+---
+import { existsSync } from "node:fs";
+import path from "node:path";
+
+interface Props {
+  slug: string;
+  title: string;
+  compact?: boolean;
+}
+
+const { slug, title, compact = false } = Astro.props;
+const entry = `/demos/${slug}/index.html`;
+const available = existsSync(path.join(process.cwd(), "public", "demos", slug, "index.html"));
+---
+
+<div class:list={["demo-frame", compact && "demo-frame--compact"]}>
+  <div class="demo-toolbar">
+    <span><i></i><i></i><i></i></span>
+    <strong>{title}</strong>
+    {available && <a href={entry} target="_blank">Open full screen</a>}
+  </div>
+  {available ? (
+    <iframe src={entry} title={`${title} interactive HuxerUI Web example`} loading="lazy"></iframe>
+  ) : (
+    <div class="demo-placeholder">
+      <span>WebAssembly preview</span>
+      <p>Interactive artifacts are produced by the GitHub Pages build.</p>
+    </div>
+  )}
+</div>

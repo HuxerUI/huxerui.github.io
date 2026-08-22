@@ -1,0 +1,176 @@
+---
+import DemoFrame from "../components/DemoFrame.astro";
+import BaseLayout from "../layouts/BaseLayout.astro";
+import { componentGroups } from "../data/components";
+import { platforms } from "../data/platforms";
+
+const heroCode = `<span class="comment">// Ordinary C++ becomes a retained interface.</span>
+[[huxerui::scope]]
+<span class="type">View</span> <span class="function">Counter</span>() {
+  <span class="type">auto</span> count = <span class="function">UseState</span>(<span class="number">0</span>);
+
+  <span class="type">return</span> <span class="function">Column</span> {
+    <span class="function">Text::Format</span>(<span class="string">"Count: {}"</span>, count),
+    <span class="function">Button</span>(<span class="string">"+1"</span>).<span class="function">OnClick</span>([count] {
+      count += <span class="number">1</span>;
+    }),
+  }.<span class="function">With</span>(
+      <span class="function">Padding</span>(<span class="number">24.0F</span>),
+      <span class="function">Spacing</span>(<span class="number">12.0F</span>)
+  );
+}
+
+<span class="type">View</span> <span class="function">App</span>() {
+  <span class="type">return</span> <span class="function">MaterialTheme</span>(Counter);
+}`;
+---
+
+<BaseLayout>
+  <section class="hero">
+    <div class="hero-copy">
+      <div class="eyebrow">Modern C++ · One shared runtime</div>
+      <h1>Build UI once.<span>Keep it native.</span></h1>
+      <p>
+        HuxerUI brings declarative composition, controlled state, retained rendering, and platform integration to C++20—
+        across desktop, mobile, and Web.
+      </p>
+      <div class="hero-actions">
+        <a class="button button--primary" href="/docs/getting-started/">Start building</a>
+        <a class="button" href="/examples/ui_gallery/">Run the Web demo</a>
+      </div>
+      <div class="hero-proof" aria-label="Project highlights">
+        <span>C++20</span>
+        <span>MIT licensed</span>
+        <span>Six supported platforms</span>
+      </div>
+    </div>
+    <div class="code-window" aria-label="HuxerUI counter example">
+      <div class="window-bar">
+        <span class="window-dots" aria-hidden="true"><i></i><i></i><i></i></span>
+        counter.cpp
+      </div>
+      <pre><code set:html={heroCode}></code></pre>
+    </div>
+  </section>
+
+  <div class="platform-ticker" aria-label="Supported platforms">
+    <div>
+      {platforms.filter((platform) => platform.status === "Supported").map((platform) => <span>{platform.name}</span>)}
+    </div>
+  </div>
+
+  <section class="section section-shell">
+    <div class="section-heading">
+      <div>
+        <div class="eyebrow">Shared where it matters</div>
+        <h2>One model from declaration to pixels.</h2>
+      </div>
+      <p>
+        Application code stays platform-neutral. Each backend owns the native lifecycle, input services, text system, and renderer.
+      </p>
+    </div>
+    <div class="feature-grid">
+      <article class="feature-card">
+        <span class="feature-number">01</span>
+        <h3>Declarative C++</h3>
+        <p>Compose transient Views with ordinary functions, typed state, events, themes, and modifiers.</p>
+      </article>
+      <article class="feature-card">
+        <span class="feature-number">02</span>
+        <h3>Retained runtime</h3>
+        <p>Reconciliation, incremental layout, animation, input, and scene retention remain shared and testable.</p>
+      </article>
+      <article class="feature-card">
+        <span class="feature-number">03</span>
+        <h3>Real platform integration</h3>
+        <p>Use native windows, IME, accessibility, files, HTTP, PlatformViews, and texture producers at the boundary.</p>
+      </article>
+    </div>
+  </section>
+
+  <section class="section section--tinted">
+    <div class="section-shell">
+      <div class="component-stage">
+        <div class="component-copy">
+          <div class="eyebrow">A coherent component system</div>
+          <h3>Controls that share behavior—not just a look.</h3>
+          <p>
+            Material and Flat themes resolve the same controlled components, accessibility semantics, pointer and keyboard paths,
+            and transient interaction model.
+          </p>
+          <a class="card-link" href="/components/">Explore components</a>
+        </div>
+        <div class="ui-card" aria-label="Illustration of HuxerUI controls">
+          <h4>Workspace settings</h4>
+          <div class="ui-controls">
+            <span class="ui-button">Apply</span>
+            <span class="ui-button ui-button--quiet">Preview</span>
+          </div>
+          <div class="ui-field">Project name</div>
+          <div class="ui-slider"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section section-shell">
+    <div class="section-heading">
+      <div>
+        <div class="eyebrow">Built into the framework</div>
+        <h2>More than a widget catalog.</h2>
+      </div>
+      <p>Navigation, presentation, resources, tasks, files, and extensibility use the same ownership model.</p>
+    </div>
+    <div class="card-grid">
+      {componentGroups.slice(0, 6).map((group) => (
+        <article class="content-card">
+          <h3>{group.name}</h3>
+          <p>{group.description}</p>
+          <ul>{group.items.slice(0, 5).map((item) => <li>{item}</li>)}</ul>
+          <a class="card-link" href={group.href}>Read the guide</a>
+        </article>
+      ))}
+    </div>
+  </section>
+
+  <section class="section section--tinted">
+    <div class="section-shell">
+      <div class="section-heading">
+        <div>
+          <div class="eyebrow">Run the same runtime in your browser</div>
+          <h2>HuxerUI, compiled to WebAssembly.</h2>
+        </div>
+        <p>The preview is one independently loaded application. Other demos stay dormant until you open their own URL.</p>
+      </div>
+      <DemoFrame slug="ui_gallery" title="UI Gallery" compact />
+      <div class="button-row">
+        <a class="button button--primary" href="/examples/">Browse all Web examples</a>
+        <a class="button" href="/docs/design/web/">Read the Web design</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="section section-shell">
+    <div class="section-heading">
+      <div>
+        <div class="eyebrow">Install once, target everywhere</div>
+        <h2>Start with the SDK or build from source.</h2>
+      </div>
+      <p>Portable SDK archives include the CLI, CMake package, host tools, resources, and packaged Android and Web artifacts.</p>
+    </div>
+    <div class="component-stage">
+      <div class="component-copy">
+        <h3>From an empty directory to a native app.</h3>
+        <div class="command">huxerui create app hello --platform windows,macos,linux,web,android,ios</div>
+        <a class="card-link" href="/docs/getting-started/">Follow the quick start</a>
+      </div>
+      <div class="ui-card">
+        <div class="eyebrow">SDK workflow</div>
+        <h4>Diagnose. Configure. Build.</h4>
+        <div class="command">huxerui doctor</div>
+        <div class="command">huxerui run windows</div>
+        <a class="button button--primary" href="/downloads/">Download the SDK</a>
+      </div>
+    </div>
+  </section>
+</BaseLayout>

@@ -1,0 +1,27 @@
+name: Validate website
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  website:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Check and build
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: npm run build
+      - name: Check generated links
+        run: npm run check:links

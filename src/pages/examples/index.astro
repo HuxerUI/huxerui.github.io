@@ -1,0 +1,31 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { examples } from "../../data/examples";
+---
+
+<BaseLayout title="Examples" description="Run independent HuxerUI WebAssembly examples and inspect their C++ sources.">
+  <div class="page-shell">
+    <header class="page-hero">
+      <div>
+        <div class="eyebrow">Real C++ applications</div>
+        <h1>Examples you can run, inspect, and extend.</h1>
+      </div>
+      <p>
+        Each preview is a separate WebAssembly application with its own URL and Runtime. Nothing is eagerly mounted as a hidden
+        multi-demo bundle.
+      </p>
+    </header>
+    <section class="section" aria-label="Online examples">
+      <div class="example-grid">
+        {examples.map((example) => (
+          <article class:list={["example-card", example.featured && "example-card--featured"]}>
+            <div class="eyebrow">{example.eyebrow}</div>
+            <h2>{example.title}</h2>
+            <p>{example.description}</p>
+            <a class="card-link" href={`/examples/${example.slug}/`}>Open example</a>
+          </article>
+        ))}
+      </div>
+    </section>
+  </div>
+</BaseLayout>

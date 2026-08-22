@@ -1,0 +1,25 @@
+{
+  "repository": "https://github.com/HuxerUI/HuxerUI.git",
+  "ref": "main",
+  "documentation": [
+    "getting-started.md",
+    "core-concepts.md",
+    "components-and-input.md",
+    "layout-and-scrolling.md",
+    "theme-animation-and-presentation.md",
+    "files.md",
+    "extending-huxerui.md",
+    "platform-support.md",
+    "roadmap.md",
+    "design/*.md"
+  ],
+  "webExamples": [
+    "ui_gallery",
+    "canvas",
+    "tabs",
+    "navigation",
+    "theme",
+    "image",
+    "presentation"
+  ]
+}

@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://huxerui.github.io/sitemap-index.xml

@@ -1,0 +1,52 @@
+---
+title: Public API Reference
+description: A curated map of HuxerUI public capabilities and their canonical headers.
+editUrl: false
+---
+
+HuxerUI's initial website reference is a structured map of the supported public surface.
+It deliberately avoids publishing a disconnected dump of generated C++ HTML.
+Signatures and detailed contracts remain in the public headers and synchronized guides.
+
+## Application and runtime
+
+| Capability | Public header | Guide |
+|---|---|---|
+| Application declaration and options | `<huxerui/app.h>` | [Getting Started](/docs/getting-started/) |
+| View, components, scopes, and state | `<huxerui/view.h>`, `<huxerui/state.h>` | [Core Concepts](/docs/core-concepts/) |
+| Lifecycle and activation | `<huxerui/lifecycle.h>`, `<huxerui/app.h>` | [Application design](/docs/design/application/) |
+| Tasks and UI-thread resumption | `<huxerui/task.h>` | [Task design](/docs/design/tasks/) |
+
+## Interface construction
+
+| Capability | Public header | Guide |
+|---|---|---|
+| Controls, modifiers, and validation | `<huxerui/view.h>`, `<huxerui/modifier.h>`, `<huxerui/validation.h>` | [Components and Input](/docs/components-and-input/) |
+| Layout, scrolling, and virtualization | `<huxerui/layout.h>`, `<huxerui/scroll.h>`, `<huxerui/virtual_layout.h>` | [Layout and Scrolling](/docs/layout-and-scrolling/) |
+| Text and editing values | `<huxerui/text.h>`, `<huxerui/text_input.h>` | [Text input design](/docs/design/text-input/) |
+| Theme, indication, and animation | `<huxerui/theme.h>`, `<huxerui/indication.h>`, `<huxerui/animation.h>` | [Theme and Presentation](/docs/theme-animation-and-presentation/) |
+| Window layers and presentation | `<huxerui/layer.h>`, `<huxerui/presentation.h>` | [Theme and Presentation](/docs/theme-animation-and-presentation/) |
+| Navigation and typed routes | `<huxerui/navigation.h>` | [Navigation design](/docs/design/navigation/) |
+| Accessibility semantics | `<huxerui/semantics.h>` | [Semantics design](/docs/design/semantics/) |
+
+## Graphics and resources
+
+| Capability | Public header | Guide |
+|---|---|---|
+| Paint, Path, Canvas, and RenderScene | `<huxerui/paint.h>`, `<huxerui/render_scene.h>` | [Canvas design](/docs/design/canvas/) |
+| Images, vectors, raw data, and strings | `<huxerui/resource.h>`, `<huxerui/vector.h>` | [Resources design](/docs/design/resources/) |
+| External texture streams | `<huxerui/external_texture.h>` | [Platform Support](/docs/platform-support/) |
+
+## Platform integration and services
+
+| Capability | Public header | Guide |
+|---|---|---|
+| PlatformView | `<huxerui/platform_view.h>` | [SDK and integration design](/docs/design/sdk-cli/) |
+| PlatformModule | `<huxerui/platform_module.h>` | [SDK and integration design](/docs/design/sdk-cli/) |
+| HTTP | `<huxerui/http.h>` | [HTTP design](/docs/design/http/) |
+| Files and pickers | `<huxerui/file.h>` | [Files](/docs/files/) |
+| Clipboard | `<huxerui/clipboard.h>` | [Components and Input](/docs/components-and-input/) |
+| Window and desktop chrome | `<huxerui/window.h>` | [Window chrome design](/docs/design/window-chrome/) |
+
+The umbrella include remains `<huxerui/huxerui.h>`.
+Consumers link `HuxerUI::huxerui` or `HuxerUI::huxerui_static`.

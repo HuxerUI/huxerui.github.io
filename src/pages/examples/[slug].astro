@@ -1,0 +1,43 @@
+---
+import DemoFrame from "../../components/DemoFrame.astro";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { examples } from "../../data/examples";
+import { site } from "../../data/site";
+
+export function getStaticPaths() {
+  return examples.map((example) => ({ params: { slug: example.slug }, props: { example } }));
+}
+
+const { example } = Astro.props;
+---
+
+<BaseLayout title={example.title} description={example.description}>
+  <div class="page-shell">
+    <header class="page-hero">
+      <div>
+        <div class="eyebrow">{example.eyebrow}</div>
+        <h1>{example.title}</h1>
+      </div>
+      <div>
+        <p>{example.description}</p>
+        <div class="button-row">
+          <a class="button" href={`${site.repository}/blob/main/${example.source}`}>View C++ source</a>
+          <a class="button" href="/examples/">All examples</a>
+        </div>
+      </div>
+    </header>
+    <section aria-label={`${example.title} interactive preview`}>
+      <DemoFrame slug={example.slug} title={example.title} />
+    </section>
+    <section class="section">
+      <div class="callout">
+        <h2>One isolated Runtime</h2>
+        <p>
+          This page loads only the selected ES module, WebAssembly binary, and packaged resources. Open another example to create a
+          different application session.
+        </p>
+        <a class="card-link" href="/docs/design/web/">Understand the Web backend</a>
+      </div>
+    </section>
+  </div>
+</BaseLayout>

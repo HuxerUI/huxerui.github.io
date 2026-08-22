@@ -1,0 +1,88 @@
+---
+import config from "virtual:starlight/user-config";
+import LanguageSelect from "@astrojs/starlight/components/LanguageSelect.astro";
+import Search from "@astrojs/starlight/components/Search.astro";
+import SiteTitle from "@astrojs/starlight/components/SiteTitle.astro";
+import SocialIcons from "@astrojs/starlight/components/SocialIcons.astro";
+import ThemeSelect from "@astrojs/starlight/components/ThemeSelect.astro";
+
+import { navigation } from "../data/site";
+
+const shouldRenderSearch =
+  config.pagefind || config.components.Search !== "@astrojs/starlight/components/Search.astro";
+---
+
+<div class="header">
+  <div class="title-wrapper sl-flex"><SiteTitle /></div>
+  <nav class="docs-nav print:hidden" aria-label="Website navigation">
+    {navigation.slice(1).map((item) => <a href={item.href}>{item.label}</a>)}
+  </nav>
+  <div class="search-wrapper sl-flex print:hidden">{shouldRenderSearch && <Search />}</div>
+  <div class="sl-hidden md:sl-flex print:hidden right-group">
+    <div class="sl-flex social-icons"><SocialIcons /></div>
+    <ThemeSelect />
+    <LanguageSelect />
+  </div>
+</div>
+
+<style>
+  @layer starlight.core {
+    .header {
+      display: flex;
+      height: 100%;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .title-wrapper {
+      min-width: 0;
+      margin: -0.25rem;
+      padding: 0.25rem;
+      overflow: clip;
+    }
+
+    .docs-nav {
+      display: none;
+      align-items: center;
+      gap: 0.15rem;
+    }
+
+    .docs-nav a {
+      padding: 0.35rem 0.55rem;
+      border-radius: 0.5rem;
+      color: var(--sl-color-gray-2);
+      font-size: 0.8rem;
+      font-weight: 650;
+      text-decoration: none;
+    }
+
+    .docs-nav a:hover {
+      color: var(--sl-color-white);
+      background: var(--sl-color-gray-6);
+    }
+
+    .search-wrapper {
+      min-width: 0;
+      margin-left: auto;
+    }
+
+    .right-group,
+    .social-icons {
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .social-icons::after {
+      width: 1px;
+      height: 2rem;
+      background: var(--sl-color-gray-5);
+      content: "";
+    }
+
+    @media (min-width: 72rem) {
+      .docs-nav {
+        display: flex;
+      }
+    }
+  }
+</style>

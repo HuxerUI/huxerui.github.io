@@ -1,0 +1,54 @@
+---
+title: Documentation
+description: Learn HuxerUI from the first application through runtime architecture and platform integration.
+editUrl: false
+template: splash
+hero:
+  title: Build with HuxerUI
+  tagline: Canonical guides synchronized from the framework repository on every build.
+  actions:
+    - text: Get started
+      link: /docs/getting-started/
+      icon: right-arrow
+      variant: primary
+    - text: Browse public API
+      link: /docs/reference/
+      icon: open-book
+      variant: secondary
+---
+
+import { Card, CardGrid } from "@astrojs/starlight/components";
+
+## Learn the framework
+
+<CardGrid>
+  <Card title="Core concepts" icon="seti:cpp">
+    Understand Views, scopes, State, Lifecycle, Tasks, events, Environment, Theme, and the shared Runtime flow.
+    [Read core concepts](/docs/core-concepts/)
+  </Card>
+  <Card title="Components and input" icon="puzzle">
+    Use controlled controls, text editing, selection, validation, focus, and shared interaction behavior.
+    [Explore components](/docs/components-and-input/)
+  </Card>
+  <Card title="Layout and scrolling" icon="document">
+    Work with constraints, responsive viewport classes, scrolling, virtualization, and custom layouts.
+    [Build layouts](/docs/layout-and-scrolling/)
+  </Card>
+  <Card title="Theme and presentation" icon="star">
+    Resolve Material or Flat styles, retained motion, Toast, Dialog, BottomSheet, Popup, and Menu.
+    [Style and present UI](/docs/theme-animation-and-presentation/)
+  </Card>
+  <Card title="Platform guides" icon="laptop">
+    See exactly what Windows, macOS, Linux, Web, Android, and iOS backends implement.
+    [Compare platforms](/docs/platform-support/)
+  </Card>
+  <Card title="Architecture and design" icon="setting">
+    Trace declarations through reconciliation, layout, retained scenes, adapters, and platform renderers.
+    [Read architecture](/docs/design/architecture/)
+  </Card>
+</CardGrid>
+
+## Source of truth
+
+The technical documents on this site are generated from the selected HuxerUI source ref rather than maintained as website copies.
+Use each page's **Edit page** link to propose a correction in the framework repository.
