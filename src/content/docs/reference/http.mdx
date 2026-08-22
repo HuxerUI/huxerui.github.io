@@ -1,0 +1,23 @@
+---
+title: HTTP API
+description: Portable request values, responses, errors, and asynchronous client.
+sidebar:
+  order: 18
+---
+
+Declared by `<huxerui/http.h>`.
+
+## Request and response values
+
+- `HttpMethod`: `Get`, `Head`, `Post`, `Put`, `Patch`, `Delete`, `Options`.
+- `HttpHeader`: name and value.
+- `HttpRequest`: URL, method (default GET), headers, body, and optional timeout (default 30 seconds; `nullopt` disables it).
+- `HttpResponse`: final URL, integer status code, headers, and body.
+
+## Errors and result
+
+`HttpErrorCode` is `Transport`, `Timeout`, or `Unsupported`. `HttpError` contains code and message. `HttpResult` constructs from response/error, reports `HasResponse`, and provides ref-qualified `Response()` plus lvalue `Error()` accessors; asking for the wrong alternative throws.
+
+## `HttpClient`
+
+Non-copyable root service. `Send(HttpRequest) const -> Task<HttpResult>`. Obtain it with `UseService<HttpClient>()`. Request cancellation follows the launched HuxerUI task execution.

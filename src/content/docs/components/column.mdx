@@ -1,0 +1,35 @@
+---
+title: Column
+description: Arrange children vertically with main-axis spacing, alignment, and flexible growth.
+sidebar:
+  order: 40
+---
+
+`Column` is a braced layout container whose main axis is vertical.
+
+```cpp
+Column {
+  Text("Account", TextRole::Title),
+  TextField(name).Label("Display name"),
+  Button("Save").OnClick(SaveAccount),
+}.With(
+    Padding(24.0F),
+    Spacing(12.0F),
+    CrossAlign(CrossAxisAlignment::Stretch)
+)
+```
+
+`Spacing` sets the gap between adjacent children.
+`MainAlign` distributes remaining vertical space; `CrossAlign` positions or stretches children horizontally.
+Children carrying `Grow(factor)` share available vertical space proportionally.
+
+The container accepts individual `View` values and flattened `Views` groups from `ForEach`.
+Children retain declaration order for layout, painting, hit testing, and semantics.
+
+## API
+
+- Construction: `Column { children... }` or an explicit `std::vector<View>` through its inherited `Layout` constructor.
+- Layout modifiers: `Spacing`, `MainAlign`, `CrossAlign`, `Padding`, `Frame`.
+- Child metadata: `Grow`.
+
+Use [`Row`](/docs/components/row/) for horizontal placement and [`Flow`](/docs/components/flow/) when items should wrap.

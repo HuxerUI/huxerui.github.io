@@ -1,0 +1,35 @@
+---
+title: DrawerLayout
+description: Coordinate application content with optional start and end drawers.
+---
+
+`DrawerLayout` owns the spatial relationship between main content and logical start/end drawers.
+
+```cpp
+DrawerLayout(
+    Content(),
+    StartDrawer(Destinations()).Open(start_open).OnOpenChanged([start_open](bool value) {
+      start_open = value;
+    }),
+    EndDrawer(Tools()).Open(end_open).OnOpenChanged([end_open](bool value) {
+      end_open = value;
+    })
+)
+```
+
+Construct it with content alone, content plus either side, or content plus both drawers. `DrawerLayout` resolves available width against `DrawerStyle`: sufficiently wide layouts can place drawers inline, while constrained layouts use modal placement and a scrim. Drawer open values stay controlled by the application.
+
+Use logical start and end components instead of hard-coding left and right. Buttons in a `TopAppBar` commonly update the controlling state; no automatic toolbar coupling is required.
+
+`DrawerLayout` does not replace the meaning of its children.
+Navigation content should use controls such as `NavigationPane`, while custom drawer content remains responsible for its own labels and roles; modal placement prevents background interaction while the drawer is active.
+
+## API
+
+- `DrawerLayout(View content)`.
+- `DrawerLayout(View content, StartDrawer start)`.
+- `DrawerLayout(View content, EndDrawer end)`.
+- `DrawerLayout(View content, StartDrawer start, EndDrawer end)`.
+- `DrawerStyle` and `DrawerMotion` configure responsive placement and motion.
+
+See [NavigationPane](../navigation-pane/) for typical drawer content.

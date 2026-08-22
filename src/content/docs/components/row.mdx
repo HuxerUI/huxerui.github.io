@@ -1,0 +1,35 @@
+---
+title: Row
+description: Arrange children horizontally with flexible growth and cross-axis alignment.
+sidebar:
+  order: 41
+---
+
+`Row` is a braced layout container whose main axis is horizontal.
+
+```cpp
+Row {
+  Image(app::images::avatar).With(Frame{.width = 40.0F, .height = 40.0F}),
+  Column {
+    Text(user_name, TextRole::Title),
+    Text(status, TextRole::Label),
+  }.With(Grow(), Spacing(2.0F)),
+  IconButton(app::images::more, "More actions"),
+}.With(
+    Spacing(12.0F),
+    CrossAlign(CrossAxisAlignment::Center)
+)
+```
+
+`Spacing` sets horizontal gaps.
+`MainAlign` distributes remaining width and `CrossAlign` positions or stretches children vertically.
+`Grow(factor)` lets a child consume a proportional share of remaining width.
+
+Use `Spacer()` for a simple flexible empty region.
+Use `Flow` instead when a horizontal collection must wrap rather than overflow or shrink.
+
+## API
+
+- Construction: `Row { children... }` or an explicit child vector.
+- Layout modifiers: `Spacing`, `MainAlign`, `CrossAlign`, `Padding`, `Frame`.
+- Child metadata: `Grow`.

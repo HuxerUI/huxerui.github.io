@@ -1,0 +1,24 @@
+---
+title: Task API
+description: Scoped coroutine tasks, cancellation handles, and delays.
+sidebar:
+  order: 6
+---
+
+Declared by `<huxerui/task.h>`.
+
+## `Task<T>` and `Task<void>`
+
+Move-only, lazy coroutine return types. A task starts when launched or awaited. Only another HuxerUI task may `co_await` it. Exceptions are retained and rethrown on resume; a non-void task must `co_return` a value.
+
+## `TaskScope`
+
+`UseTaskScope()` returns the current component's scope. `Launch(Task<void>&&)` and the factory overload return `TaskHandle`. Outstanding executions are canceled when the owning scope is destroyed.
+
+## `TaskHandle`
+
+Copyable weak cancellation handle. `Cancel()` is safe after completion or prior cancellation.
+
+## `Delay`
+
+`Delay(std::chrono::duration<double>) -> Task<void>` schedules resumption through the owning UI task system. Standard chrono duration literals are re-exported in `huxerui`.

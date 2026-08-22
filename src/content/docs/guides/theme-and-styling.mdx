@@ -1,0 +1,26 @@
+---
+title: Theme and styling
+description: Apply inherited visual systems and customize component styles.
+---
+
+Theme is HuxerUI's visual specialization of `Environment`. Wrap a subtree in a built-in theme or provide a customized `ThemeDefinition`.
+
+```cpp
+View App() {
+  return MaterialTheme(Content);
+}
+```
+
+Built-in entry points include `MaterialTheme`, `MaterialDarkTheme`, `FlatTheme`, and `FlatDarkTheme`. Each accepts a view factory and copyable arguments; overloads accepting `ThemeSpec` let applications replace tokens while retaining the component recipes for that family.
+
+```cpp
+View BrandedApp() {
+  ThemeSpec spec = MaterialLightThemeSpec();
+  spec.colors.primary = Color::Rgb(92, 61, 180);
+  return MaterialTheme(std::move(spec), Content);
+}
+```
+
+`ThemeSpec` groups color, typography, shape, spacing, elevation, motion, and interaction schemes. `ThemeDefinition` additionally owns component and presentation style resolvers. Use `UseTheme()` to read the resolved `ThemeSpec`; use `Theme(definition, factory, ...)` for a custom definition.
+
+Common modifiers can still override a particular view's background, foreground, border, shadow, opacity, transform, and indication. Prefer theme customization for repeated visual intent and modifiers for local composition. Component-specific style structures are documented in the [Theme API](../../reference/theme/).

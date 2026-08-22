@@ -1,0 +1,38 @@
+---
+title: VirtualGrid
+description: Realize a large collection in fixed or adaptive columns with optional item spans.
+sidebar:
+  order: 46
+---
+
+`VirtualGrid` virtualizes a vertically scrolling grid.
+
+```cpp
+VirtualGrid(items, [](const Item& item) {
+  return ItemCard(item).Key(item.id);
+})
+    .Columns(GridColumns::Adaptive(220.0F))
+    .EstimatedRowExtent(180.0F)
+    .ColumnSpacing(16.0F)
+    .RowSpacing(16.0F)
+    .CacheExtent(320.0F)
+```
+
+Choose `GridColumns::Fixed(count)` for a stable column count or `GridColumns::Adaptive(minimum_width)` to resolve as many columns as available width can support.
+
+`.RowExtent(...)` describes fixed-height rows.
+Use `.EstimatedRowExtent(...)` when rows can vary.
+`.ItemSpans(...)` supplies the number of columns consumed by each corresponding item.
+
+The same range, state range, and count-factory constructors as `VirtualList` are available.
+`.Controller(...)` supports metrics and indexed scrolling.
+
+VirtualGrid publishes grid, row and column counts, and realized cell coordinates through accessibility semantics.
+
+## API
+
+- Constructors inherited from `VirtualLayout`.
+- Fluent methods: `.Columns`, `.RowExtent`, `.EstimatedRowExtent`, `.RowSpacing`, `.ColumnSpacing`, `.CacheExtent`, `.ItemSpans`, `.Controller`.
+- Column model: `GridColumns::Fixed` or `GridColumns::Adaptive`.
+
+Use [`Flow`](/docs/components/flow/) for a small wrapping collection that should mount every child.

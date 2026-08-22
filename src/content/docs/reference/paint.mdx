@@ -1,0 +1,46 @@
+---
+title: Paint and render scene API
+description: Immutable paint commands, recording context, retained scene nodes, and damage.
+sidebar:
+  order: 22
+---
+
+Declared by `<huxerui/paint.h>` and `<huxerui/render_scene.h>`.
+
+## Fills and image placement
+
+- `ImageFit`: `None`, `Contain`, `Cover`, `Fill`, or `ScaleDown`.
+- `GradientStop`, `LinearGradient`, and `RadialGradient`.
+- `ImageFillSource`: `ImageResource`, `ImageAsset`, or `VectorAsset`.
+- `ImageFill`: source, fit, alignment, sampling, tint, and opacity.
+- `VisualFill`: value wrapper for `Color`, `LinearGradient`, `RadialGradient`, or `ImageFill`; construct from any alternative and inspect with `Get()`.
+
+## Paint commands
+
+`PaintCommand` is a variant of:
+
+- `DrawRectCommand`, `DrawLinearGradientCommand`, `DrawRadialGradientCommand`.
+- `DrawTextCommand`, `TextRun`, `DrawTextRunsCommand`.
+- `DrawImageCommand`, `DrawExternalTextureCommand`.
+- `DrawCircleCommand`, `DrawArcCommand`, `DrawBorderCommand`, `DrawShadowCommand`.
+- `FillPathCommand`, `StrokePathCommand`, `DrawPathShadowCommand`.
+- `PushClipCommand`, `PopClipCommand`, `PushPathClipCommand`.
+- `PushTransformCommand`, `PopTransformCommand`.
+- `PlacePlatformViewCommand`, whose queries expose identity, type, properties/revision, and bounds.
+
+Each command is immutable platform-neutral data with equality. Command fields correspond to the matching `PaintContext` parameters.
+
+## `PaintSequence` and `PaintContext`
+
+`PaintSequence` exposes `Commands`, conservative `Bounds`, `Revision`, and whether it contains external textures. `PaintContext(sequence, bounds)` records drawing through `DrawRect`, gradient, text/text-runs, image/image-rect, external texture, circle, arc, border, rect/path shadow, fill/stroke path, clip, and transform methods. `Bounds()` returns local recording bounds; `Finish()` validates balanced stacks and closes recording.
+
+## Render scene
+
+- `RenderClip`: rectangular or path clip command.
+- `RenderNode`: stable ID, parent-local offset, presentation transform, group opacity, descendant clips, child transform, content/foreground sequences, child pointers, visibility, and revision.
+- `RenderScene`: non-owning root pointer.
+- `DamageRegion`: full flag or dirty rectangles.
+- `RenderFrame`: scene, damage, and revision.
+- `FrameCommit`: render frame, immutable semantic frame, and optional absolute next-frame deadline.
+
+The scene/frame types are the platform renderer boundary. Their non-owning pointers remain valid only until the next runtime frame construction or destruction.

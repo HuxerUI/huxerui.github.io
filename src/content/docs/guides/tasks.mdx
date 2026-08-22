@@ -1,0 +1,25 @@
+---
+title: Tasks
+description: Run cancellable asynchronous work bound to a component scope.
+---
+
+HuxerUI `Task<T>` is a lazy C++ coroutine type. Launch top-level work through a scoped `TaskScope` so unmount cancels outstanding operations.
+
+```cpp
+Task<void> LoadProfile(State<std::string> status) {
+  status = "Loading";
+  co_await Delay(250ms);
+  status = "Ready";
+}
+
+View LoadButton(State<std::string> status) {
+  auto tasks = UseTaskScope();
+  return Button("Load").OnClick([tasks, status] {
+    tasks.Launch(LoadProfile(status));
+  });
+}
+```
+
+Tasks may await other HuxerUI tasks. `TaskScope::Launch` accepts a `Task<void>` or a factory returning one and returns `TaskHandle`; calling `Cancel` is idempotent. `Delay` resumes through the platform scheduler. Exceptions propagate through `co_await` and must be handled at the appropriate task boundary.
+
+Do not detach raw coroutines that retain component state. See [Task API](../../reference/task/) and the async [HTTP](../http/) and [Files](../files/) services.

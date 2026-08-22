@@ -29,19 +29,22 @@ const heroCode = `<span class="comment">// Ordinary C++ becomes a retained inter
   <section class="hero">
     <div class="hero-copy">
       <div class="eyebrow">Modern C++ · One shared runtime</div>
-      <h1>Build UI once.<span>Keep it native.</span></h1>
+      <h1>
+        <span class="hero-title-line">Cross-platform UI.</span>
+        <span class="hero-title-line hero-title-accent">Rebuilt for C++.</span>
+      </h1>
       <p>
-        HuxerUI brings declarative composition, controlled state, retained rendering, and platform integration to C++20—
-        across desktop, mobile, and Web.
+        HuxerUI unifies desktop, mobile, and Web behind one declarative runtime—with shared composition, state, layout,
+        rendering, and animation, plus deep platform integration.
       </p>
       <div class="hero-actions">
-        <a class="button button--primary" href="/docs/getting-started/">Start building</a>
+        <a class="button button--primary" href="/docs/get-started/create-a-project/">Start building</a>
         <a class="button" href="/examples/ui_gallery/">Run the Web demo</a>
       </div>
       <div class="hero-proof" aria-label="Project highlights">
         <span>C++20</span>
+        <span>Six platform backends</span>
         <span>MIT licensed</span>
-        <span>Six supported platforms</span>
       </div>
     </div>
     <div class="code-window" aria-label="HuxerUI counter example">
@@ -82,8 +85,8 @@ const heroCode = `<span class="comment">// Ordinary C++ becomes a retained inter
       </article>
       <article class="feature-card">
         <span class="feature-number">03</span>
-        <h3>Real platform integration</h3>
-        <p>Use native windows, IME, accessibility, files, HTTP, PlatformViews, and texture producers at the boundary.</p>
+        <h3>Platform-native integration</h3>
+        <p>Connect windows, IME, accessibility, files, HTTP, PlatformViews, and texture producers through explicit adapters.</p>
       </article>
     </div>
   </section>
@@ -145,7 +148,7 @@ const heroCode = `<span class="comment">// Ordinary C++ becomes a retained inter
       <DemoFrame slug="ui_gallery" title="UI Gallery" compact />
       <div class="button-row">
         <a class="button button--primary" href="/examples/">Browse all Web examples</a>
-        <a class="button" href="/docs/design/web/">Read the Web design</a>
+        <a class="button" href="/docs/platforms/web/">Read the Web guide</a>
       </div>
     </div>
   </section>
@@ -153,16 +156,16 @@ const heroCode = `<span class="comment">// Ordinary C++ becomes a retained inter
   <section class="section section-shell">
     <div class="section-heading">
       <div>
-        <div class="eyebrow">Install once, target everywhere</div>
+        <div class="eyebrow">SDK, CLI, and CMake</div>
         <h2>Start with the SDK or build from source.</h2>
       </div>
-      <p>Portable SDK archives include the CLI, CMake package, host tools, resources, and packaged Android and Web artifacts.</p>
+      <p>Host SDK archives include the CLI, CMake package, host tools, resources, and packaged Android and Web artifacts.</p>
     </div>
     <div class="component-stage">
       <div class="component-copy">
-        <h3>From an empty directory to a native app.</h3>
+        <h3>From an empty directory to a runnable app.</h3>
         <div class="command">huxerui create app hello --platform windows,macos,linux,web,android,ios</div>
-        <a class="card-link" href="/docs/getting-started/">Follow the quick start</a>
+        <a class="card-link" href="/docs/get-started/create-a-project/">Follow the quick start</a>
       </div>
       <div class="ui-card">
         <div class="eyebrow">SDK workflow</div>

@@ -1,0 +1,100 @@
+---
+title: Layout and constraints
+description: Arrange components with rows, columns, flows, stacks, scrolling, and virtualized collections.
+sidebar:
+  order: 1
+---
+
+HuxerUI layout is constraint based.
+A parent measures each child with minimum and maximum bounds, chooses its own constrained size, and places children in local coordinates.
+
+## Core containers
+
+| Component | Behavior |
+|---|---|
+| [`Column`](/docs/components/column/) | Places children vertically. |
+| [`Row`](/docs/components/row/) | Places children horizontally. |
+| [`Flow`](/docs/components/flow/) | Wraps children into additional lines when space is exhausted. |
+| [`Stack`](/docs/components/stack/) | Overlays children in declaration order. |
+
+```cpp
+Row {
+  Column {
+    Text("Project", TextRole::Label),
+    Text(project_name, TextRole::Title),
+  }.With(Grow()),
+  Button("Open"),
+}.With(
+    Padding(16.0F),
+    Spacing(12.0F),
+    CrossAlign(CrossAxisAlignment::Center)
+)
+```
+
+## Alignment
+
+`MainAlign` controls distribution on a row or column's main axis with `Start`, `Center`, `End`, `SpaceBetween`, `SpaceAround`, or `SpaceEvenly`.
+
+`CrossAlign` uses `Start`, `Center`, `End`, or `Stretch` on the cross axis.
+`Align` positions a node's content within extra space using horizontal and vertical alignment.
+
+`Grow(factor)` tells a compatible parent to allocate remaining main-axis space proportionally.
+`Spacer()` is an empty flexible layout element when explicit separation reads more naturally.
+
+## Frame and padding
+
+`Frame` contributes exact and bounded size constraints:
+
+```cpp
+Image(images::banner)
+    .Fit(ImageFit::Cover)
+    .With(Frame{
+        .height = 180.0F,
+        .min_width = 240.0F,
+        .max_width = 960.0F,
+    })
+```
+
+`Padding` reduces the constraints offered to content and adds the resolved inset back to the measured size.
+Use `EdgeInsets::All` or `Symmetric` for common padding, or initialize the `top`, `right`, `bottom`, and `left` fields directly.
+
+## Scrolling
+
+`ScrollView` hosts one content view and scrolls vertically by default:
+
+```cpp
+auto scroll = UseScrollController();
+
+return ScrollView {
+  Column {
+    ForEach(rows, RenderRow),
+  }.With(Spacing(8.0F)),
+}.Controller(scroll)
+  .With(ScrollBar());
+```
+
+Set `.ScrollAxis(Axis::Horizontal)` for horizontal scrolling.
+`ScrollController` exposes current `ScrollMetrics`, direct offsets, relative scrolling, and `ScrollToItem` for virtual layouts.
+
+## Virtualized collections
+
+Use `VirtualList` and `VirtualGrid` when a collection is too large to mount every item.
+Their factories materialize only the realized range plus cache extent.
+
+```cpp
+VirtualList(items, [](const Item& item) {
+  return ItemRow(item).Key(item.id);
+})
+    .EstimatedItemExtent(56.0F)
+    .CacheExtent(240.0F)
+```
+
+`VirtualGrid` supports fixed or adaptive columns, row extents and estimates, row and column spacing, cache extent, and optional item spans.
+
+## Custom layout
+
+Applications can define a type derived from `Layout<Derived>` and implement static `Measure`.
+Measure children only through `LayoutContext`, return a constrained `LayoutResult`, and place children using local offsets.
+
+Use a custom layout for a genuinely new placement policy.
+Do not create one merely to hide a composition that `Row`, `Column`, `Flow`, or `Stack` already expresses.

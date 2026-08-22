@@ -1,0 +1,18 @@
+---
+title: Canvas, paint, path, and vector
+description: Draw platform-neutral graphics and reusable vector assets.
+---
+
+`Canvas` gives a painter a local `Size` and mutable `PaintContext` during retained painting.
+
+```cpp
+Canvas([](PaintContext& paint, Size size) {
+  paint.DrawCircle({size.width / 2.0F, size.height / 2.0F}, 36.0F, Color::Rgb(92, 61, 180));
+}).With(Frame{.width = 160.0F, .height = 160.0F})
+```
+
+Paint operations append immutable platform-neutral commands. Available primitives cover rectangles, linear/radial gradients, text and text runs, raster/vector images, external textures, circles, arcs, borders, shadows, filled/stroked paths, clips, and transforms.
+
+`Path` builds line, curve, arc, and closed contours with a fill rule. `VectorBuilder` combines paths into a reusable `VectorAsset`. Prefer `Image(VectorAsset)` for reusable icons and `Canvas` for size-dependent or animated custom drawing.
+
+Balance every pushed clip or transform. Paint commands use local coordinates; runtime composition supplies node transforms and opacity. Custom drawing does not automatically add semantics, so attach `Semantics` when the result communicates information. See [Paint API](../../reference/paint/) and [Vector API](../../reference/vector/).

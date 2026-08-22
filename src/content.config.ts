@@ -8,7 +8,6 @@ export const collections = {
       generateId: ({ entry }) => {
         const path = entry
           .replace(/\\/g, "/")
-          .replace(/^generated\//, "")
           .replace(/\.(md|mdx)$/i, "")
           .replace(/(^|\/)index$/, "");
         return path ? `docs/${path}` : "docs";

@@ -1,0 +1,83 @@
+---
+title: First application
+description: Declare an application, compose a stateful component, and understand the first HuxerUI frame.
+sidebar:
+  order: 3
+---
+
+Every HuxerUI application exposes one `Application` declaration.
+Its root factory returns the first declarative `View` tree.
+
+```cpp
+#include <huxerui/huxerui.h>
+
+using namespace huxerui;
+
+[[huxerui::scope]]
+View Counter() {
+  auto count = UseState(0);
+
+  return Column {
+    Text("Counter", TextRole::Title),
+    Text::Format("Current value: {}", count),
+    Row {
+      Button("Decrease").OnClick([count] {
+        count -= 1;
+      }),
+      Button("Increase").OnClick([count] {
+        count += 1;
+      }),
+    }.With(Spacing(8.0F)),
+  }.With(
+      Padding(24.0F),
+      Spacing(12.0F)
+  );
+}
+
+View App() {
+  return MaterialTheme(Counter);
+}
+
+const Application application{
+    App,
+    {
+        .window = {
+            .title = "Counter",
+            .initial_size = {480.0F, 320.0F},
+        },
+    }
+};
+```
+
+## What the declaration means
+
+`Application` stores the root factory and `AppOptions` for the platform shell.
+The root already owns a composition scope, so `App` does not need `[[huxerui::scope]]`.
+
+`Counter` does need an independent scope because it owns local `State`.
+The code generator rewrites the attribute into the runtime scope boundary used to preserve the state across recomposition.
+
+`Column` and `Row` receive child `View` values through braced DSL syntax.
+`.With(...)` applies reusable modifiers from left to right, while `.OnClick(...)` binds the typed click event.
+
+Writing `count` invalidates subscribed scopes.
+HuxerUI calls `Counter` again, reconciles the new transient `View` values against mounted nodes, and updates only the affected frame work.
+
+## The platform entry
+
+Generated projects provide the correct native or Web entry point.
+A minimal desktop entry ultimately calls:
+
+```cpp
+int main() {
+  return huxerui::RunApplication();
+}
+```
+
+Application UI should not call `RunApplication()` itself or construct platform adapters.
+
+## Continue learning
+
+- [DSL fundamentals](/docs/dsl/fundamentals/) explains the syntax used above.
+- [State and recomposition](/docs/dsl/state-and-recomposition/) explains identity and subscriptions.
+- [Components](/docs/components/) documents every built-in component.

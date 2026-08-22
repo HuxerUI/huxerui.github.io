@@ -1,0 +1,117 @@
+---
+title: Modifiers
+description: Configure layout, presentation, interaction, animation, scrolling, and semantics with typed node modifiers.
+sidebar:
+  order: 4
+---
+
+Modifiers are typed values passed to `View::With`.
+They apply from left to right to the same node and do not insert wrapper views.
+
+```cpp
+Text("Ready")
+    .With(
+        Padding(12.0F),
+        Background(Color::Rgb(235, 248, 240)),
+        Border(Color::Rgb(80, 160, 105), 1.0F),
+        CornerRadius(8.0F)
+    )
+```
+
+## Layout modifiers
+
+| Modifier | Purpose |
+|---|---|
+| `Padding` | Adds inner space around node content using one value or `EdgeInsets`. |
+| `Frame` | Sets exact, minimum, or maximum width and height constraints. |
+| `Spacing` | Sets the child gap used by compatible layouts. |
+| `MainAlign` | Positions children on a row or column's main axis. |
+| `CrossAlign` | Positions or stretches children on the cross axis. |
+| `Align` | Aligns content within available node space. |
+| `Grow` | Supplies flexible growth metadata to a compatible parent layout. |
+
+```cpp
+Row {
+  Text("Name"),
+  TextField(name).With(Grow()),
+}.With(
+    Spacing(12.0F),
+    CrossAlign(CrossAxisAlignment::Center)
+)
+```
+
+## Presentation modifiers
+
+| Modifier | Purpose |
+|---|---|
+| `Background` | Paints a color or `VisualFill` behind content. |
+| `Border` | Paints a border with color, width, and optional radii. |
+| `Shadow` | Paints a rectangular surface shadow. |
+| `Foreground` | Overrides compatible foreground content color. |
+| `FontSize` | Overrides text size for compatible text content. |
+| `CornerRadius` | Sets one radius or complete `CornerRadii`. |
+| `ClipChildren` | Clips descendant painting and interaction to the node shape. |
+| `Opacity` | Applies static or animated opacity to the node and descendants. |
+| `Offset`, `Scale`, `Rotation` | Applies presentation transforms without changing measurement. |
+
+Presentation transforms affect painting and pointer hit testing but not parent measurement.
+
+## Interaction modifiers
+
+`Enabled` controls whether a node participates in semantic activation.
+`Focusable` opts a custom node into focus handling.
+`Indication` and `FocusRing` customize transient interaction visuals when a component or theme exposes them.
+
+```cpp
+custom_view.With(
+    Enabled(can_activate),
+    Focusable(true),
+    Semantics{
+        .role = SemanticRole::Button,
+        .label = "Run",
+    }
+)
+```
+
+## Scrolling
+
+`ScrollBar` enables the default scrollbar or supplies a `ScrollBarStyle` override.
+Scroll containers also accept `ScrollPhysics` through the retained modifier API to tune user scrolling and overscroll behavior.
+
+```cpp
+ScrollView(content).With(ScrollBar())
+```
+
+## Animation values
+
+Presentation modifiers accept `AnimateTo` values:
+
+```cpp
+card.With(
+    Opacity(AnimateTo(visible ? 1.0F : 0.0F, TweenSpec{.duration = 0.2})),
+    Scale(AnimateTo(visible ? 1.0F : 0.96F, SpringSpec{}))
+)
+```
+
+The retained modifier instance advances animation state without recomposing the component every frame.
+
+## Semantics
+
+`Semantics` adds or overrides accessible meaning, state, range values, collection metadata, and live-region behavior.
+Built-in components already provide their expected semantics; use this modifier for custom views or application-specific labels and hints.
+
+Read [Accessibility](/docs/guides/accessibility/) before excluding descendants or hiding a subtree.
+
+## Component methods are not modifiers
+
+Use component-specific fluent methods for semantics that only one component understands:
+
+```cpp
+Image(images::cover)
+    .Fit(ImageFit::Cover)
+    .Sampling(ImageSampling::Linear)
+    .With(Frame{.height = 220.0F})
+```
+
+`Fit` and `Sampling` configure `Image`; `Frame` is reusable node layout.
+This distinction keeps `.With(...)` from becoming an untyped property system.

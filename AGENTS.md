@@ -1,7 +1,7 @@
 # HuxerUI Website Agent Guide
 
-This repository owns the HuxerUI public website, presentation metadata, build integration, and deployment.
-The framework repository remains the source of truth for technical documentation, public APIs, examples, supported capabilities, and release artifacts.
+This repository owns the HuxerUI public website, user documentation, presentation metadata, build integration, and deployment.
+The framework repository remains the source of truth for public API declarations, executable behavior, examples, supported capabilities, architecture notes, and release artifacts.
 
 ## Workflow
 
@@ -14,10 +14,11 @@ The framework repository remains the source of truth for technical documentation
 
 ## Content ownership
 
-- Do not copy framework guides into hand-maintained website pages.
-- Synchronize canonical documents through `huxerui-source.json` and `scripts/sync-huxerui-content.mjs`.
-- Keep the selected framework ref centralized in `huxerui-source.json`.
-- Curated website metadata may organize discoverability, but it must not claim capabilities absent from current public headers, examples, or canonical documentation.
+- Write and organize user documentation in this repository instead of publishing framework design documents.
+- Treat current public headers, executable tests, and examples as evidence for documented contracts; do not copy framework Markdown into website pages.
+- Keep the selected framework ref for Web examples centralized in `huxerui-source.json`.
+- Every public component has a dedicated user page, while complete API coverage is organized by coherent module rather than one page per trivial type.
+- Curated website content must not claim capabilities absent from current public headers, tests, or examples.
 - Display planned platforms or features explicitly as planned.
 - Fetch Release metadata at build time; do not call the GitHub API from the browser.
 

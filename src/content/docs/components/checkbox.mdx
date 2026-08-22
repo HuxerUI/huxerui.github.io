@@ -1,0 +1,32 @@
+---
+title: Checkbox
+description: Edit an independent controlled boolean choice.
+sidebar:
+  order: 30
+---
+
+`Checkbox` represents a controlled on/off choice that can be selected independently of neighboring checkboxes.
+
+```cpp
+Checkbox("Include diagnostics", include_diagnostics)
+    .OnChanged([include_diagnostics](bool checked) {
+      include_diagnostics = checked;
+    })
+```
+
+Construct it with a `bool` or `State<bool>`, with or without a `StringVariant` label.
+The state overload reads the current value; `OnChanged` emits the requested next value and does not mutate the state automatically.
+
+The shared activation path supports pointer input, Enter, and Space.
+`Enabled(false)` disables activation and applies disabled styling.
+
+`CheckboxStyle` controls box size, interactive and state-layer size, checked fill, checkmark, unchecked border, disabled colors, border width, and radius.
+Checkbox role, checked state, label, focus, and activate action are exposed automatically to accessibility services.
+
+## API
+
+- Constructors: `Checkbox(bool|State<bool>)` and `Checkbox(StringVariant, bool|State<bool>)`.
+- Event: `.OnChanged(function)` with `bool`.
+- Theme style: `CheckboxStyle`.
+
+Use [`RadioButton`](/docs/components/radio-button/) for one choice in a mutually exclusive group and [`Switch`](/docs/components/switch/) for an immediately applied setting.

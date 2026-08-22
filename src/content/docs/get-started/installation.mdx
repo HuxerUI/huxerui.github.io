@@ -1,0 +1,70 @@
+---
+title: Installation
+description: Install the HuxerUI SDK and verify the platform tools needed by your application.
+sidebar:
+  order: 1
+---
+
+HuxerUI ships as a relocatable SDK with the `huxerui` command-line tool, CMake packages, host code generators, built-in resources, and packaged platform artifacts.
+
+## Requirements
+
+All applications require:
+
+- A C++20 compiler supported by the selected platform toolchain.
+- CMake 3.20 or later.
+- The HuxerUI SDK for the current development host.
+
+Platform builds also require their platform SDK: Visual Studio on Windows, Xcode on Apple platforms, the Android SDK and NDK for Android, or Emscripten for Web.
+
+## Select an SDK
+
+The CLI first honors an explicit `HUXERUI_HOME` and otherwise discovers the SDK relative to its own executable.
+Set `HUXERUI_HOME` when you keep multiple SDKs or use a source checkout intentionally.
+
+```powershell
+$env:HUXERUI_HOME = "D:\Environment\HuxerUI"
+$env:Path = "$env:HUXERUI_HOME\bin;$env:Path"
+```
+
+```bash
+export HUXERUI_HOME=/opt/huxerui
+export PATH="$HUXERUI_HOME/bin:$PATH"
+```
+
+## Diagnose the environment
+
+Run the read-only doctor before creating or building an application:
+
+```bash
+huxerui doctor
+```
+
+Limit diagnosis to the platforms you plan to use:
+
+```bash
+huxerui doctor windows,web
+```
+
+`doctor` reports the selected SDK and missing external tools without installing or changing them.
+Use `setup` for supported platform prerequisites that the CLI can acquire:
+
+```bash
+huxerui setup android,web
+```
+
+## Direct CMake consumers
+
+Projects that do not use a generated application shell can locate the installed package directly:
+
+```cmake
+find_package(HuxerUI CONFIG REQUIRED)
+target_link_libraries(my_target PRIVATE HuxerUI::huxerui_static)
+```
+
+Use `HuxerUI::huxerui` when the host platform and package use the shared library form.
+Application projects should prefer `huxerui_add_app`, which also enables scope code generation and resource packaging.
+
+## Next
+
+[Create a project](/docs/get-started/create-a-project/) with the CLI, or continue to [DSL fundamentals](/docs/dsl/fundamentals/) if an application shell already exists.

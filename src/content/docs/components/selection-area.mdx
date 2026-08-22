@@ -1,0 +1,34 @@
+---
+title: SelectionArea
+description: Enable shared text selection across a subtree of static Text components.
+sidebar:
+  order: 37
+---
+
+`SelectionArea` makes static text in one content subtree selectable.
+
+```cpp
+SelectionArea(
+    Column {
+      Text("Release notes", TextRole::Title),
+      Text(release_notes),
+      Text(build_identifier, TextRole::Label),
+    }.With(Spacing(8.0F))
+)
+```
+
+The shared runtime owns selection ranges, pointer or touch gestures, handles, and the HuxerUI-drawn copy menu.
+Platform clipboard services perform the final copy operation.
+
+`SelectionArea` is for static `Text` content.
+`TextField` already owns editable selection and must not rely on a surrounding selection area for its editing behavior.
+
+The selected text remains represented by descendant text semantics rather than a new application state value.
+Add application-specific semantics to the content only when its visible text does not communicate enough context.
+
+## API
+
+- Constructor: `explicit SelectionArea(View content)`.
+- Common modifiers: `Padding`, `Frame`, `Semantics`.
+
+See [Text](/docs/components/text/) and [Accessibility](/docs/guides/accessibility/).

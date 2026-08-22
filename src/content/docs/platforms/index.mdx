@@ -1,0 +1,19 @@
+---
+title: Platform guides
+description: Platform setup, integration boundaries, and current backend capabilities.
+sidebar:
+  order: 1
+---
+
+HuxerUI shares one C++ application, DSL, state model, layout engine, interaction system, semantics tree, and paint scene. Platform adapters own lifecycle, scheduling, native input, text services, accessibility bridges, files, HTTP, windows, and rendering.
+
+| Platform | Application shell | Graphics and text | Native integration |
+| --- | --- | --- | --- |
+| Android | Gradle `HuxerUI` library plus app module | Android renderer and text services | Java/JNI PlatformModule and PlatformView |
+| iOS | CMake/Xcode application shell | UIKit/Core Graphics stack | Objective-C++ PlatformModule and PlatformView |
+| macOS | CMake native executable | AppKit/Core Graphics stack | Objective-C++ PlatformModule and PlatformView |
+| Windows | CMake MSVC executable | Win32 renderer and text services | Win32 PlatformModule, HWND PlatformView, external textures |
+| Linux | CMake native executable | X11, Cairo, EGL/GLES, HarfBuzz | X11 platform services and portal file picker |
+| Web | Emscripten application | Browser canvas/text integration | JavaScript PlatformModule, DOM PlatformView, browser history |
+
+Use `huxerui setup` to prepare the selected target and `huxerui run` for development. The generated project owns platform application metadata while its C++ `src` tree remains shared.

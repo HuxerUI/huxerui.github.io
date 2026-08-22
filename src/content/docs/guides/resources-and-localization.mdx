@@ -1,0 +1,22 @@
+---
+title: Resources and localization
+description: Package strings, images, vectors, and raw data with density and locale resolution.
+---
+
+Place application resources under the generated project's `assets` tree. The HuxerUI resource compiler produces typed identifiers and a package consumed by every platform.
+
+Generated values can be passed directly to components:
+
+```cpp
+Column {
+  Text(strings::welcome),
+  Image(images::logo),
+  Button(StringVariant::Format(strings::greeting, user_name)),
+}
+```
+
+`StringResource`, `ImageResource`, and `RawResource` are stable IDs. `UseString` resolves and formats a string immediately. `StringVariant` lets text-taking APIs defer resolution while safely representing a literal, owned string, string view, or resource plus positional arguments.
+
+`UseImage` resolves raster variants using the current `ResourceConfiguration`, including locale, density, and color scheme where supplied. `UseVectorImage` resolves a `VectorAsset`; `UseRawResource` returns immutable bytes. `ImageAsset` can also be created from encoded bytes or a file when content is not packaged.
+
+Resource selection responds to `Runtime::UpdateResourceContext` through the platform adapter. Application code normally consumes the resulting environment and does not query platform resource directories directly. See [Resource API](../../reference/resource/).

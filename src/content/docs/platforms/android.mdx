@@ -1,0 +1,19 @@
+---
+title: Android
+description: Build and integrate HuxerUI applications on Android 6.0 and later.
+sidebar:
+  order: 2
+---
+
+Android support targets API 23 and later. Generated projects use a Gradle build with the `HuxerUI` library module and an application module; the library links the Android HuxerUI shared library while application C++ remains in the generated source tree.
+
+```powershell
+huxerui setup android
+huxerui run android
+```
+
+The host view owns one shared runtime and adapter. Java/Kotlin lifecycle, input method, accessibility node provider, file picker, HTTP transport, and system bars cross the JNI boundary into shared C++ behavior. Keep app UI code platform-neutral and add Android-specific factories through `RootContext::Modules()`.
+
+Android defaults to safe-area content. Choose `WindowContentMode::EdgeToEdge` to draw behind system bars, then use `SafeAreaPadding` and `SystemBarsAppearance`. Software-keyboard viewport adjustment is distinct from physical safe-area insets.
+
+PlatformView factories are declared by `<huxerui/android/platform_view.h>`. External texture sources use `<huxerui/android/external_texture.h>`. JNI work must run on the UI thread and respect Java reference lifetime.

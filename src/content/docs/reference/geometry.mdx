@@ -1,0 +1,40 @@
+---
+title: Color and geometry API
+description: Colors, points, sizes, rectangles, transforms, insets, radii, and constraints.
+sidebar:
+  order: 2
+---
+
+Declared by `<huxerui/color.h>` and `<huxerui/geometry.h>`.
+
+## `Color`
+
+Linear component value with public `red`, `green`, `blue`, and `alpha` floats. `Rgb(int, int, int, float alpha = 1)` converts 8-bit RGB; `Transparent()`, `Black()`, and `White()` provide constants. Equality compares components.
+
+## `Axis`
+
+`Horizontal` or `Vertical`.
+
+## `Point` and `Size`
+
+`Point{x, y}` and `Size{width, height}` are logical-coordinate values with equality.
+
+## `Rect`
+
+Public `x`, `y`, `width`, and `height`; `Contains`, `IsEmpty`, `Intersects`, and `Intersection` query geometry. Equality compares fields.
+
+## `CornerRadii`
+
+Public `top_left`, `top_right`, `bottom_right`, and `bottom_left`. Construct uniformly or per corner; `Top(value)` rounds top corners and `IsUniform()` tests equality.
+
+## `Transform2D`
+
+Affine matrix fields `m11`, `m12`, `m21`, `m22`, `translate_x`, and `translate_y`. `IsIdentity`, `Apply`, and fallible `Inverse` operate on points.
+
+## `EdgeInsets`
+
+Public `top`, `right`, `bottom`, and `left`. `All` and `Symmetric(horizontal, vertical)` construct common values; `Horizontal()` and `Vertical()` sum axes.
+
+## `Constraints`
+
+Public min/max width and height. Methods: `Constrain`, `ConstrainWidth`, `ConstrainHeight`, `HasBoundedWidth`, `HasBoundedHeight`, `Loose`, `LooseWidth`, `LooseHeight`, `TightWidth`, `TightHeight`, and `Deflate`.

@@ -1,0 +1,18 @@
+---
+title: PlatformView API
+description: Shared declaration for platform-owned views and typed events.
+sidebar:
+  order: 24
+---
+
+Declared by `<huxerui/platform_view.h>`.
+
+## `PlatformView`
+
+`PlatformView(std::string type, PlatformPayload properties = {})` creates a declarative platform-view node. Rvalue `.Events<PlatformEventKey...>()` declares the platform events the node can dispatch. Bind handlers with inherited `.On<Key>(handler)`.
+
+The type must match a platform-specific `PlatformViewFactory` registered in `RootContext::Modules()`. Recomposition supplies replacement property payloads; the adapter owns create/update/place/hide/dispose behavior.
+
+## Event descriptor
+
+`detail::PlatformEventDescriptor` stores event key type, platform name, and typed dispatch function. `MakePlatformEventDescriptor<Key>()` and `DispatchPlatformViewEvent` connect payload decoding to `EventBindings`; these are template plumbing for `.Events`, not separate application APIs.

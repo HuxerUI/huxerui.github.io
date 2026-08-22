@@ -1,0 +1,22 @@
+---
+title: Window and system UI
+description: Configure safe-area policy, system bars, desktop chrome, and window commands.
+---
+
+`WindowOptions` is stable for one runtime. It sets title, initial logical size, content mode, chrome mode, preferred custom title-bar height, and caption labels.
+
+`WindowContentMode::SafeArea` keeps root content inside platform obstructions. `EdgeToEdge` gives the app the complete drawing surface; apply `SafeAreaPadding` only where content must avoid selected edges.
+
+```cpp
+return Content().With(
+    SafeAreaPadding{.top = true, .right = true, .bottom = true, .left = true},
+    SystemBarsAppearance{
+        .status_bar_background = theme.colors.primary,
+        .status_bar_content = SystemBarContentBrightness::Light,
+    }
+);
+```
+
+Desktop windows default to `WindowChromeMode::System`. `Custom` lets application UI occupy the title-bar surface; compose [WindowTitleBar](../../components/window-title-bar/) and use `UseWindow()` for window commands.
+
+`WindowMetrics` is an environment value containing viewport, remaining safe-area insets, and optional title-bar metrics. System-bar brightness can be automatic, light, or dark. Availability and native behavior vary by platform; see the platform guides.

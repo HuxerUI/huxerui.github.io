@@ -1,0 +1,24 @@
+---
+title: Accessibility
+description: Build semantic UI that works with platform assistive technologies.
+---
+
+Built-in controls publish roles, names, values, state, supported actions, collections, and text-editing information automatically. Start with meaningful labels, controlled state, and the correct component.
+
+```cpp
+IconButton(images::refresh, "Refresh messages")
+```
+
+Use the `Semantics` modifier when composition needs additional or overridden meaning:
+
+```cpp
+Canvas(PaintChart).With(Semantics{
+    .role = SemanticRole::Image,
+    .label = "Revenue chart",
+    .hint = "Shows monthly revenue for the current year",
+})
+```
+
+`Semantics` can describe checked, selected, expanded, busy, required, invalid, range, text selection, scroll, collection, live-region, and descendant-policy state. Do not duplicate visible text mechanically; communicate the action or state an assistive user needs.
+
+Custom layouts and retained extensions can contribute structure through `SemanticBuilder`. `SemanticNode` and `SemanticFrame` are the platform adapter boundary, not the preferred application authoring surface. Platform support currently follows each adapter's guide. See [Semantics API](../../reference/semantics/).

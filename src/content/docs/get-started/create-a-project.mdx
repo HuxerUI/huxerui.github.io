@@ -1,0 +1,65 @@
+---
+title: Create a project
+description: Generate a HuxerUI application shell and add the platforms you want to ship.
+sidebar:
+  order: 2
+---
+
+The CLI creates one application project with shared C++ source and source-controlled platform shells.
+
+## Create an application
+
+```bash
+huxerui create app hello_huxer --id dev.example.hello --platform windows,web,android
+cd hello_huxer
+```
+
+The generated project contains:
+
+- `src/` for shared application code.
+- `resources/` for localized strings, images, vectors, and raw assets.
+- One platform directory for each enabled shell.
+- A root `CMakeLists.txt` used by source and installed-SDK builds.
+
+Add another platform later without regenerating the application:
+
+```bash
+huxerui platform add ios
+```
+
+## Build and run
+
+```bash
+huxerui build windows --profile debug
+huxerui run windows
+```
+
+Web builds launch through the platform driver:
+
+```bash
+huxerui run web
+```
+
+Device platforms can select a discovered target explicitly:
+
+```bash
+huxerui devices ios
+huxerui run ios --device <id>
+```
+
+Package release artifacts under `dist/<platform>`:
+
+```bash
+huxerui package windows,web
+```
+
+## Source ownership
+
+The root build scans supported C++ files under `src/`; an Android or Web shell does not require a second application source list.
+Keep platform-only entry points and manifests in their platform directories, and keep reusable UI in shared source.
+
+The generated shell links the correct HuxerUI library form for its platform and enables the `[[huxerui::scope]]` transformer for application sources.
+
+## Next
+
+Open the generated `src/app.cpp`, then follow [First application](/docs/get-started/first-application/) to replace its initial `Text` with a stateful interface.

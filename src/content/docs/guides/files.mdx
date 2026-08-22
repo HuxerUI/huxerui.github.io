@@ -1,0 +1,26 @@
+---
+title: Files
+description: Read and write files and present platform-native file pickers.
+---
+
+`FileSystem` provides application directories and asynchronous file operations. `FilePicker` returns capability-bearing `FileReference` values instead of assuming every platform exposes a durable filesystem path.
+
+```cpp
+Task<void> OpenText(State<std::string> content) {
+  auto picker = UseService<FilePicker>();
+  auto picked = co_await picker->OpenFileAsync({
+      .name = "Text",
+      .extensions = {"txt"},
+  });
+  if (picked) {
+    auto text = co_await picked->ReadStringAsync();
+    if (text.Succeeded()) {
+      content = std::move(text).Value();
+    }
+  }
+}
+```
+
+Use `FileReference` for user-selected and externally activated files. It carries metadata and platform authority, and supports reading, importing, and replacement when writable without exposing provider URLs as local paths. `File` and `FileSystem` cover app-owned paths; `AppDirectories` identifies platform-resolved locations. Obtain the installed services with `UseService<FileSystem>()` and `UseService<FilePicker>()`.
+
+Picker filters are intent, not a security boundary. Handle cancellation as an empty successful selection and inspect `FileErrorCode` for failures. See [File API](../../reference/file/) for exact overloads and result types.

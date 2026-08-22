@@ -1,0 +1,19 @@
+---
+title: macOS
+description: Build native HuxerUI desktop applications with AppKit.
+sidebar:
+  order: 4
+---
+
+macOS applications use a native CMake/Xcode toolchain and AppKit adapter.
+
+```bash
+huxerui setup macos
+huxerui run macos
+```
+
+The adapter owns `NSWindow`/`NSView` lifecycle, AppKit input and `NSTextInputClient`, accessibility, clipboard, files, HTTP, scheduling, and render-scene presentation. Logical HuxerUI geometry remains in DIPs and is converted at the host boundary.
+
+`WindowChromeMode::System` retains native chrome. Custom chrome can compose application UI around platform window controls where supported; do not assume Windows caption geometry. Register NSView-backed platform views with `<huxerui/macos/platform_view.h>` and publish external textures through `<huxerui/macos/external_texture.h>`.
+
+Build and runtime validation require macOS and Xcode command-line tools.

@@ -1,0 +1,35 @@
+---
+title: NavigationBar
+description: Select one primary destination in a compact bottom navigation bar.
+---
+
+`NavigationBar` presents a controlled set of primary destinations. The owner supplies the selected index and handles requested changes.
+
+```cpp
+NavigationBar(
+    {
+      NavigationItem(images::home, "Home"),
+      NavigationItem(images::library, "Library"),
+      NavigationItem(images::settings, "Settings"),
+    },
+    selected
+).OnChanged([selected](std::size_t index) {
+  selected = index;
+})
+```
+
+`NavigationItem` accepts a label alone or an `ImageResource`, `ImageAsset`, or `VectorAsset` plus label. `.SelectedIcon(...)` supplies an alternate selected icon and `.Enabled(false)` disables a destination.
+
+The bar does not own selection. Pass `std::size_t` or `State<std::size_t>` and publish the new value after `NavigationEvents::Changed`. `NavigationBarStyle` controls height, icon and label treatment, selection indicator, indication, and animation.
+
+The component exposes collection and selected-item semantics. Labels remain important even when a theme hides unselected labels.
+
+## API
+
+- `NavigationBar(items, selected_index)` with initializer-list/vector and value/state overloads.
+- `OnChanged(handler)` receives the requested index.
+- `NavigationItem(label)` and icon-plus-label constructors.
+- `NavigationItem::SelectedIcon(...)` and `Enabled(bool)`.
+- `NavigationBarStyle` configures themed appearance.
+
+See also [NavigationPane](../navigation-pane/) and [Tabs](../tabs/).

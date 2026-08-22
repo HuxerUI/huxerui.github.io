@@ -1,0 +1,26 @@
+---
+title: Spacer
+description: Consume flexible layout space between siblings.
+sidebar:
+  order: 14
+---
+
+`Spacer` is an empty layout component used to push siblings apart.
+
+```cpp
+Row {
+  Text("Document"),
+  Spacer(),
+  Button("Save"),
+}.With(CrossAlign(CrossAxisAlignment::Center))
+```
+
+In a `Row`, it consumes available horizontal space; in a `Column`, it consumes available vertical space.
+Use `Grow(factor)` on ordinary content when the flexible region itself should render or participate in semantics.
+
+`Spacer` has no content, events, or accessibility semantics.
+
+## API
+
+- Constructor: `Spacer()`.
+- Common modifiers: `Frame` for a fixed minimum gap and `Grow` for explicit proportional behavior.

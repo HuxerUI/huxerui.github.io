@@ -1,0 +1,27 @@
+---
+title: WindowTitleBar
+description: Compose application-defined desktop title-bar content around standard window controls.
+---
+
+`WindowTitleBar` is a layout for windows created with `WindowChromeMode::Custom`. It automatically contributes a draggable region and centers its children vertically.
+
+```cpp
+WindowTitleBar {
+  Text("Studio"),
+  Spacer(),
+  Button("Run"),
+  Button("Account"),
+}.With(Spacing(8.0F), Padding(EdgeInsets::Symmetric(12.0F, 0.0F)))
+```
+
+Interactive descendants remain client controls and do not drag the window. The layout reserves platform- or framework-managed caption-control space through `WindowTitleBarMetrics`. Use `UseWindow()` when custom controls must invoke minimize, maximize, restore, toggle, or close.
+
+The component is meaningful when custom chrome is enabled in `WindowOptions`; system chrome remains the default. Give custom caption actions accessible labels and preserve a usable drag region.
+
+## API
+
+- `WindowTitleBar(std::vector<View>)` and variadic child constructor.
+- Inherits common layout modifiers.
+- `UseWindow() -> WindowHandle` with `Minimize`, `Maximize`, `Restore`, `ToggleMaximize`, and `Close`.
+
+See [Window and system UI](../../guides/window-and-system-ui/).

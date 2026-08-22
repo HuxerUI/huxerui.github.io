@@ -1,0 +1,42 @@
+---
+title: Event API
+description: Typed events, input payloads, interaction state, and event hubs.
+sidebar:
+  order: 4
+---
+
+Declared by `<huxerui/event.h>`.
+
+## Interaction and input values
+
+- `InteractionState`: enabled, hovered, pressed, focused, and focus-visible state.
+- `InteractionEvent::Type`: `Press`, `Release`, or `Cancel`; `InteractionEvent::Source`: `Pointer` or `Keyboard`.
+- `InteractionEvent`: type, source, matching `press_id`, and optional node-local pointer position.
+- `PointerEventType`: `Down`, `Up`, `Move`, or `Cancel`; `PointerDeviceKind`: `Mouse`, `Touch`, or `Pen`.
+- `PointerEvent`: type, pointer ID, node-local position, device kind, and click count.
+- `ScrollEvent`: local delta and pointer position.
+- `Key`: `Unknown`, `Tab`, `Enter`, `Space`, `Escape`, `Backspace`, `Delete`, `ArrowLeft`, `ArrowRight`, `ArrowUp`, `ArrowDown`, `Home`, `End`, `PageUp`, `PageDown`, `A`, `C`, `V`, `X`, `Y`, `Z`, `Shift`, `Control`, `Alt`, and `Meta`.
+- `KeyEventType`: `Down` or `Up`; `KeyModifiers` carries Shift, Control, Alt, and Meta flags.
+- `KeyEvent`: type, key, text, modifiers, and repeat state.
+- `BackPhase`: `Begin`, `Update`, `Cancel`, or `Commit`; `BackEvent` carries phase and progress.
+
+## `Event<Arguments...>`
+
+Base shape for an event key. A key supplies `using Signature = void(Arguments...)`; its type is the identity.
+
+## Built-in event groups
+
+- `ViewEvents`: `Click`, `PointerDown`, `PointerMove`, `PointerUp`, `PointerCancel`, `FocusChanged`, `KeyDown`, `KeyUp`, and `BackRequested`.
+- `ToggleEvents::Changed(bool)`.
+- `SliderEvents::Changed(float)`.
+- `SegmentedButtonEvents::Changed(std::size_t)`.
+- `TabsEvents::Changed(std::size_t)`.
+- `NavigationEvents::Changed(std::size_t)`.
+- `DrawerEvents::OpenChanged(bool)`.
+- `TextFieldEvents::Changed(const TextEditingValue&)` and `Submitted()`.
+
+## Binding and emission
+
+`View::On<Key>(handler)` creates an `EventHandler<Key::Signature>`. `EventBindings` stores handlers by key type; `HasEventBinding<Key>` and `EmitEvent<Key>` are extension helpers.
+
+`EventHub` is scope-local and exposes typed registration and emission. `EventEmitter` is the copyable handle returned by `UseEvents()`.

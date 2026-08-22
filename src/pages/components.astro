@@ -12,7 +12,7 @@ import { componentGroups } from "../data/components";
       </div>
       <p>
         HuxerUI components are controlled View factories backed by shared state, input, semantics, layout, and theme contracts.
-        The catalog below reflects the current public framework—not a future roadmap.
+        The catalog maps directly to the current public API and its component-specific behavior.
       </p>
     </header>
     <section class="section" aria-label="Component groups">
@@ -22,7 +22,7 @@ import { componentGroups } from "../data/components";
             <h2>{group.name}</h2>
             <p>{group.description}</p>
             <ul>{group.items.map((item) => <li>{item}</li>)}</ul>
-            <a class="card-link" href={group.href}>Open canonical documentation</a>
+            <a class="card-link" href={group.href}>View component documentation</a>
           </article>
         ))}
       </div>
@@ -33,7 +33,7 @@ import { componentGroups } from "../data/components";
         Start with ordinary component functions. HuxerUI also exposes custom layouts, retained NodeExtensions, root services,
         PlatformModule, PlatformView, and platform-neutral PaintCommands at narrower extension boundaries.
       </p>
-      <a class="card-link" href="/docs/extending-huxerui/">Extend HuxerUI</a>
+      <a class="card-link" href="/docs/reference/view/">Explore the View API</a>
     </aside>
   </div>
 </BaseLayout>

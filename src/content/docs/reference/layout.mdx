@@ -1,0 +1,39 @@
+---
+title: Layout, scrolling, and virtualization API
+description: Alignment, custom measurement, controllers, and lazy layout contracts.
+sidebar:
+  order: 10
+---
+
+Declared by `<huxerui/layout.h>`, `<huxerui/scroll.h>`, and `<huxerui/virtual_layout.h>`.
+
+## Alignment
+
+- `MainAxisAlignment`: `Start`, `Center`, `End`, `SpaceBetween`, `SpaceAround`, `SpaceEvenly`.
+- `CrossAxisAlignment`: `Start`, `Center`, `End`, `Stretch`.
+- `HorizontalAlignment`: `Start`, `Center`, `End`, `Stretch`.
+- `VerticalAlignment`: `Top`, `Center`, `Bottom`, `Stretch`.
+
+## Custom layout
+
+`LayoutContext` exposes child count, child measurement, layout values, resolved environment, and window/title-bar metrics. `LayoutResult` contains the constrained layout size and child placements. `LayoutDescriptor` erases a `Layout<Derived>` measurement function. `MountedNode` is the retained node visible to framework layout implementations; applications should not retain it.
+
+`LayoutValue<Key>` is typed parent-child metadata and uses `ErasedLayoutValue` internally.
+
+## Scrolling
+
+- `ScrollAlignment`: `Start`, `Center`, `End`.
+- `ScrollMetrics`: axis, offset, maximum offset, viewport extent, and content extent.
+- `ScrollController`: `Metrics`, `Offset`, `MaxOffset`, `ViewportExtent`, `ContentExtent`, `IsConnected`, `ScrollTo`, `ScrollBy`, and `ScrollToItem`.
+- `ScrollControllerBinding`: modifier connecting a controller to one scroll node.
+- `UseScrollController(initial_offset = 0, source_location)` creates a scope-stable controller.
+
+## Virtual layout
+
+- `GridColumns::Fixed(count)` and `GridColumns::Adaptive(minimum_width)` create the two public column policies; `Resolve(available_width, spacing)` returns the effective count.
+- `VirtualViewport`: visible and cache extents plus scroll offset.
+- `VirtualLayoutContext`: item count, viewport, item measurement, key/state access, and environment.
+- `VirtualLayoutResult`: total content extent and placed virtual items.
+- `VirtualLayoutDescriptor`: erased lazy-measure contract used by `VirtualLayout<Derived>`.
+
+The built-in lazy components are [`VirtualList`](../../components/virtual-list/) and [`VirtualGrid`](../../components/virtual-grid/).

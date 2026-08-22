@@ -1,0 +1,26 @@
+---
+title: Path and vector API
+description: Copy-on-write paths and immutable reusable vector assets.
+sidebar:
+  order: 21
+---
+
+Declared by `<huxerui/vector.h>`.
+
+## `Path`
+
+Copy-on-write contour value. Mutating chain methods are `MoveTo`, `LineTo`, `QuadraticTo`, `CubicTo`, and `Close`; `Reset` clears it. `RoundedRect(rect, radii)` creates a path. Queries are `IsEmpty`, `Bounds`, and equality.
+
+## Path options
+
+- `PathFillRule`: `NonZero`, `EvenOdd`.
+- `StrokeCap`: `Butt`, `Round`, `Square`.
+- `StrokeJoin`: `Miter`, `Round`, `Bevel`.
+
+## `VectorAsset`
+
+`Create(intrinsic_size, build)` uses an implicit view box; `Create(view_box, intrinsic_size, build)` sets both. Queries are `ViewBox`, `IntrinsicSize`, `HasValue`, and handle equality.
+
+## `VectorBuilder`
+
+Available only inside `VectorAsset::Create`. Methods: `FillPath`, `StrokePath` (width, cap, join, miter limit), `PushClip`, `PopClip`, `PushTransform`, and `PopTransform`. Clips and transforms must balance before the build callback returns.

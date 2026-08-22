@@ -1,7 +1,7 @@
 # HuxerUI website
 
-This repository builds the official HuxerUI website at [huxerui.github.io](https://huxerui.github.io).
-Astro owns the public landing pages and Starlight renders canonical framework documentation synchronized from [HuxerUI/HuxerUI](https://github.com/HuxerUI/HuxerUI).
+This repository builds the official HuxerUI website and user documentation at [huxerui.github.io](https://huxerui.github.io).
+Astro owns the public landing pages and Starlight renders documentation written and maintained in this repository.
 
 ## Requirements
 
@@ -17,27 +17,19 @@ Install exact dependencies:
 npm ci
 ```
 
-Point the website at a local HuxerUI checkout to avoid a temporary clone:
+Run the local development server:
 
-```powershell
-$env:HUXERUI_SOURCE_DIR = "D:\path\to\HuxerUI"
+```bash
 npm run dev
 ```
 
-```bash
-HUXERUI_SOURCE_DIR=/path/to/HuxerUI npm run dev
-```
+## Documentation
 
-Without `HUXERUI_SOURCE_DIR`, the content synchronizer clones the configured source ref into `.cache/huxerui` and refreshes that ref on later runs.
+User documentation lives under `src/content/docs` and is organized around the HuxerUI DSL, components, application services, platform integration, and complete public API coverage.
+Current public headers, executable tests, and examples in [HuxerUI/HuxerUI](https://github.com/HuxerUI/HuxerUI) are the evidence for documented behavior.
+Framework architecture and design notes are not copied into the website.
 
-## Canonical content
-
-`huxerui-source.json` is the single website configuration for the framework repository, selected ref, synchronized documents, and published Web example set.
-`scripts/sync-huxerui-content.mjs` generates Starlight-ready documents under `src/content/docs/generated` and keeps edit links pointed at the canonical source.
-Generated documents are never committed.
-
-The custom Components, Platforms, Examples, and Downloads pages contain display metadata only.
-Technical contracts remain owned by the framework repository.
+`huxerui-source.json` selects the framework repository, ref, and published Web example set.
 
 ## Releases
 
@@ -59,6 +51,7 @@ The Pages deployment configures HuxerUI with Emscripten and builds these indepen
 
 `scripts/stage-web-examples.mjs` copies each HTML, ES module, Wasm binary, and optional resource payload into its own ignored `public/demos/<name>` directory.
 Each example route lazy-loads only its selected application.
+The deployment resolves the repository and ref selected by `huxerui-source.json` into `.cache/huxerui`; this source checkout is used only to build the interactive examples.
 
 To stage an existing local Web build:
 

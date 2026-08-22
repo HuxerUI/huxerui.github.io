@@ -1,0 +1,41 @@
+---
+title: Dialog
+description: Present alerts or custom modal content above the application tree.
+---
+
+Use `UseDialog()` for imperative alerts and application-defined modal content.
+
+```cpp
+auto dialog = UseDialog();
+
+Button("Delete").OnClick([dialog] {
+  dialog.Show(
+      "Delete item?",
+      "This action cannot be undone.",
+      "Delete",
+      "Cancel",
+      DeleteItem
+  );
+})
+```
+
+Alert overloads accept title, message, positive action, optional negative action, and callbacks. An empty callback performs the default action of dismissing the dialog. For custom content, pass a `ViewFactory` or a factory receiving `DialogContext`; the context exposes the layer ID and `Dismiss()`.
+
+`DialogOptions` controls outside-press and cancel dismissal and can observe dismissal requests. `Update` replaces custom content for an existing layer. `DialogStyle` owns scrim, surface, typography, action layout, placement, geometry, indication, and motion, so Material and Flat themes can present the same intent differently.
+
+Declarative visibility is also available through the `Dialog` modifier descriptor when the view tree should own visibility.
+
+Dialogs publish a modal `Dialog` semantic node and temporarily remove background application semantics from navigation.
+The dialog exposes a dismiss action only when its cancellation policy allows dismissal, while standard actions remain ordinary semantic buttons.
+
+## API
+
+- `UseDialog() -> DialogHandle`.
+- `Show(title, message, positive = {}, on_positive_click = {}, options = {})`.
+- `Show(title, message, positive, negative, positive_callback = {}, negative_callback = {}, options = {})`.
+- `Show(ViewFactory, options)` and `Show(DialogFactory, options)` plus bound-argument templates.
+- `Update(LayerId, factory)` and `Dismiss(LayerId)`.
+- `DialogContext::Id()` and `Dismiss()`.
+- `DialogOptions`, `DialogStyle`, `DialogFactory`, and declarative `Dialog`.
+
+See [BottomSheet](../bottom-sheet/) for bottom-aligned modal content.

@@ -1,0 +1,31 @@
+---
+title: Switch
+description: Toggle a controlled setting whose effect is applied immediately.
+sidebar:
+  order: 32
+---
+
+`Switch` represents a controlled binary setting.
+
+```cpp
+Switch("Use dark appearance", dark_mode)
+    .OnChanged([dark_mode](bool checked) {
+      dark_mode = checked;
+    })
+```
+
+Construct it with `bool` or `State<bool>`, with or without a `StringVariant` label.
+The caller remains authoritative and must accept or reject each emitted value.
+
+Use a switch for an immediately applied setting.
+Use a checkbox when the value participates in a form or a set of independently submitted choices.
+
+`SwitchStyle` controls track and thumb geometry, checked and unchecked colors and borders, disabled states, state-layer size, radius, and animation duration.
+Switch role, checked state, label, focus, and activation semantics are provided automatically.
+
+## API
+
+- Constructors: `Switch(bool|State<bool>)` and `Switch(StringVariant, bool|State<bool>)`.
+- Event: `.OnChanged(function)` with `bool`.
+- Theme style: `SwitchStyle`.
+- Common modifiers: `Enabled`, `Semantics`, `Opacity`.

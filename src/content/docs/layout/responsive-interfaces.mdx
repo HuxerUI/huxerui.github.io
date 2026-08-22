@@ -1,0 +1,81 @@
+---
+title: Responsive interfaces
+description: Adapt one declarative tree to compact, medium, and expanded viewports.
+sidebar:
+  order: 2
+---
+
+HuxerUI exposes a semantic `ViewportClass` through Environment.
+Use it when a change in available width should select a different composition rather than merely stretch the same layout.
+
+## Viewport classes
+
+The default breakpoints are:
+
+| Class | Width |
+|---|---|
+| `Compact` | Below 600 DIPs |
+| `Medium` | At least 600 and below 840 DIPs |
+| `Expanded` | At least 840 DIPs |
+
+Applications can replace the medium and expanded thresholds through `AppOptions::viewport_breakpoints`.
+
+```cpp
+View Workspace() {
+  switch (UseViewportClass()) {
+    case ViewportClass::Compact:
+      return CompactWorkspace();
+    case ViewportClass::Medium:
+      return MediumWorkspace();
+    case ViewportClass::Expanded:
+      return ExpandedWorkspace();
+  }
+  return {};
+}
+```
+
+Reading the viewport class subscribes the current scope to later changes.
+When a resize crosses a breakpoint, that scope recomposes and the runtime reconciles the selected structure.
+
+## Prefer fluid layout first
+
+Use constraints, `Grow`, `Flow`, min/max frames, and adaptive grid columns for changes that do not require a different information architecture.
+
+```cpp
+VirtualGrid(items, RenderCard)
+    .Columns(GridColumns::Adaptive(240.0F))
+    .ColumnSpacing(16.0F)
+    .RowSpacing(16.0F)
+```
+
+Use `ViewportClass` for structural decisions such as:
+
+- Replacing a bottom `NavigationBar` with a `NavigationPane`.
+- Persistently revealing drawers on expanded windows.
+- Showing a details pane beside a list.
+- Moving secondary actions into or out of a top bar.
+
+## Preserve semantic identity
+
+Responsive branches may mount different component structures.
+Keep user-owned selection and navigation state above the branch so it survives a class change.
+
+```cpp
+[[huxerui::scope]]
+View ResponsiveShell() {
+  auto destination = UseState<std::size_t>(0);
+
+  if (UseViewportClass() == ViewportClass::Compact) {
+    return CompactShell(destination);
+  }
+  return ExpandedShell(destination);
+}
+```
+
+Do not depend on a node retaining local state when the responsive branch replaces it with a different component.
+Lift that state to the nearest stable scope.
+
+## Safe areas and system UI
+
+Viewport size describes application content space after the selected `WindowContentMode` policy.
+Mobile system bars, safe-area padding, and edge-to-edge appearance are window concerns covered by [Window and system UI](/docs/guides/window-and-system-ui/).

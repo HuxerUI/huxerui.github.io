@@ -1,0 +1,125 @@
+---
+title: Events and interaction
+description: Bind typed component events, observe low-level input, and emit events from reusable components.
+sidebar:
+  order: 3
+---
+
+Events describe semantic output from a `View`.
+Handlers are bound declaratively and replaced when the node recomposes.
+
+## Convenience events
+
+```cpp
+Button("Save").OnClick([] {
+  SaveDocument();
+})
+```
+
+Controls add type-safe conveniences for their primary output:
+
+```cpp
+Checkbox("Autosave", autosave)
+    .OnChanged([autosave](bool checked) {
+      autosave = checked;
+    })
+
+Slider(volume)
+    .Range(0.0F, 100.0F)
+    .Step(1.0F)
+    .OnChanged([volume](float next) {
+      volume = next;
+    })
+```
+
+The convenience methods delegate to the same typed event keys used by `.On<Key>(...)`.
+
+## Built-in event families
+
+| Event family | Keys |
+|---|---|
+| `ViewEvents` | `Click`, pointer down/move/up/cancel, `FocusChanged`, key down/up, `BackRequested` |
+| `ToggleEvents` | `Changed(bool)` |
+| `SliderEvents` | `Changed(float)` |
+| `SegmentedButtonEvents` | `Changed(std::size_t)` |
+| `TabsEvents` | `Changed(std::size_t)` |
+| `NavigationEvents` | `Changed(std::size_t)` |
+| `DrawerEvents` | `OpenChanged(bool)` |
+| `TextFieldEvents` | `Changed(const TextEditingValue&)`, `Submitted` |
+
+Bind a less common event explicitly:
+
+```cpp
+View content = Canvas(DrawScene)
+    .On<ViewEvents::PointerMove>([](const PointerEvent& event) {
+      UpdatePointer(event.position);
+    });
+```
+
+Pointer positions are local to the receiving node.
+`PointerEvent` also reports its type, pointer identifier, device kind, and click count.
+
+## Keyboard and Back
+
+`KeyEvent` reports `Down` or `Up`, a normalized `Key`, text, modifier flags, and repeat state.
+Use `Focusable` when a custom node needs keyboard focus.
+
+`ViewEvents::BackRequested` is the simple semantic event for a committed Back request.
+Navigation and platform integration additionally use phased `BackEvent` values internally for predictive transitions.
+
+## Disabled input
+
+Apply `Enabled(false)` to remove semantic activation and disabled controls from normal interaction:
+
+```cpp
+Button("Delete")
+    .OnClick(DeleteSelection)
+    .With(Enabled(has_selection))
+```
+
+Themes resolve disabled visuals from the same interaction state.
+
+## Custom component events
+
+Define a key by inheriting `Event<Arguments...>`:
+
+```cpp
+struct SearchRequested : Event<std::string> {};
+```
+
+A scoped component obtains an emitter and emits through the key:
+
+```cpp
+[[huxerui::scope]]
+View SearchBox() {
+  auto value = UseState(TextEditingValue{});
+  auto events = UseEvents();
+
+  return Row {
+    TextField(value).OnChanged([value](const TextEditingValue& next) {
+      value = next;
+    }),
+    Button("Search").OnClick([events, value] {
+      events.Emit<SearchRequested>(value->text);
+    }),
+  };
+}
+```
+
+The caller binds the custom key exactly like a built-in event:
+
+```cpp
+SearchBox().On<SearchRequested>([](std::string query) {
+  BeginSearch(std::move(query));
+})
+```
+
+`EventEmitter` is a weak connection to the component's current event hub.
+`IsConnected()` reports whether the declaring scope still has a live hub.
+
+## Interaction visuals
+
+Hover, focus, focus-visible, pressed, and enabled are runtime interaction facts.
+Themes translate them into `Indication`, focus rings, control colors, and animation without requiring a separate state variable for each event.
+
+Use raw pointer or key events for genuinely custom gestures, not to reimplement the standard activation path of a built-in control.

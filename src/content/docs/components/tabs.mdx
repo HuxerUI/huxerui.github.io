@@ -1,0 +1,49 @@
+---
+title: Tabs
+description: Select one controlled tab and communicate the relationship between labels and page content.
+sidebar:
+  order: 35
+---
+
+`Tabs` renders a controlled tab list.
+
+```cpp
+Tabs(
+    {
+        TabItem("Overview"),
+        TabItem(app::images::activity, "Activity"),
+        std::move(TabItem("Reports")).Enabled(false),
+    },
+    selected
+).OnChanged([selected](std::size_t index) {
+  selected = index;
+})
+```
+
+Simple constructors accept string labels.
+`TabItem` adds raster or vector icons, icon-only presentation with a required semantic label, and per-item enabled state.
+
+The selected index is controlled and must identify an item.
+`OnChanged` requests a new index; use that state to choose the corresponding page content.
+
+```cpp
+Column {
+  Tabs({"Files", "Search", "History"}, selected)
+      .OnChanged([selected](std::size_t index) {
+        selected = index;
+      }),
+  selected.Get() == 0 ? FilesPage() : selected.Get() == 1 ? SearchPage() : HistoryPage(),
+}
+```
+
+`TabsStyle` controls label states, icons, item geometry, optional equal expansion, divider, indicator color and sizing, and indicator motion.
+`TabIndicatorSizing::Item` follows the item; `Content` can produce a shorter content-width indicator.
+
+Tabs expose tab-list, tab, selected, disabled, focus, and activation semantics.
+
+## API
+
+- Constructors: label lists or `std::vector<TabItem>`, followed by index or `State<std::size_t>`.
+- `TabItem`: label, icon plus label, `IconOnly`, and `.Enabled(bool)`.
+- Event: `.OnChanged(function)` with `std::size_t`.
+- Theme style: `TabsStyle` and `TabIndicatorSizing`.

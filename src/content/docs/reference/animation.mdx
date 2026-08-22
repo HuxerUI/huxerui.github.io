@@ -1,0 +1,43 @@
+---
+title: Animation API
+description: Timing curves, animation specs, controllers, transitions, and scene effects.
+sidebar:
+  order: 14
+---
+
+Declared by `<huxerui/animation.h>`.
+
+## Curves and specifications
+
+- `Easing`: `Linear`, `EaseIn`, `EaseOut`, or `EaseInOut`.
+- `CubicBezierCurve(x1, y1, x2, y2)`: custom control points exposed by `X1`, `Y1`, `X2`, and `Y2`.
+- `TimingCurve`: variant of `Easing` or cubic Bézier.
+- `SnapSpec`: immediate target.
+- `TweenSpec`: `duration` and `easing`.
+- `SpringSpec`: `stiffness` and `damping_ratio`.
+- `ProgressKeyframe`: `fraction`, `progress`, and `curve_to_next`.
+- `KeyframeSpec(duration, keyframes)`: validated ordered keyframes exposed by `Duration()` and `Keyframes()`.
+- `AnimationSpec`: variant of all four spec kinds.
+
+## Playback and controller
+
+- `RepeatMode`: `Restart` or `Reverse`.
+- `AnimationPlayback`: `delay`, optional `iterations`, and `repeat_mode`.
+- `MotionAdvanceResult`: progress and whether another frame is required.
+- `MotionController`: inspect `Value`, `Target`, `Velocity`, and `IsRunning`; change motion with `Set`, `Seek`, `AnimateTo`, and `Advance`.
+
+## View animation
+
+- `Animated<T>` couples target value, `AnimationSpec`, and playback.
+- `AnimateTo(target, spec, playback = {})` constructs it.
+- Presentation properties: `Opacity`, `Offset`, `Scale`, and `Rotation`.
+- `TransformOrigin` controls scale/rotation origin.
+- `Transition(progress)` accepts a float or `Animated<float>` and adds `Opacity(from, to)`, `Offset(from, to)`, `Scale(from, to, origin)`, and `Rotation(from, to, origin)` tracks.
+
+## Scene transitions
+
+- `FadeSceneTransition` and `CircularRevealSceneTransition` are built-in scene effects.
+- `SceneTransitionAnchor` tags retained scene content and is obtained from `SceneTransitionHandle::Anchor()`.
+- `UseSceneTransition() -> SceneTransitionHandle`; `Run` accepts a fade or circular reveal, and `RunAt` supplies the reveal origin.
+
+Navigation and presentation motion structs reuse `AnimationSpec` but are declared in their owning headers.

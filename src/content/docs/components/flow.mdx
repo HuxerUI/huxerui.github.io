@@ -1,0 +1,35 @@
+---
+title: Flow
+description: Place children in lines that wrap when the available main-axis space is exhausted.
+sidebar:
+  order: 42
+---
+
+`Flow` lays out children in declaration order and starts another line when the current line cannot fit the next child.
+
+```cpp
+Flow {
+  ForEach(tags, [](const Tag& tag) {
+    return Chip(tag.name, tag.selected).Key(tag.id);
+  }),
+}.With(
+    Spacing(8.0F),
+    CrossAlign(CrossAxisAlignment::Center)
+)
+```
+
+It is useful for chips, tags, compact actions, and other items with content-dependent width.
+Unlike `Row`, it does not require every child to remain on one horizontal line.
+
+`Spacing` controls the gap between items and wrapped lines according to the built-in flow policy.
+Alignment modifiers affect placement within available line space.
+
+Use stable keys for dynamic stateful items that can reorder.
+For a very large scrollable data set, use `VirtualGrid` rather than mounting every item in a flow.
+
+`Flow` adds no semantic role of its own and preserves its children in declaration order, including after visual wrapping.
+
+## API
+
+- Construction: `Flow { children... }` or an explicit child vector.
+- Common modifiers: `Spacing`, `MainAlign`, `CrossAlign`, `Padding`, `Frame`.

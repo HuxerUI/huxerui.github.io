@@ -1,0 +1,32 @@
+---
+title: Window API
+description: Window options, safe areas, system bars, custom chrome, and commands.
+sidebar:
+  order: 15
+---
+
+Declared by `<huxerui/window.h>`.
+
+## Configuration enums
+
+- `WindowContentMode`: `SafeArea`, `EdgeToEdge`.
+- `WindowChromeMode`: `System`, `Custom`.
+- `WindowCommand`: `Minimize`, `Maximize`, `Restore`, `ToggleMaximize`, `Close`.
+- `SystemBarContentBrightness`: `Automatic`, `Light`, `Dark`.
+
+## Options and metrics
+
+- `WindowOptions`: title, initial size, content mode, chrome mode, preferred title-bar height, and caption labels.
+- `WindowCaptionLabels`: localized minimize, toggle-maximize, and close labels.
+- `WindowMetrics`: logical viewport, remaining safe-area insets, and optional title-bar metrics.
+- `WindowTitleBarMetrics`: height, resolved left/right control reservations, and maximized state.
+
+## Modifiers
+
+- `SystemBarsAppearance`: status/navigation backgrounds and content brightness; `Default()` and `Descriptor()`.
+- `SafeAreaPadding`: per-edge booleans and `Descriptor()`; selected edges consume only unconsumed ancestor insets.
+- `WindowDragRegion`: marker descriptor for draggable custom-chrome content.
+
+## Title bar and commands
+
+`WindowTitleBar` is a variadic/collection `Layout` that applies drag-region and centered cross-axis behavior while reserving standard controls. `UseWindow() -> WindowHandle`; handle methods are `Minimize`, `Maximize`, `Restore`, `ToggleMaximize`, and `Close`.

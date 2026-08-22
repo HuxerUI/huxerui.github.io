@@ -1,0 +1,60 @@
+---
+title: Text and input API
+description: Fonts, text layout, editing values, IME contracts, validation, and clipboard.
+sidebar:
+  order: 19
+---
+
+Declared by `<huxerui/text.h>`, `<huxerui/text_input.h>`, `<huxerui/validation.h>`, and `<huxerui/clipboard.h>`.
+
+## Fonts and styles
+
+- `FontFamilyKind`: `System`, `Monospace`, or `Named`.
+- `FontWeight`: `Thin`, `ExtraLight`, `Light`, `Regular`, `Medium`, `SemiBold`, `Bold`, `ExtraBold`, or `Black`.
+- `FontSlant`: `Normal` or `Italic`.
+- `Font`: `System(size)`, named/fallback family construction, and fluent size/weight/slant updates; equality compares descriptor values.
+- `TextDecoration`: `None`, `Underline`, `StrikeThrough` flags; bitwise `|`, `&`, and `HasTextDecoration` support combinations.
+- `TextStyle`: `font`, `foreground`, and `decoration`.
+
+## Shaping and layout
+
+- `TextDirection`: `Auto`, `LeftToRight`, or `RightToLeft`.
+- `TextShapingOptions`: locale/language and direction inputs.
+- `TextAlign`: `Leading`, `Center`, or `Trailing`.
+- `TextWrap`: `NoWrap` or `Word`.
+- `TextLayoutOptions`: shaping options, alignment, and wrapping; maximum width is the separate `MeasureText` argument.
+- `FontMetrics`, `TextRunMetrics`, and `TextLayoutMetrics`: ascent/descent/leading, run geometry, overall size, baselines, and line data.
+- `TextMeasurer` platform interface and `UseTextMeasurer()` extension hook.
+
+## Editing values
+
+- `TextOffset` is signed 64-bit; `TextInputSessionId` is unsigned 64-bit.
+- `TextAffinity`: `Upstream` or `Downstream`; `TextPosition`, `TextRange`, and `TextSelection` model caret/range state.
+- `TextEditingValue` contains UTF-8 text, selection, and composition range with validation/equality helpers.
+
+## IME command boundary
+
+`TextInputCommandKind` values are `SetSelection`, `BeginComposition`, `UpdateComposition`, `CommitText`, `FinishComposition`, `CancelComposition`, and `DeleteSurrounding`.
+`TextInputCoordinateSpace` is `Text` or `Composition`; `TextInputUnit` is `Utf16CodeUnit` or `UnicodeCodePoint`.
+`TextInputCommand` and `TextInputCommandBatch` carry revisioned platform edits.
+
+- `TextInputType`: `Text`, `Email`, `Number`, `Decimal`, `Phone`, or `Url`.
+- `TextCapitalization`: `None`, `Characters`, `Words`, or `Sentences`.
+- `TextInputAction`: `Default`, `Done`, `Go`, `Next`, `Search`, `Send`, or `Newline`.
+- `TextInputConfiguration`: type, capitalization, action, multiline, secure, autocorrect, and read-only flags.
+
+- `TextInputResultCode`: `Ok`, `SessionMismatch`, `Rejected`, or `ReadOnly`.
+- `TextInputSyncAction`: `None`, `Update`, or `Restart`.
+- `TextInputEndReason`: `FocusLost`, `ClientRemoved`, `Disabled`, `ReadOnly`, or `RuntimeDestroyed`.
+- `TextInputKeyResult`: `Unhandled` or `Handled`.
+- State/result structures: `TextInputState`, `TextInputApplyResult`, `TextInputContext`, `TextInputGeometry`, and `TextInputPositionResult`.
+
+`TextInputClient` and `TextSelectionClient` are mounted extension interfaces. `PlatformTextInput` is the adapter interface for begin/update/end session, keyboard, geometry queries, selection menus, and platform synchronization.
+
+## Validation
+
+`ValidationStatus` is `None`, `Valid`, `Invalid`, or `Pending`. `ValidationResult` has named factories and `IsInvalid`. `Required` and `EmailAddress` accept optional localized messages. `Validate(value, rules...)` evaluates until a rule is non-valid.
+
+## Clipboard
+
+`TextEditingAction` is `Cut`, `Copy`, `Paste`, or `SelectAll`. `TextSelectionMenuLabels` supplies localized labels. `PlatformClipboard` defines `ReadText` and `WriteText` for adapters.

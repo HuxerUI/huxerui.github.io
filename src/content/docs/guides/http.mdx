@@ -1,0 +1,25 @@
+---
+title: HTTP
+description: Send asynchronous HTTP requests through the platform transport.
+---
+
+`HttpClient` is an application service backed by the current platform transport. Requests are explicit value objects and return `Task<HttpResult>`.
+
+```cpp
+Task<void> LoadFeed(State<std::string> output) {
+  auto http = UseService<HttpClient>();
+  HttpResult result = co_await http->Send({
+      .url = "https://example.com/feed.json",
+      .method = HttpMethod::Get,
+  });
+  if (result.HasResponse()) {
+    output = result.Response().body;
+  } else {
+    output = result.Error().message;
+  }
+}
+```
+
+Specify method, headers, body, and optional timeout in `HttpRequest`. A response contains final URL, status code, headers, and body. HTTP status codes are responses; transport, timeout, and unsupported-platform failures use `HttpError`.
+
+The runtime installs `HttpClient` as a root service; obtain it with `UseService<HttpClient>()`. Launch requests from `TaskScope` so cancellation follows UI lifetime. Never put credentials in documentation or source literals. See [HTTP API](../../reference/http/) for exact request and result methods.

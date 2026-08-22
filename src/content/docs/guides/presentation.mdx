@@ -1,0 +1,24 @@
+---
+title: Presentation
+description: Present toasts, dialogs, bottom sheets, popups, menus, and tooltips.
+---
+
+Presentation content belongs to the current window's layer stack. `UseToast`, `UseDialog`, `UseBottomSheet`, `UsePopup`, and `UseMenu` return lightweight handles connected to window-scoped services.
+
+```cpp
+auto toast = UseToast();
+auto dialog = UseDialog();
+
+Button("Save").OnClick([toast, dialog] {
+  dialog.Show("Save changes?", "The document has changed.", "Save", [toast] {
+    Save();
+    toast.Show("Saved");
+  });
+})
+```
+
+Calling `Show` captures the current `Environment`, so theme and localized resources follow the presenting subtree even though the content is rendered outside the application layout tree. Handles return `LayerId` values for explicit updates or dismissal.
+
+Modal presentations trap the relevant interaction and restore focus after dismissal. Anchored presentations use a retained `LayerAnchor` modifier and follow final view bounds. Point-positioned popup and menu overloads are available for pointer context menus.
+
+Themes own presentation style: placement, scrim, shape, shadow, spacing, item treatment, and motion can differ without changing application intent. See the individual component pages for [Toast](../../components/toast/), [Dialog](../../components/dialog/), [BottomSheet](../../components/bottom-sheet/), [Popup](../../components/popup/), [Menu](../../components/menu/), and [Tooltip](../../components/tooltip/).

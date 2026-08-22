@@ -1,0 +1,44 @@
+---
+title: ScrollView
+description: Scroll one measured content subtree vertically or horizontally.
+sidebar:
+  order: 44
+---
+
+`ScrollView` hosts one content `View` and scrolls vertically by default.
+
+```cpp
+[[huxerui::scope]]
+View Document() {
+  auto scroll = UseScrollController();
+
+  return ScrollView {
+    Column {
+      ForEach(sections, RenderSection),
+    }.With(
+        Padding(24.0F),
+        Spacing(16.0F)
+    ),
+  }.Controller(scroll)
+    .With(ScrollBar());
+}
+```
+
+Set `.ScrollAxis(Axis::Horizontal)` for horizontal content.
+`.Controller(ScrollController)` connects imperative coordination without moving the scroll offset into component state.
+
+`ScrollController` reports `ScrollMetrics` and supports `ScrollTo`, `ScrollBy`, and virtual-layout `ScrollToItem`.
+Create a scope-stable controller with `UseScrollController(initial_offset)`.
+
+The runtime owns pointer wheel or touch scrolling, momentum, bounds, clipping, scrollbar interaction, and nested scroll arbitration.
+Focused text input may request visibility, but user scrolling remains authoritative and can move away from the field.
+
+ScrollView exposes scroll-view role, extent, current offset, and semantic scroll actions.
+
+## API
+
+- Constructor: `explicit ScrollView(View content)`.
+- Fluent methods: `.ScrollAxis(Axis)`, `.Controller(ScrollController)`.
+- Common modifiers: `ScrollBar`, `Frame`, `Grow`, `Background`.
+
+Use [`VirtualList`](/docs/components/virtual-list/) or [`VirtualGrid`](/docs/components/virtual-grid/) for large collections.

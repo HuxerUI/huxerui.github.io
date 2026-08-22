@@ -1,0 +1,40 @@
+---
+title: RadioButton
+description: Present one controlled choice in a mutually exclusive group.
+sidebar:
+  order: 31
+---
+
+`RadioButton` renders the selected state of one option.
+The application owns group exclusivity by storing one selected value.
+
+```cpp
+Column {
+  RadioButton("Automatic", mode.Get() == Mode::Automatic)
+      .OnChanged([mode](bool selected) {
+        if (selected) {
+          mode = Mode::Automatic;
+        }
+      }),
+  RadioButton("Manual", mode.Get() == Mode::Manual)
+      .OnChanged([mode](bool selected) {
+        if (selected) {
+          mode = Mode::Manual;
+        }
+      }),
+}.With(Spacing(8.0F))
+```
+
+Construct it with `bool` or `State<bool>`, optionally preceded by a `StringVariant` label.
+Do not keep a separate boolean state for every option when one enum or identifier describes the group more accurately.
+
+`RadioButtonStyle` controls geometry, selected and unselected colors, disabled colors, border, inner dot, state layer, and transition duration.
+The component exposes radio-button role, selected state, label, focus, and activation semantics.
+
+## API
+
+- Constructors: `RadioButton(bool|State<bool>)` and `RadioButton(StringVariant, bool|State<bool>)`.
+- Event: `.OnChanged(function)` with `bool`.
+- Theme style: `RadioButtonStyle`.
+
+For a compact fixed group with one selected index, use [`SegmentedButton`](/docs/components/segmented-button/).

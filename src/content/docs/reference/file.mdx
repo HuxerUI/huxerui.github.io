@@ -1,0 +1,34 @@
+---
+title: File API
+description: Local paths, async I/O, file references, pickers, and app directories.
+sidebar:
+  order: 17
+---
+
+Declared by `<huxerui/file.h>`.
+
+## Results and metadata
+
+- `FileType`: `File`, `Directory`, `Other`.
+- `FileInfo`: type, byte size, optional modification time.
+- `FileErrorCode`: `NotFound`, `PermissionDenied`, `NotDirectory`, `IsDirectory`, `TooLarge`, `InvalidEncoding`, `Unsupported`, `Io`.
+- `FileError`: code and message.
+- `FileResult<T>`: construct from value/error; `Succeeded`, ref-qualified `Value`, and `Error` accessors.
+
+## `File`
+
+Construct from UTF-8 path/string view or parent plus child. Path queries: `Path`, `Name`, `Stem`, `Extension`, `ParentPath`, `Parent`, `Child`, and `Resolve`. Status queries: `Exists`, `IsFile`, `IsDirectory`, synchronous/async `Stat`.
+
+I/O methods have synchronous and `Async` forms: read bytes/string; write and append bytes/string; list children; create one/all directories; delete or recursively delete; copy; and move. Copy/move accept `overwrite = false`. Async methods return `Task`.
+
+## `FileReference`
+
+Capability for a selected or activated file. Metadata: `Name`, optional `Size`, optional `ContentType`, `CanWrite`. Async operations: `ReadBytesAsync`, `ReadStringAsync`, `ImportToAsync`, and `ReplaceWithAsync`.
+
+## `FilePicker`
+
+`FilePickerFilter` contains name, extensions, and content types. `SaveFileOptions` contains suggested name and filter. Capability queries are `CanOpenFiles` and `CanSaveFiles`; operations are `OpenFileAsync`, `OpenFilesAsync`, and `SaveFileAsync`.
+
+## `FileSystem`
+
+`AppDirectories` contains optional executable directory plus required data, cache, and temporary directories. `FileSystem::Directories()` returns them; `CurrentDirectory()` resolves process working directory. Obtain `FileSystem` and `FilePicker` with `UseService<T>()`.

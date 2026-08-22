@@ -1,0 +1,33 @@
+---
+title: Semantics API
+description: Declarative accessibility metadata, actions, trees, and extension builder.
+sidebar:
+  order: 20
+---
+
+Declared by `<huxerui/semantics.h>`.
+
+## Declarative semantics
+
+`SemanticNodeId` is `std::uint64_t`.
+`SemanticRole` values are `Generic`, `Text`, `Heading`, `Image`, `Button`, `Link`, `Checkbox`, `RadioButton`, `Switch`, `Slider`, `ProgressIndicator`, `TextField`, `SearchField`, `Tab`, `TabList`, `Menu`, `MenuItem`, `Dialog`, `Navigation`, `List`, `ListItem`, `Grid`, `GridCell`, and `ScrollView`.
+
+- `SemanticCheckedState`: `Unchecked`, `Checked`, or `Mixed`.
+- `SemanticLiveRegion`: `None`, `Polite`, or `Assertive`.
+- `SemanticDescendantPolicy`: `Preserve` or `Exclude`.
+- Value structures: `SemanticRange`, `SemanticCollection`, and `SemanticCollectionItem`.
+
+`Semantics` is a modifier with optional role, label, value, placeholder, hint, state description, error, identifier, checked/selected/expanded/busy/read-only/required/invalid state, heading level, range, text selection, scroll metrics, collection/item metadata, live region, descendant policy, and hidden flag.
+
+## Actions
+
+`SemanticActionKind` values are `Activate`, `Focus`, `SetText`, `SetSelection`, `SetValue`, `Increment`, `Decrement`, `Scroll`, `ShowOnScreen`, `Expand`, `Collapse`, `Dismiss`, and `Custom`.
+`SemanticActionMask` maps a kind to its bit. `SemanticAction` carries a kind and typed variant payload.
+
+## Platform frame
+
+`SemanticNode` is the fully resolved adapter record: identity/parent/children, optional platform-view identity, strings, state, range/editing/scroll/collection data, enabled/focused/multiline/secure/offscreen flags, action mask, custom actions, and world bounds. `SemanticFrame` contains revision, root ID, and nodes.
+
+## `SemanticBuilder`
+
+Extension-facing builder methods are `SetOwner`, `AddChild(local_id, local_bounds, semantics)`, `AddAction`, and `AddCustomAction`. Runtime transforms local extension nodes into the final frame.

@@ -1,0 +1,36 @@
+---
+title: Navigation API
+description: Navigation chrome, drawers, retained stacks, and typed route controllers.
+sidebar:
+  order: 11
+---
+
+Declared by `<huxerui/navigation.h>`.
+
+## Navigation chrome
+
+- `TopAppBar`, `TopAppBarTitleAlignment`, `TopAppBarStyle`.
+- `NavigationItem`: label/icon constructors, `SelectedIcon`, and `Enabled`.
+- `NavigationBar` and `NavigationPane`: controlled selected index and `OnChanged`.
+- `NavigationBarStyle` and `NavigationPaneStyle` configure colors, icon/label geometry, selection indicator, indication, and animation.
+
+## Drawers
+
+- `StartDrawer` and `EndDrawer`: content, controlled `Open`, and `OnOpenChanged`.
+- `DrawerLayout`: content-only, either-side, and both-side constructors.
+- `DrawerStyle`: surface/scrim/shadow, preferred/minimum widths, minimum content width, modal reveal, edge drag width, corner radius, and optional motion.
+- `DrawerMotion`: open and close animation specs.
+
+## Factory navigation
+
+`NavigationStack(factory, args...)` creates a retained stack. `NavigationController` exposes `Push`, `Pop`, `Replace`, `CanPop`, and `Depth`; factory/argument overloads avoid forwarding lambdas. `UseNavigation()` resolves the nearest stack and `UseRootNavigation()` the outermost.
+
+## Routed navigation
+
+`NavigationPath<Route>` stores route values and exposes `Empty`, `Size`, `Routes`, and equality. `NavigationStack(root, State<NavigationPath<Route>>, resolver)` builds destinations. `RouteNavigationController<Route>` exposes `Push`, `Pop`, `Replace`, `SetPath`, `CanPop`, and `Depth`. Typed `UseNavigation<Route>()` and `UseRootNavigation<Route>()` require a compatible routed stack.
+
+## Motion
+
+`NavigationMotion` controls entering/covered offsets, scale, opacity, and push/pop specs. `NavigationStyle` contains optional motion and `Default()`.
+
+See the dedicated [navigation component pages](../../components/navigation-stack/) and [routing guide](../../guides/navigation-and-routing/).

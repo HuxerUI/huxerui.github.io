@@ -1,0 +1,32 @@
+---
+title: Resource API
+description: Typed resource IDs, localization, raw assets, and raster image assets.
+sidebar:
+  order: 16
+---
+
+Declared by `<huxerui/resource.h>`.
+
+## Resource identifiers
+
+`ResourceId(domain, key)` exposes `Domain`, `Key`, `ToString`, and equality. `ImageResource`, `StringResource`, and `RawResource` are distinct final ID types inheriting its constructors.
+
+## `StringVariant`
+
+Retains direct text or a localized template. Constructors accept empty, `std::string`, `std::string_view`, C string, or `StringResource`. `Format(resource, arguments...)` retains positional formatted arguments. `UseString` overloads resolve a `StringVariant` or `StringResource` plus arguments.
+
+## Locale and configuration
+
+`Locale::FromLanguageTag`, `Locale::Default`, and `LanguageTag` represent normalized locale choice. `ResourceConfiguration` contains `locale` and logical `display_scale`.
+
+## `RawAsset`
+
+Factories: `FromBytes`, `CopyBytes`, and `FromSharedBytes`. Queries: `Bytes`, `AsStringView`, `ToString`, `MimeType`, `HasValue`, and handle equality.
+
+## `ImageAsset`
+
+Factories: `FromFile`, `FromEncoded`, and `CopyEncoded`, each with optional scale. Queries: `EncodedBytes`, `Format`, `MimeType`, pixel width/height, `Scale`, `IntrinsicSize`, `HasValue`, and handle equality. `ImageFormat` is `Png` or `Jpeg`; `ImageSampling` is `Nearest` or `Linear`.
+
+## Resolution
+
+`UseRawResource`, `UseImage`, and `UseVectorImage` resolve generated IDs through the current resource configuration. `PlatformResources` is the adapter interface exposing `Configuration()` and synchronous immutable package `Read(path)`.

@@ -1,0 +1,19 @@
+---
+title: Web
+description: Compile HuxerUI applications to WebAssembly with Emscripten.
+sidebar:
+  order: 7
+---
+
+Web builds use Emscripten and link the HuxerUI static SDK library into a WebAssembly application.
+
+```bash
+huxerui setup web
+huxerui run web
+```
+
+The browser adapter owns animation-frame scheduling, canvas presentation, DOM input and IME conversion, accessibility integration, HTTP through browser networking, file capabilities, activation, and visibility lifecycle.
+
+Use `<huxerui/web/navigation.h>` for `BrowserNavigationStack`, which synchronizes a typed `NavigationPath<Route>` with URL and browser back/forward history through an application codec. DOM-backed platform views are registered with `<huxerui/web/platform_view.h>`; browser external texture sources use `<huxerui/web/external_texture.h>`.
+
+Browser security policy governs network origins, file access, clipboard permission, autoplay, and external resources. A Web build cannot rely on native filesystem paths or unrestricted synchronous I/O.

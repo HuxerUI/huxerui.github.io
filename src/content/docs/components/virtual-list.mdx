@@ -1,0 +1,36 @@
+---
+title: VirtualList
+description: Realize only the visible range of a large vertical or horizontal collection.
+sidebar:
+  order: 45
+---
+
+`VirtualList` accepts a range and item factory, a `State<Range>`, or an item count and index factory.
+
+```cpp
+VirtualList(items, [](const Item& item) {
+  return ItemRow(item).Key(item.id);
+})
+    .EstimatedItemExtent(56.0F)
+    .CacheExtent(240.0F)
+```
+
+Items are materialized on demand for the viewport plus cache extent.
+The factory must return a `View`; use stable keys for items whose state must follow semantic identity.
+
+`.ItemExtent(...)` enables fixed-extent positioning.
+Use `.EstimatedItemExtent(...)` for variable-height items so initial range and scroll corrections start from a useful estimate.
+`.CacheExtent(...)` keeps nearby content realized to reduce visible creation during scrolling.
+
+`.ScrollAxis(Axis::Horizontal)` changes the main axis.
+`.Controller(...)` connects a `ScrollController`, including `ScrollToItem(index, alignment)`.
+
+VirtualList emits collection and realized item semantics without materializing offscreen semantic-only nodes.
+
+## API
+
+- Constructors inherited from `VirtualLayout`: range plus factory, state range plus factory, or count plus index factory.
+- Fluent methods: `.ScrollAxis`, `.ItemExtent`, `.EstimatedItemExtent`, `.CacheExtent`, `.Controller`.
+- Controller alignment: `ScrollAlignment::Start`, `Center`, or `End`.
+
+Use [`ScrollView`](/docs/components/scroll-view/) for a small heterogeneous document and [`VirtualGrid`](/docs/components/virtual-grid/) for multiple columns.

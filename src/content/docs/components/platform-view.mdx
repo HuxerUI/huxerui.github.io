@@ -1,0 +1,25 @@
+---
+title: PlatformView
+description: Place a PlatformModule-provided native view in HuxerUI layout.
+---
+
+`PlatformView` names a platform view type and supplies a structured `PlatformPayload` of creation or update properties.
+
+```cpp
+PlatformView("video_player", PlatformPayload{
+    {"source", std::string("intro.mp4")},
+    {"autoplay", true},
+}).Events<PlaybackChanged>()
+```
+
+The matching `PlatformModule` owns native creation, property updates, events, placement, and disposal. `.Events<Keys...>()` declares typed platform event keys; handlers still attach with the normal `.On<Key>(...)` API.
+
+Platform views participate in HuxerUI measurement and placement but retain platform-native rendering and input limitations. Composition capabilities vary by backend; avoid assuming arbitrary transforms, path clipping, or cross-surface blending without checking the platform guide.
+
+## API
+
+- `PlatformView(std::string type, PlatformPayload properties = {})`.
+- `Events<PlatformEventKey...>()` declares dispatchable event types.
+- Common size, layout, semantics, and event modifiers apply where supported.
+
+See [PlatformModule](../../guides/platform-module/) for registering factories and [PlatformView guide](../../guides/platform-view/) for backend constraints.

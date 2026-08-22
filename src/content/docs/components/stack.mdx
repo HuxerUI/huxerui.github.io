@@ -1,0 +1,35 @@
+---
+title: Stack
+description: Overlay children in one local coordinate space.
+sidebar:
+  order: 43
+---
+
+`Stack` measures and overlays children in declaration order.
+Later children paint above earlier children.
+
+```cpp
+Stack {
+  Image(app::images::cover)
+      .Fit(ImageFit::Cover)
+      .With(Frame{.height = 220.0F}),
+  Text("Featured", TextRole::Title)
+      .With(
+          Align(HorizontalAlignment::Start, VerticalAlignment::End),
+          Padding(16.0F),
+          Foreground(Color::White())
+      ),
+}
+```
+
+Use child `Align` modifiers to position content within the stack's available size.
+Apply `ClipChildren` with `CornerRadius` when overlays must remain inside a shaped surface.
+
+Stack controls painting order but does not create a window-level overlay.
+Use presentation services and layers for dialogs, menus, popups, tooltips, and other content that must escape the application subtree.
+
+## API
+
+- Construction: `Stack { children... }` or an explicit child vector.
+- Common modifiers: `Frame`, `Padding`, `ClipChildren`, `CornerRadius`.
+- Child modifier: `Align`.

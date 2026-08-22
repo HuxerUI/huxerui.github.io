@@ -1,0 +1,46 @@
+---
+title: Button
+description: Trigger a semantic action with a text label and theme-owned interaction feedback.
+sidebar:
+  order: 20
+---
+
+`Button` is the standard labeled action control.
+
+```cpp
+Button("Save changes").OnClick([] {
+  SaveChanges();
+})
+```
+
+Construct it from `StringResource`, `std::string`, `std::string_view`, or a string literal.
+The label is required component input rather than an arbitrary child view.
+
+## Interaction
+
+`.OnClick(...)` uses the shared pointer, Enter, and Space activation path.
+The current theme resolves hover, pressed, focus-visible, disabled state, and Material ripple or Flat feedback.
+
+```cpp
+Button("Delete")
+    .OnClick(DeleteSelection)
+    .With(Enabled(has_selection))
+```
+
+`Enabled(false)` removes activation and applies disabled semantics and style.
+
+## Theme and accessibility
+
+`ButtonStyle` controls background, label style, disabled colors, padding, minimum size, radius, and optional indication.
+The component exposes button role, accessible label, focus, and activate action automatically.
+
+Use `Semantics{.hint = ...}` only when the visible label does not fully explain the result.
+
+## API
+
+- Constructors: `Button(StringResource|string|string_view|const char*)`.
+- Event: `.OnClick(function)` or `.On<ViewEvents::Click>(function)`.
+- Common modifiers: `Enabled`, `Frame`, `Padding`, `Semantics`.
+- Theme style: `ButtonStyle`.
+
+Use [`IconButton`](/docs/components/icon-button/) for an icon-only action and [`Chip`](/docs/components/chip/) for compact action or selection tokens.

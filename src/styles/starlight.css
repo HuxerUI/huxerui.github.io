@@ -1,5 +1,5 @@
 :root {
-  --sl-font: "Segoe UI Variable", Inter, system-ui, sans-serif;
+  --sl-font: "Geist Variable", "Segoe UI Variable", "Segoe UI", system-ui, sans-serif;
   --sl-font-mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
   --sl-color-accent-low: #e9e4ff;
   --sl-color-accent: #5745e8;

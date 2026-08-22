@@ -1,0 +1,51 @@
+---
+title: Canvas
+description: Record custom platform-neutral drawing commands inside a measured HuxerUI component.
+sidebar:
+  order: 12
+---
+
+`Canvas` calls a painter with `PaintContext&` and the component's measured `Size`.
+Its local drawing rectangle is `{0, 0, size.width, size.height}`.
+
+```cpp
+Canvas([](PaintContext& paint, Size size) {
+  const Point center{size.width * 0.5F, size.height * 0.5F};
+  paint.DrawCircle(center, 48.0F, Color::Rgb(92, 72, 180));
+  paint.DrawCircle(center, 24.0F, Color::White());
+}).With(Frame{.width = 160.0F, .height = 160.0F})
+```
+
+## Painting
+
+`PaintContext` records immutable platform-neutral commands for rectangles, gradients, text, images, external textures, circles, arcs, borders, shadows, paths, clipping, and transforms.
+Platform renderers replay the resulting `PaintSequence`.
+
+Balance every pushed clip or transform on all painter paths.
+Prefer local coordinates derived from the supplied `Size`; parent placement is applied later by the render scene.
+
+## Updating a canvas
+
+Capture declarative values in the painter.
+When a captured `State` read changes, recomposition supplies a new painter and invalidates the canvas paint result.
+For continuous visual motion, apply retained animation modifiers such as `Rotation(AnimateTo(...))` rather than updating state every display frame.
+
+## Accessibility and input
+
+Canvas has no inferred semantic meaning.
+Add `Semantics` for charts, controls, or other meaningful drawings, and bind pointer events only when the custom content is interactive.
+
+```cpp
+Canvas(DrawChart)
+    .With(Semantics{
+        .role = SemanticRole::Image,
+        .label = "Revenue by quarter",
+    })
+```
+
+## API
+
+- Constructor: `Canvas(CanvasPainter)` where `CanvasPainter` is `std::function<void(PaintContext&, Size)>`.
+- Common modifiers: `Frame`, `Grow`, `ClipChildren`, transforms, `Semantics`.
+
+Read [Canvas, paint, path, and vector](/docs/guides/graphics/) for the full drawing surface.

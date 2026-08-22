@@ -1,0 +1,73 @@
+---
+title: TextField
+description: Edit a complete controlled TextEditingValue with selection, composition, validation, and platform IME support.
+sidebar:
+  order: 36
+---
+
+`TextField` is controlled by a complete `TextEditingValue`, not only a string.
+The value preserves text, selection, affinity, and active IME composition.
+
+```cpp
+[[huxerui::scope]]
+View EmailField() {
+  auto email = UseState(TextEditingValue::FromText(""));
+
+  return TextField(email)
+      .Label("Email")
+      .Placeholder("name@example.com")
+      .Variant(TextFieldVariant::Outlined)
+      .InputConfiguration({
+          .type = TextInputType::Email,
+          .action = TextInputAction::Done,
+      })
+      .Validation(Validate(email->text, Required(), EmailAddress()))
+      .OnChanged([email](const TextEditingValue& next) {
+        email = next;
+      })
+      .OnSubmitted([] {
+        SubmitForm();
+      });
+}
+```
+
+## Configuration
+
+`.Label(...)` and `.Placeholder(...)` accept strings or localized resources.
+Leading and trailing icons accept `ImageResource`, `ImageAsset`, or `VectorAsset`.
+
+Choose `Filled`, `Outlined`, or `Standard` with `.Variant(...)`.
+`.LineLimits(...)` selects single-line input or multiline minimum and optional maximum lines.
+`.MaxLength(...)` limits accepted text length.
+`.Secure()` masks display and configures secure platform input.
+
+`TextInputConfiguration` controls keyboard type, capitalization, action, multiline, secure, autocorrect, and read-only behavior.
+Component methods reconcile secure and multiline configuration with their specialized helpers.
+
+## Controlled editing
+
+Always store and return the complete value received by `OnChanged`.
+Replacing it with `TextEditingValue::FromText(next.text)` would discard selection and composition state and can disrupt an active IME.
+
+HuxerUI owns caret, selection handles, undo history, scrolling, and platform session bookkeeping as retained state.
+The application owns the accepted editing value and validation result.
+
+## Validation
+
+`.Validation(ValidationResult)` displays valid, invalid, pending, or neutral domain state.
+Validation reports a problem; it does not filter edits.
+Use `Validate`, `Required`, `EmailAddress`, or an application rule returning `ValidationResult`.
+
+## Accessibility
+
+Text field or search-field role, label, placeholder, value policy, selection, required and invalid state, error text, focus, and editing actions are exposed through the semantic tree.
+Secure values are not exposed as plain semantic text.
+
+## API
+
+- Constructors: `TextField(TextEditingValue)` and `TextField(State<TextEditingValue>)`.
+- Fluent methods: label, placeholder, leading/trailing icon, variant, line limits, max length, validation, secure, and input configuration.
+- Events: `.OnChanged(const TextEditingValue&)`, `.OnSubmitted()`.
+- Theme style: `TextFieldStyle` and `TextFieldVariantStyle`.
+
+See [Text and input API](/docs/reference/text-and-input/) for editing ranges, commands, sessions, and platform boundaries.

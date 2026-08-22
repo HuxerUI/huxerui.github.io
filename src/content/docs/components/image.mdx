@@ -1,0 +1,54 @@
+---
+title: Image
+description: Display raster resources, vector assets, and external texture streams with explicit fitting.
+sidebar:
+  order: 11
+---
+
+`Image` displays an `ImageResource`, decoded `ImageAsset`, `VectorAsset`, or `ExternalTexture`.
+
+```cpp
+Image(UseImage(app::images::cover))
+    .Fit(ImageFit::Cover)
+    .Align(HorizontalAlignment::Center, VerticalAlignment::Center)
+    .Sampling(ImageSampling::Linear)
+    .With(
+        Frame{.width = 320.0F, .height = 180.0F},
+        CornerRadius(16.0F),
+        ClipChildren()
+    )
+```
+
+## Source and sizing
+
+Resource images select the best packaged density and locale variant for the active `ResourceConfiguration`.
+Raster and vector assets expose intrinsic size; parent constraints and `.Fit(...)` determine their final destination rectangle.
+
+`ImageFit` supports `Fill`, `Contain`, `Cover`, `None`, and `ScaleDown`.
+Alignment controls where unused space or cropped content is anchored.
+
+## Sampling and tint
+
+`.Sampling(...)` selects the raster sampling policy.
+`.Tint(Color)` recolors compatible raster or vector content and is useful for theme-owned icons.
+
+## Accessibility
+
+Decorative images need no extra semantic label.
+Meaningful images should provide image semantics explicitly:
+
+```cpp
+Image(app::images::status)
+    .With(Semantics{
+        .role = SemanticRole::Image,
+        .label = "Build succeeded",
+    })
+```
+
+## API
+
+- Constructors: `Image(ImageResource)`, `Image(ImageAsset)`, `Image(VectorAsset)`, `Image(ExternalTexture)`.
+- Fluent methods: `.Fit(ImageFit)`, `.Align(horizontal, vertical)`, `.Sampling(ImageSampling)`, `.Tint(Color)`.
+- Common modifiers: `Frame`, `CornerRadius`, `ClipChildren`, `Opacity`, `Semantics`.
+
+See [Resources and localization](/docs/guides/resources-and-localization/) and [ExternalTexture](/docs/components/external-texture/).

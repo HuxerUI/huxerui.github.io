@@ -1,0 +1,44 @@
+---
+title: TopAppBar
+description: Place a title, leading control, and actions in a themed application bar.
+---
+
+`TopAppBar` is a navigation layout with one title, an optional leading view, and zero or more trailing actions.
+
+```cpp
+TopAppBar(
+    "Inbox",
+    IconButton(images::menu, "Open navigation").OnClick(OpenDrawer),
+    {
+      IconButton(images::search, "Search"),
+      IconButton(images::more, "More actions"),
+    }
+)
+```
+
+The title accepts `StringVariant`, so literals, owned strings, string views, and `StringResource` values are supported. The second argument is `std::optional<View>` and the action collection may be a `std::vector<View>` or initializer list.
+
+Use `.TitleAlignment(TopAppBarTitleAlignment::Start)` or `Center` to choose title placement. Common modifiers still apply to the resulting view.
+
+Theme definitions supply `TopAppBarStyle`, including height, padding, title typography, background, and spacing. The leading and action views retain their own interaction and accessibility semantics; give icon-only actions meaningful labels.
+
+## Complete example
+
+```cpp
+View InboxBar() {
+  return TopAppBar(
+      strings::inbox,
+      IconButton(images::menu, strings::open_navigation),
+      {IconButton(images::search, strings::search)}
+  ).TitleAlignment(TopAppBarTitleAlignment::Start);
+}
+```
+
+## API
+
+- `TopAppBar(StringVariant title, std::optional<View> leading = std::nullopt, std::vector<View> actions = {})`.
+- Initializer-list overload for actions.
+- `TitleAlignment(TopAppBarTitleAlignment)`.
+- `TopAppBarStyle` and `TopAppBarTitleAlignment` define themed presentation.
+
+See also [NavigationBar](../navigation-bar/) and [WindowTitleBar](../window-title-bar/).

@@ -1,0 +1,17 @@
+---
+title: Linux
+description: Build HuxerUI desktop applications on the X11 backend.
+sidebar:
+  order: 6
+---
+
+Linux uses CMake with an X11 host, Cairo retained bitmap rendering, EGL/OpenGL ES presentation, HarfBuzz text shaping, and xkbcommon input.
+
+```bash
+huxerui setup linux
+huxerui run linux
+```
+
+The SDK resolves system X11, xkbcommon, EGL, and GLES libraries and includes the pinned graphics/text dependency stack used by HuxerUI. XIM composition and X11 clipboard transfers are event-driven. The file picker uses the desktop portal when available.
+
+Linux external texture publication is declared in `<huxerui/linux/external_texture.h>`. Platform services must remain non-blocking on the X11 event loop. PlatformView coverage is backend-dependent; consult the SDK release notes before shipping an integration that requires native child windows.

@@ -1,0 +1,28 @@
+---
+title: StartDrawer
+description: Configure content that enters from the logical start edge of DrawerLayout.
+---
+
+`StartDrawer` wraps the start-side drawer content consumed by `DrawerLayout`.
+
+```cpp
+StartDrawer(NavigationPane(items, selected, true))
+    .Open(start_open)
+    .OnOpenChanged([start_open](bool open) {
+      start_open = open;
+    })
+```
+
+Open state is controlled. `.Open(bool)` and `.Open(State<bool>)` provide the current value; `DrawerEvents::OpenChanged` requests the next value. Logical start follows the platform layout direction.
+
+The active `DrawerStyle` determines modal width, scrim, shadow, edge gesture area, and motion. When `DrawerLayout` can place the drawer persistently beside content, it uses rectangular inline presentation rather than modal decoration.
+
+`StartDrawer` is a structural wrapper and preserves the semantic order and meaning of its content instead of publishing a separate control role.
+
+## API
+
+- `StartDrawer(View content)`.
+- `Open(bool)` and `Open(State<bool>)`.
+- `OnOpenChanged(handler)`.
+
+See [DrawerLayout](../drawer-layout/) and [EndDrawer](../end-drawer/).

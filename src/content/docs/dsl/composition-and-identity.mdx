@@ -1,0 +1,134 @@
+---
+title: Composition and identity
+description: Split interfaces into components, preserve dynamic child identity, and pass inherited values through Environment.
+sidebar:
+  order: 5
+---
+
+Composition is the primary HuxerUI reuse mechanism.
+Build small functions with explicit required input, then assemble them through ordinary C++ control flow.
+
+## Stateless composition
+
+```cpp
+View StatusBadge(std::string label, Color color) {
+  return Text(std::move(label), TextRole::Label)
+      .With(
+          Padding(EdgeInsets::Symmetric(10.0F, 4.0F)),
+          Background(color),
+          CornerRadius(100.0F)
+      );
+}
+```
+
+A stateless function does not need `[[huxerui::scope]]`.
+Its returned declarations become ordinary children of the caller.
+
+## Scoped composition
+
+Add a scope when the component owns `UseState`, `UseStateList`, `UseEvents`, `UseTaskScope`, or scope-bound lifecycle work:
+
+```cpp
+[[huxerui::scope]]
+View ExpandableSection(std::string title, View content) {
+  auto expanded = UseState(false);
+
+  return Column {
+    Button(std::move(title)).OnClick([expanded] {
+      expanded = !expanded.Get();
+    }),
+    expanded.Get() ? std::move(content) : View{},
+  };
+}
+```
+
+Use a stable component call structure.
+When dynamic stateful children can reorder, assign keys to their returned roots.
+
+## Keys
+
+Unkeyed siblings reconcile by position.
+That is correct for fixed declarations but not for a mutable collection whose entries own local state.
+
+```cpp
+ForEach(messages, [](const Message& message) {
+  return MessageRow(message).Key(message.id);
+})
+```
+
+A key represents semantic identity, not the current array index.
+It must remain stable for the life of that item and be unique among siblings.
+
+## Typed inherited values
+
+Define an environment value with a static default:
+
+```cpp
+struct EditorSettings {
+  bool show_line_numbers = true;
+
+  static EditorSettings Default() {
+    return {};
+  }
+};
+```
+
+Provide it to a subtree and read the nearest value:
+
+```cpp
+View Editor() {
+  const auto& settings = UseEnvironment<EditorSettings>();
+  return Text(settings.show_line_numbers ? "Line numbers on" : "Line numbers off");
+}
+
+View AppContent() {
+  return ProvideEnvironment(
+      EditorSettings{.show_line_numbers = false},
+      Editor
+  );
+}
+```
+
+`UseEnvironment` does not allocate an ordered state slot.
+The closest provider wins, and a missing provider uses `Value::Default()`.
+
+## Theme is specialized Environment
+
+`UseTheme()` reads the current `ThemeSpec`.
+`Theme`, `MaterialTheme`, and `FlatTheme` provide theme values to their subtree using the same hierarchical model.
+
+```cpp
+View Surface() {
+  const ThemeSpec& theme = UseTheme();
+  return Column {
+    Text("Settings", TextRole::Title),
+  }.With(
+      Padding(theme.spacing.large),
+      Background(theme.colors.surface),
+      CornerRadius(theme.shapes.medium)
+  );
+}
+```
+
+## Lifecycle belongs to the scope
+
+Use `Lifecycle` for an external subscription or resource that must restart when dependencies change and clean up when the component unmounts:
+
+```cpp
+Lifecycle([channel] {
+  auto connection = Connect(channel);
+  return [connection] {
+    connection->Disconnect();
+  };
+}, channel);
+```
+
+Setup runs after composition commits.
+Changing a captured dependency runs the previous cleanup before the new setup, and unmount runs cleanup once.
+
+## Avoid retained View ownership
+
+Do not store `View` values in application state to represent screens or mutable controls.
+Store the data or route that determines the UI, then let component functions declare the current tree.
+
+Use `NavigationStack`, presentation services, controllers, or a root service where those APIs explicitly own retained coordination.

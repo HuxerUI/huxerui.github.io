@@ -1,0 +1,129 @@
+---
+title: State and recomposition
+description: Own observable values in scopes and update controlled components without retaining View objects.
+sidebar:
+  order: 2
+---
+
+`State<T>` stores an observable value in the current component scope.
+Reading it during composition subscribes that scope; writing a different value requests recomposition.
+
+## Declare a stateful scope
+
+```cpp
+[[huxerui::scope]]
+View Counter() {
+  auto count = UseState(0);
+
+  return Button("Count: " + std::to_string(count.Get()))
+      .OnClick([count] {
+        count += 1;
+      });
+}
+```
+
+`[[huxerui::scope]]` is transformed at build time.
+Use it when a reusable component owns local state, calls `UseEvents`, or needs an independent recomposition boundary.
+The application root already owns a scope and must not be annotated.
+
+`Button` accepts a string label rather than a child `Text` view, so the example constructs that label from the current value.
+Use `Text::Format` when the formatted value is rendered by `Text`.
+
+## Read and write
+
+Use `Get()` when an explicit value is clearest:
+
+```cpp
+bool is_open = open.Get();
+```
+
+`State<T>` also converts to `const T&`, supports `operator->`, assignment, common compound operators, increment and decrement, and `Update`:
+
+```cpp
+count = 10;
+count += 2;
+
+profile.Update([](Profile& value) {
+  value.display_name = "Ada";
+});
+```
+
+For equality-comparable values, assigning an equal value does not notify subscribers.
+
+## Controlled components
+
+User-owned values remain authoritative in application state.
+A component renders the current value and emits the requested next value:
+
+```cpp
+[[huxerui::scope]]
+View Settings() {
+  auto enabled = UseState(false);
+
+  return Switch("Notifications", enabled)
+      .OnChanged([enabled](bool next) {
+        enabled = next;
+      });
+}
+```
+
+Checkboxes, radio buttons, switches, sliders, tabs, segmented buttons, text editing values, navigation selection, progress, and declarative visibility follow this model.
+Passing `State<T>` to a constructor is a convenient read; it does not transfer ownership or install an implicit write-back handler.
+
+## Lists
+
+`UseStateList<T>` exposes structural operations that notify the declaring scope:
+
+```cpp
+auto items = UseStateList<Item>({
+    {1, "Alpha"},
+    {2, "Bravo"},
+});
+
+items.PushBack({3, "Charlie"});
+items.Insert(1, {4, "Delta"});
+items.Set(0, {1, "Updated"});
+items.Move(2, 0);
+items.Erase(1);
+```
+
+It also provides `Size`, `Empty`, `At`, `operator[]`, const iteration, `PopBack`, and `Clear`.
+
+## State identity
+
+State identity is determined by the current `RecomposeScope`, the `UseState` source location, and the occurrence at that location.
+Keep state calls structurally stable within a component.
+
+Dynamic siblings reconcile by position unless they have keys.
+Use stable semantic keys when items can be inserted, removed, or reordered:
+
+```cpp
+Column {
+  ForEach(items, [](const Item& item) {
+    return ItemRow(item).Key(item.id);
+  }),
+}
+```
+
+Keys must be unique among siblings under the same parent.
+They accept signed and unsigned integers, enums, strings, string views, and string literals.
+
+## Recomposition is local
+
+Only scopes that read a changed state are invalidated.
+Recomposition creates new declarations, then reconciliation updates compatible mounted nodes and replaces incompatible ones.
+
+Transient runtime facts such as hover, press, focus, momentum, caret blink, and active animations do not need application `State` and do not force component recomposition every frame.
+
+## State is safe to capture by value
+
+`State<T>` and `StateList<T>` are shared handles.
+Capture them by value in event handlers and task continuations:
+
+```cpp
+Button("Clear").OnClick([items] {
+  items.Clear();
+})
+```
+
+An empty default-constructed handle is invalid; obtain application state through `UseState` or `UseStateList` inside a valid scope.

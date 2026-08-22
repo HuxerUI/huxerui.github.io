@@ -1,0 +1,43 @@
+---
+title: Scope
+description: Create an explicit retained composition boundary around a View factory.
+sidebar:
+  order: 47
+---
+
+`Scope` stores a `View` factory as an independent recomposition boundary.
+Most application code should use `[[huxerui::scope]]`, which generates this boundary automatically while preserving natural function syntax.
+
+```cpp
+[[huxerui::scope]]
+View Counter() {
+  auto count = UseState(0);
+  return Button("Count: " + std::to_string(count.Get()))
+      .OnClick([count] {
+        count += 1;
+      });
+}
+```
+
+Explicit construction is useful when a factory is already available as a value:
+
+```cpp
+Scope(content_factory)
+```
+
+The variadic constructor binds a compatible factory and copyable arguments without requiring an application-authored forwarding lambda:
+
+```cpp
+Scope(ProfilePage, user_id)
+```
+
+State, event hubs, task scopes, and lifecycle registrations belong to the scope that creates them.
+Do not add scopes to every helper function; stateless composition should stay an ordinary function returning `View`.
+
+`Scope` adds no semantic role of its own; its returned child supplies the semantic subtree.
+
+## API
+
+- `Scope(std::function<View()> factory)`.
+- `Scope(Factory&& factory, Arguments&&... arguments)` for a compatible view factory.
+- Preferred declaration syntax: `[[huxerui::scope]] View Component(...)`.

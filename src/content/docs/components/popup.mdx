@@ -1,0 +1,36 @@
+---
+title: Popup
+description: Show custom anchored or point-positioned floating content.
+---
+
+`PopupHandle` supports content anchored to a view and content positioned at an explicit window point.
+
+```cpp
+auto popup = UsePopup();
+
+Button("Details")
+    .With(popup.Anchor())
+    .OnClick([popup] {
+      popup.Show(DetailsCard, PopupOptions{
+          .placement = {AnchorSide::Below, AnchorAlignment::Start},
+      });
+    })
+```
+
+The anchor is a retained modifier and follows the view's final bounds. `ShowAt(point, ...)` skips anchoring. Factories may receive `PopupContext` to dismiss themselves.
+
+`PopupOptions` controls preferred side/alignment, gap, viewport margin, offset, outside/cancel dismissal, focus trapping, and the dismissal callback. Placement may flip or constrain to remain usable inside the viewport.
+
+Popup content keeps the semantics declared by its child views.
+Set `focus_trap` for interactive floating surfaces that must contain keyboard and accessibility focus, and give application-defined content an explicit label or role when its visible children are not self-describing.
+
+## API
+
+- `UsePopup() -> PopupHandle`.
+- `Anchor() -> LayerAnchor`.
+- `Show(factory, PopupOptions = {})` and `ShowAt(Point, factory, PopupOptions = {})`.
+- Context-aware and bound-argument factory overloads.
+- `Dismiss(LayerId)`; `PopupContext::Id()` and `Dismiss()`.
+- `AnchorSide`, `AnchorAlignment`, `AnchorPlacement`, and `PopupOptions`.
+
+See [Menu](../menu/) for structured actions and [Tooltip](../tooltip/) for descriptive hints.

@@ -1,0 +1,58 @@
+---
+title: Text
+description: Render styled, localized, formatted, and selectable text.
+sidebar:
+  order: 10
+---
+
+`Text` renders a string as body, label, or title content using the current theme.
+
+```cpp
+Column {
+  Text("Project settings", TextRole::Title),
+  Text("Changes are saved automatically."),
+  Text("CONNECTED", TextRole::Label),
+}.With(Spacing(6.0F))
+```
+
+## Values and formatting
+
+Construct `Text` from `StringResource`, `std::string`, `std::string_view`, a string literal, or a printable `State<T>`.
+`Text::Format` replaces ordered `{}` placeholders and accepts either a string view or localized `StringResource`.
+
+```cpp
+Text::Format("{} of {} files", completed, total)
+Text::Format(app::strings::welcome, user_name)
+```
+
+Escape literal braces as `{{` and `}}`.
+A mismatch between placeholders and arguments throws `std::invalid_argument`.
+
+## Style
+
+`.Style(TextStyle)` supplies a complete font, color, decoration, and shaping style.
+Use `FontSize` or `Foreground` for focused overrides that should compose with the theme-resolved role style.
+
+```cpp
+Text("Warning")
+    .Style(TextStyle{
+        .font = Font::System(15.0F).WithWeight(FontWeight::SemiBold),
+        .foreground = Color::Rgb(180, 40, 40),
+    })
+```
+
+`TextRole::Body`, `Label`, and `Title` select defaults from the current typography and color scheme.
+
+## Selection and accessibility
+
+Text exposes text semantics automatically.
+Wrap a subtree in [`SelectionArea`](/docs/components/selection-area/) to enable shared pointer or touch text selection and the HuxerUI selection menu.
+
+## API
+
+- Constructors: `Text(StringResource|string|string_view|const char*, TextRole = Body)` and `Text(State<T>, TextRole = Body)`.
+- Static factories: `Text::Format(...)`, including role-first and resource overloads.
+- Fluent method: `.Style(TextStyle)`.
+- Common modifiers: `Foreground`, `FontSize`, `Padding`, `Frame`, `Semantics`.
+
+See [Text and input API](/docs/reference/text-and-input/) for fonts, layout options, metrics, runs, and measurement.

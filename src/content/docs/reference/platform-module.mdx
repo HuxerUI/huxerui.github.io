@@ -1,0 +1,30 @@
+---
+title: PlatformModule API
+description: Recursive payloads, typed methods and events, factories, instances, and registration.
+sidebar:
+  order: 23
+---
+
+Declared by `<huxerui/platform_module.h>`.
+
+## `PlatformPayload`
+
+Immutable shared recursive value. `PlatformPayloadKind` is `Null`, `Boolean`, `Integer`, `Double`, `String`, `Bytes`, `List`, `Object`, or `ExternalTexture`. Constructors accept each alternative; integral constructors validate signed 64-bit range. Accessors are `Kind`, `IsNull`, and `AsBoolean/Integer/Double/String/Bytes/List/Object/ExternalTexture`; a type mismatch throws.
+
+## Results and keys
+
+- `PlatformRequestId`: unsigned 64-bit request identity.
+- `PlatformError`: string code, message, and details payload.
+- `PlatformResult<Result>`: result-or-error variant.
+- A `PlatformMethodKey` defines `Request`, `Result`, `Name`, `Encode`, and `Decode`.
+- A `PlatformEventKey` is an HuxerUI event key with `Name` and `Decode` compatible with its signature.
+
+## Factory and instance
+
+`PlatformModuleFactory` creates an `Instance` from options and an event sink. The instance supplies method-call and disposal functions; a method call returns a cancellation cleanup.
+
+`PlatformInstance` is move-only. `Call<Method>(request, completion)` returns a request ID; `On<Key>(handler)` registers an event handler; `Cancel(id)` and `Close()` end work.
+
+## Registry
+
+`PlatformModules::Register(type, registration)` stores one typed registration per name. `Find<Registration>(type)` validates registration type. `Open(type, options = {})` creates a shared `PlatformModuleFactory` instance. Platform adapters construct the registry and dispatch completion/event work onto the UI thread.

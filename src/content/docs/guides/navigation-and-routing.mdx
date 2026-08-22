@@ -1,0 +1,54 @@
+---
+title: Navigation and routing
+description: Build retained page stacks, typed routes, nested navigation, and browser history.
+---
+
+HuxerUI separates page presentation from route identity. Use factory navigation for local flows and a controlled `NavigationPath<Route>` when destinations must be serializable, externally addressable, or synchronized with browser history.
+
+## Factory navigation
+
+```cpp
+View Home() {
+  auto navigation = UseNavigation();
+  return Button("Open profile").OnClick([navigation] {
+    navigation.Push(Profile, 42);
+  });
+}
+
+View App() {
+  return NavigationStack(Home);
+}
+```
+
+The variadic `Push` and `Replace` overloads bind copyable factory arguments without an application-authored forwarding lambda. Covered pages remain mounted, preserving state until popped or replaced.
+
+## Typed routes
+
+```cpp
+struct Route {
+  enum class Kind { Article, Settings } kind;
+  int id = 0;
+  bool operator==(const Route&) const = default;
+};
+
+[[huxerui::scope]]
+View RoutedApp() {
+  auto path = UseState(NavigationPath<Route>{});
+  return NavigationStack(Home, path, [](const Route& route) -> View {
+    if (route.kind == Route::Kind::Article) {
+      return Article(route.id);
+    }
+    return Settings();
+  });
+}
+```
+
+`RouteNavigationController<Route>` mutates the controlled path through `Push`, `Pop`, `Replace`, and `SetPath`. A route type must be copyable and equality-comparable. Prefer a small value type that carries stable route parameters, not retained UI objects.
+
+Nested stacks resolve the nearest compatible controller through `UseNavigation`. `UseRootNavigation` deliberately resolves the outermost compatible stack for app-level transitions.
+
+## Browser URLs
+
+On Web, include `<huxerui/web/navigation.h>` and use `BrowserNavigationStack`. A codec maps the complete `NavigationPath<Route>` to and from the browser URL. Back/forward actions update the same controlled path, while application mutations commit browser history. Keep parsing deterministic and return a valid root path for unsupported URLs.
+
+Navigation motion comes from `NavigationStyle`; reduced-motion preferences suppress or simplify transitions. See [NavigationStack](../../components/navigation-stack/) for the complete component API.

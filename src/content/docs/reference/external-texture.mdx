@@ -1,0 +1,14 @@
+---
+title: ExternalTexture API
+description: Shared handle for externally produced frames.
+sidebar:
+  order: 25
+---
+
+Declared by `<huxerui/external_texture.h>`.
+
+## `ExternalTexture`
+
+Default construction creates an empty handle. `IntrinsicSize()` returns the current logical source size; `HasValue()` reports a connected state; equality compares shared source identity. Platform-specific source types are the only producers.
+
+The handle is accepted by `Image`, `ImageFill` is intentionally limited to static image/vector sources, and `PaintContext` has explicit external-texture drawing operations.

@@ -1,0 +1,38 @@
+---
+title: State and environment API
+description: Observable component state and typed hierarchical values.
+sidebar:
+  order: 3
+---
+
+Declared by `<huxerui/state.h>` and `<huxerui/environment.h>`.
+
+## `State<T>`
+
+Copyable handle to one observed value. `Get()` and implicit const conversion read and subscribe the current scope; assignment and supported arithmetic/increment operators update the cell. `IsValid()` reports whether the handle is connected.
+
+## `StateList<T>`
+
+Observable vector-like state for dynamic collections. It exposes validity, size/empty queries, indexed reads, snapshots and iterators, plus mutation operations for insertion, erasure, clearing, push/pop, replacement, and element update. Mutations invalidate subscribed scopes while preserving the cell identity.
+
+## State creation
+
+- `UseState(initial, source_location)` creates `State<decay_t<T>>` in the current scope.
+- `UseStateList<T>()`, range, and initializer-list overloads create `StateList<T>`.
+- Identity is scope, source location, and occurrence at that location.
+
+## `Environment`
+
+Typed hierarchical value. `Set(value)` installs an `EnvironmentValue` by its C++ type and returns the environment for chaining. An environment value must be copyable and provide `static Default()`. Parent lookup is established by `ProvideEnvironment`.
+
+## `UseEnvironment<T>` and `ProvideEnvironment`
+
+`UseEnvironment<T>()` reads the nearest required value during composition. `ProvideEnvironment(environment, factory, args...)` or `ProvideEnvironment(value, factory, args...)` creates a subtree boundary.
+
+## Viewport environment
+
+- `ViewportClass`: `Compact`, `Medium`, `Expanded`.
+- `ViewportBreakpoints`: medium and expanded width thresholds.
+- `UseViewportClass()` reads the runtime-installed current width class.
+
+The runtime updates subscribed responsive scopes when window metrics cross a configured breakpoint.

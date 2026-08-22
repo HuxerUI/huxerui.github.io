@@ -1,0 +1,12 @@
+---
+title: PlatformView
+description: Integrate native controls while preserving HuxerUI layout and typed events.
+---
+
+`PlatformView` is the shared UI-side contract for a view supplied by `PlatformModule`. The application names a registered type, passes `PlatformPayload` properties, and declares typed event keys.
+
+The runtime measures and positions a platform-view slot. The adapter creates, updates, shows, hides, and disposes the native object according to mounted lifetime. Platform views must not become a second state system: authoritative values remain in application state and property updates flow through recomposition.
+
+Native composition differs by backend. Android, Apple, and Web can use their platform view hierarchies; Windows currently uses a single HuxerUI surface with HWND placement slices and therefore has stricter overlap and transform constraints. Check the specific platform guide before relying on clipping, opacity, rotation, or interleaving.
+
+Use [ExternalTexture](../external-texture/) when the integration only needs changing pixels and HuxerUI should retain input/composition ownership. See the [PlatformView component](../../components/platform-view/) and [PlatformModule](../platform-module/).

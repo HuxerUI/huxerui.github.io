@@ -1,54 +1,68 @@
 ---
-title: Documentation
-description: Learn HuxerUI from the first application through runtime architecture and platform integration.
-editUrl: false
+title: HuxerUI documentation
+description: Build declarative cross-platform interfaces with C++20.
 template: splash
 hero:
-  title: Build with HuxerUI
-  tagline: Canonical guides synchronized from the framework repository on every build.
+  title: Build interfaces from typed C++ values
+  tagline: Learn the HuxerUI DSL, compose reusable components, and ship one application model across desktop, mobile, and Web.
   actions:
-    - text: Get started
-      link: /docs/getting-started/
+    - text: Install HuxerUI
+      link: /docs/get-started/installation/
       icon: right-arrow
       variant: primary
-    - text: Browse public API
-      link: /docs/reference/
+    - text: Learn the DSL
+      link: /docs/dsl/fundamentals/
       icon: open-book
       variant: secondary
 ---
 
 import { Card, CardGrid } from "@astrojs/starlight/components";
 
-## Learn the framework
+## Start with the language of the UI
+
+HuxerUI interfaces are ordinary C++ functions that return `View` values.
+Braced containers describe children, typed modifiers configure reusable presentation, and typed events connect behavior without stringly typed property bags.
+
+```cpp
+[[huxerui::scope]]
+View Counter() {
+  auto count = UseState(0);
+
+  return Column {
+    Text::Format("Count: {}", count),
+    Button("Increment").OnClick([count] {
+      count += 1;
+    }),
+  }.With(
+      Padding(24.0F),
+      Spacing(12.0F)
+  );
+}
+```
 
 <CardGrid>
-  <Card title="Core concepts" icon="seti:cpp">
-    Understand Views, scopes, State, Lifecycle, Tasks, events, Environment, Theme, and the shared Runtime flow.
-    [Read core concepts](/docs/core-concepts/)
+  <Card title="The HuxerUI DSL" icon="seti:cpp">
+    Learn component functions, braced children, `.With(...)`, typed events, scopes, state, keys, and controlled values.
+    [Start with DSL fundamentals](/docs/dsl/fundamentals/)
   </Card>
-  <Card title="Components and input" icon="puzzle">
-    Use controlled controls, text editing, selection, validation, focus, and shared interaction behavior.
-    [Explore components](/docs/components-and-input/)
+  <Card title="Components" icon="puzzle">
+    Use focused pages for every built-in control, layout, navigation surface, and platform-facing component.
+    [Browse components](/docs/components/)
   </Card>
-  <Card title="Layout and scrolling" icon="document">
-    Work with constraints, responsive viewport classes, scrolling, virtualization, and custom layouts.
-    [Build layouts](/docs/layout-and-scrolling/)
+  <Card title="Build applications" icon="rocket">
+    Add navigation, presentation, resources, asynchronous work, files, HTTP, lifecycle, and window behavior.
+    [Create your first application](/docs/get-started/first-application/)
   </Card>
-  <Card title="Theme and presentation" icon="star">
-    Resolve Material or Flat styles, retained motion, Toast, Dialog, BottomSheet, Popup, and Menu.
-    [Style and present UI](/docs/theme-animation-and-presentation/)
-  </Card>
-  <Card title="Platform guides" icon="laptop">
-    See exactly what Windows, macOS, Linux, Web, Android, and iOS backends implement.
-    [Compare platforms](/docs/platform-support/)
-  </Card>
-  <Card title="Architecture and design" icon="setting">
-    Trace declarations through reconciliation, layout, retained scenes, adapters, and platform renderers.
-    [Read architecture](/docs/design/architecture/)
+  <Card title="API reference" icon="document">
+    Find every public type, function, enum, field, and overload, grouped by the module that owns it.
+    [Open the API reference](/docs/reference/)
   </Card>
 </CardGrid>
 
-## Source of truth
+## One shared application model
 
-The technical documents on this site are generated from the selected HuxerUI source ref rather than maintained as website copies.
-Use each page's **Edit page** link to propose a correction in the framework repository.
+The shared runtime owns state observation, recomposition, reconciliation, layout, interaction, text editing, animation, accessibility semantics, and retained rendering.
+Platform adapters connect that model to Windows, macOS, Linux, Web, Android, and iOS services.
+
+Use the guides for application-facing contracts.
+The framework repository's architecture notes describe implementation decisions and are intentionally not duplicated here.

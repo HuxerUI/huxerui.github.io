@@ -1,0 +1,41 @@
+---
+title: Chip
+description: Represent a compact action or a controlled selected value with optional icon content.
+sidebar:
+  order: 22
+---
+
+`Chip` can be an action when bound with `OnClick`, or a controlled selectable token when constructed with `selected` and bound with `OnChanged`.
+
+```cpp
+Chip("Add filter").OnClick(OpenFilterPicker)
+
+Chip(app::images::tag, "Featured", featured)
+    .OnChanged([featured](bool selected) {
+      featured = selected;
+    })
+```
+
+Labels accept strings or `StringResource` through `StringVariant`.
+Icon overloads accept `ImageResource`, `ImageAsset`, or `VectorAsset`.
+
+## Controlled selection
+
+Passing `bool` or `State<bool>` selects the visual and semantic state for this composition.
+`OnChanged` emits the requested next value; the component never mutates the supplied state automatically.
+
+Use `Enabled(false)` for an unavailable action or selection.
+
+## Theme and accessibility
+
+`ChipStyle` independently controls normal, selected, and disabled fills, labels, borders, icon geometry, padding, minimum height, radius, and indications.
+Action chips expose button behavior; selectable chips expose their selected state through semantics.
+
+## API
+
+- Label constructors: `Chip(label)` and `Chip(label, bool selected)`.
+- Icon constructors: `Chip(icon, label)` and `Chip(icon, label, bool selected)`.
+- Events: `.OnClick(function)` or `.OnChanged(function)`.
+- Theme style: `ChipStyle`.
+
+Use [`SegmentedButton`](/docs/components/segmented-button/) for a fixed mutually exclusive set and [`Checkbox`](/docs/components/checkbox/) for a conventional binary setting.

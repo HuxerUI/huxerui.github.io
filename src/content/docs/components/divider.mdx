@@ -1,0 +1,39 @@
+---
+title: Divider
+description: Separate adjacent content with a theme-controlled horizontal or vertical rule.
+sidebar:
+  order: 13
+---
+
+`Divider` paints a noninteractive separator using the current `DividerStyle`.
+It is horizontal by default.
+
+```cpp
+Column {
+  Text("General", TextRole::Title),
+  Divider(),
+  SettingsRows(),
+}.With(Spacing(12.0F))
+```
+
+Use a vertical divider inside a row and give it an explicit or parent-constrained height:
+
+```cpp
+Row {
+  Text("Local"),
+  Divider(Axis::Vertical).With(Frame{.height = 24.0F}),
+  Text("Remote"),
+}.With(
+    Spacing(12.0F),
+    CrossAlign(CrossAxisAlignment::Center)
+)
+```
+
+Themes control color and thickness through `DividerStyle`.
+A divider is decorative and does not expose an interactive semantic action.
+
+## API
+
+- Constructor: `explicit Divider(Axis axis = Axis::Horizontal)`.
+- Common modifiers: `Frame`, `Padding`, `Opacity`.
+- Theme style: `DividerStyle` with `color` and `thickness`.

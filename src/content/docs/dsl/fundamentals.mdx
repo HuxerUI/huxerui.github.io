@@ -1,0 +1,137 @@
+---
+title: DSL fundamentals
+description: Understand component functions, braced children, fluent configuration, and transient View values.
+sidebar:
+  order: 1
+---
+
+HuxerUI is a C++ library rather than a separate markup language.
+Its DSL is a small set of ordinary types and conventions designed to make a declarative tree readable.
+
+## Components are functions
+
+A component is any function whose result converts to `View`.
+
+```cpp
+View ProfileHeader(std::string name) {
+  return Row {
+    Image(images::avatar)
+        .Fit(ImageFit::Cover)
+        .With(Frame{.width = 48.0F, .height = 48.0F}, CornerRadius(24.0F)),
+    Column {
+      Text(std::move(name), TextRole::Title),
+      Text("Online", TextRole::Label),
+    }.With(Spacing(4.0F)),
+  }.With(
+      Spacing(12.0F),
+      CrossAlign(CrossAxisAlignment::Center)
+  );
+}
+```
+
+Use parameters for required component input.
+Return a built-in component directly or compose several children into a layout.
+
+## Braced children
+
+Layout components accept children through braces:
+
+```cpp
+Column {
+  Text("First"),
+  Text("Second"),
+  Row {
+    Button("Back"),
+    Button("Continue"),
+  },
+}
+```
+
+The braces construct a normal C++ object.
+Children are evaluated in declaration order and retain that order in layout, painting, hit testing, and semantics unless the component documents another policy.
+
+`ForEach` returns a `Views` group that a braced container flattens into its children:
+
+```cpp
+Column {
+  ForEach(items, [](const Item& item) {
+    return Text(item.title).Key(item.id);
+  }),
+}
+```
+
+## Fluent component configuration
+
+Required values belong in a component constructor.
+Behavior unique to one component uses a strongly typed fluent method:
+
+```cpp
+TextField(value)
+    .Label("Email")
+    .Placeholder("name@example.com")
+    .Variant(TextFieldVariant::Outlined)
+    .OnChanged([value](const TextEditingValue& next) {
+      value = next;
+    })
+```
+
+These methods are rvalue-qualified.
+Finish configuration while building the declarative expression instead of retaining and mutating a component object later.
+
+## Reusable modifiers
+
+`.With(...)` applies modifiers that make sense across component types:
+
+```cpp
+Text("Status")
+    .With(
+        Padding(8.0F),
+        Background(Color::Rgb(240, 244, 255)),
+        CornerRadius(8.0F),
+        Foreground(Color::Rgb(30, 80, 180))
+    )
+```
+
+Modifiers apply from left to right and configure the same node; they do not create hidden wrapper views.
+Read [Modifiers](/docs/dsl/modifiers/) for layout, presentation, interaction, animation, and semantics modifiers.
+
+## Typed events
+
+Convenience methods such as `.OnClick(...)` and `.OnChanged(...)` bind built-in typed events.
+The generic form uses an event key:
+
+```cpp
+Button("Save")
+    .On<ViewEvents::FocusChanged>([](bool focused) {
+      // React to focus without string event names.
+    })
+```
+
+Read [Events and interaction](/docs/dsl/events-and-interaction/) for built-in event families and custom component events.
+
+## View values are declarations
+
+`View` is a transient copy-on-write value describing what should exist for the current composition.
+Do not store mutable application state inside it or keep a `View` instance as a long-lived widget handle.
+
+Use:
+
+- `State<T>` for application-owned observable values.
+- A controller when an API explicitly exposes imperative coordination.
+- `Lifecycle` for resources that need setup and cleanup.
+- Root services for per-window capabilities.
+
+The runtime reconciles each new declaration with retained mounted nodes.
+That split lets the C++ declaration stay simple while focus, scrolling, animation, text editing, and platform resources survive recomposition.
+
+## Include and namespace
+
+Most application files use the umbrella header:
+
+```cpp
+#include <huxerui/huxerui.h>
+
+using namespace huxerui;
+```
+
+Libraries may include focused headers such as `<huxerui/view.h>` or `<huxerui/navigation.h>` to make dependencies explicit.

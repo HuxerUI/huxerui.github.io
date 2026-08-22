@@ -1,0 +1,44 @@
+---
+title: View and component API
+description: Transient View values, child collections, layouts, and all built-in component types.
+sidebar:
+  order: 8
+---
+
+Declared by `<huxerui/view.h>`.
+
+## `View`
+
+Copy-on-write declarative value. Public rvalue-qualified operations are `OnClick(handler)`, `On<EventKey>(handler)`, `LayoutValue<Key>(value)`, `With(modifiers...)`, and `Key(...)`. Key overloads accept signed/unsigned integers, other integral types, enums, strings, string views, and C strings. Explicit boolean conversion reports whether a view contains a spec.
+
+## Children and factories
+
+`Views` is a dynamic child collection with `Reserve`, `Add`, `Size`, `Items`, and rvalue `Take`. `ForEach(range, factory)` and the `State<Range>` overload build it. Containers accept `View` and `Views` children. `detail::ViewFactoryFor` and `BindViewFactory` define the copyable factory/argument contract used across components.
+
+## Extension layouts
+
+`Layout<Derived>` creates a custom layout node with children and a static `Measure`. `VirtualLayout<Derived>` creates a lazy layout from `VirtualItemSource`. `MakeVirtualItemSource(range, factory)` and count/factory overloads create sources.
+
+## Content and actions
+
+- [`Text`](../../components/text/), `TextRole`.
+- [`Image`](../../components/image/), [`Canvas`](../../components/canvas/).
+- [`Button`](../../components/button/), [`IconButton`](../../components/icon-button/), [`Chip`](../../components/chip/).
+- [`Divider`](../../components/divider/), [`Spacer`](../../components/spacer/).
+
+## Input and selection
+
+- [`TextField`](../../components/text-field/), `TextFieldVariant`, `TextFieldLineLimits`.
+- [`Checkbox`](../../components/checkbox/), [`RadioButton`](../../components/radio-button/), [`Switch`](../../components/switch/).
+- [`Slider`](../../components/slider/), [`SegmentedButton`](../../components/segmented-button/), `SegmentedButtonItem`.
+- [`Tabs`](../../components/tabs/), `TabItem`.
+- [`SelectionArea`](../../components/selection-area/).
+
+## Progress and layout
+
+- [`ProgressCircle`](../../components/progress-circle/) and [`ProgressBar`](../../components/progress-bar/).
+- [`Column`](../../components/column/), [`Row`](../../components/row/), [`Flow`](../../components/flow/), [`Stack`](../../components/stack/).
+- [`ScrollView`](../../components/scroll-view/), [`VirtualList`](../../components/virtual-list/), [`VirtualGrid`](../../components/virtual-grid/).
+- [`Scope`](../../components/scope/).
+
+Each linked component page documents constructors, controlled values, events, fluent methods, theme behavior, semantics, and examples.

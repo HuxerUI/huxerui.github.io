@@ -1,0 +1,42 @@
+---
+title: Slider
+description: Edit a controlled numeric value through pointer, keyboard, and accessibility range actions.
+sidebar:
+  order: 34
+---
+
+`Slider` edits a controlled floating-point value.
+Its default range is `0.0F` through `1.0F`.
+
+```cpp
+Row {
+  Slider(volume)
+      .Range(0.0F, 100.0F)
+      .Step(1.0F)
+      .OnChanged([volume](float next) {
+        volume = next;
+      }),
+  Text::Format("{}%", static_cast<int>(volume.Get())),
+}.With(
+    Spacing(12.0F),
+    CrossAlign(CrossAxisAlignment::Center)
+)
+```
+
+`.Range(minimum, maximum)` defines the legal interval.
+`.Step(step)` snaps requested values to discrete increments.
+The caller must feed accepted values back into the next composition.
+
+Pointer dragging, keyboard range adjustment, focus, and accessibility increment or decrement actions share the same controlled output path.
+
+`SliderStyle` controls track, tick, stop-indicator, thumb, disabled geometry and colors, focus treatment, and animation duration.
+The slider exposes role, current range, optional step, enabled state, and focus semantics automatically.
+
+## API
+
+- Constructors: `Slider(float)` and `Slider(State<float>)`.
+- Fluent methods: `.Range(float minimum, float maximum)`, `.Step(float)`.
+- Event: `.OnChanged(function)` with `float`.
+- Theme style: `SliderStyle`.
+
+Use [`ProgressBar`](/docs/components/progress-bar/) when the value is display-only.

@@ -1,0 +1,36 @@
+---
+title: Application and root services API
+description: Application declaration, activation, lifecycle state, root hooks, and adapter boundary.
+sidebar:
+  order: 7
+---
+
+Declared by `<huxerui/app.h>` and `<huxerui/root.h>`.
+
+## Application declaration
+
+- `RootFactory` is `View (*)()`.
+- `Application(root_factory, AppOptions = {})` stores an immutable root and options.
+- `AppOptions` contains `WindowOptions window`, `ViewportBreakpoints`, debug-overlay default, and `std::vector<RootHook> root_hooks`.
+- `RunApplication()` launches the application declaration supplied by the generated platform entry.
+
+## Activation and lifecycle
+
+- `LaunchActivation`, `UrlActivation{url}`, and `FileActivation{files}` form `ApplicationActivation`.
+- `ApplicationLifecycleState`: `Active`, `Inactive`, `Background`.
+- `UseApplication() -> ApplicationHandle`.
+- `StartupActivation()` returns the runtime's initial activation.
+- `LifecycleState()` reads observable current state.
+- `OnLifecycleChange(handler, dependencies...)` and `OnActivation(handler, dependencies...)` register scoped listeners.
+
+## Root services
+
+`RootHook` receives `RootContext&`. `RootContext::Provide(shared_ptr<Service>)` installs exactly one service per type; `Layers()` exposes `LayerController` and `Modules()` exposes `PlatformModules`. `UseService<Service>()` resolves an installed root service.
+
+The runtime installs built-in `FileSystem`, `FilePicker`, and `HttpClient` services when their platform capabilities are available.
+
+## Adapter boundary
+
+`PlatformAdapter` is the platform implementation interface for frame scheduling, time, text layout, rendering, input services, resources, activation, lifecycle, files, HTTP, process metrics, system UI, and platform integration. Applications do not subclass it.
+
+`Runtime` owns composition, reconciliation, layout, interaction, semantics, animation, layers, and `RenderScene` generation for one adapter. Its public methods support platform hosts and focused framework extensions. `ProcessMetrics` carries cumulative CPU time, memory footprint, and processor count.

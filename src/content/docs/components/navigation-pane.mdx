@@ -1,0 +1,36 @@
+---
+title: NavigationPane
+description: Present primary destinations as a compact rail or expanded side pane.
+---
+
+`NavigationPane` uses the same controlled `NavigationItem` model as `NavigationBar`, but lays destinations out vertically.
+
+```cpp
+const bool expanded = UseViewportClass() == ViewportClass::Expanded;
+
+NavigationPane(
+    {
+      NavigationItem(images::home, "Home"),
+      NavigationItem(images::settings, "Settings"),
+    },
+    selected,
+    expanded
+).OnChanged([selected](std::size_t index) {
+  selected = index;
+})
+```
+
+The third constructor argument is `expanded` and defaults to `false`. Compact mode behaves like a navigation rail; expanded mode exposes a wider label-oriented pane. Responsiveness remains explicit application composition rather than a hidden component rewrite.
+
+Selection is controlled and updates through `NavigationEvents::Changed`. `NavigationPaneStyle` owns compact and expanded widths, item geometry, content colors, indication, and selection animation.
+
+Both visual modes publish the same `Navigation` collection.
+Each destination is a labelled semantic button with stable selected and disabled state, so changing `expanded` does not replace its accessible identity.
+
+## API
+
+- `NavigationPane(items, selected_index, bool expanded = false)` with initializer-list/vector and value/state overloads.
+- `OnChanged(handler)` receives the requested index.
+- Uses [NavigationBar](../navigation-bar/)'s `NavigationItem` values.
+
+See also [DrawerLayout](../drawer-layout/) and [responsive interfaces](../../layout/responsive-interfaces/).

@@ -1,0 +1,27 @@
+---
+title: PlatformModule
+description: Define typed method, event, and PlatformView bridges to platform code.
+---
+
+`PlatformModule` is the application-facing native capability boundary. A root hook registers platform-specific factories in `RootContext::Modules`; shared code opens an instance by type.
+
+```cpp
+struct GetBatteryLevel {
+  using Request = std::monostate;
+  using Result = double;
+  static constexpr std::string_view Name = "getBatteryLevel";
+  static PlatformPayload Encode(const Request&);
+  static Result Decode(const PlatformPayload&);
+};
+
+auto instance = modules.Open("device");
+instance.Call<GetBatteryLevel>({}, [](PlatformResult<double> result) {
+  // Handle a value or PlatformError.
+});
+```
+
+`PlatformPayload` is an immutable recursive value supporting null, boolean, signed integer, double, string, bytes, list, object, and `ExternalTexture`. Typed method keys encode requests and decode results. Typed event keys reuse HuxerUI's event signatures and decode platform payloads.
+
+Each call returns a `PlatformRequestId`; cancellation and instance closure are explicit. Factories return cleanup functions so adapters can release native work. Completion and event delivery are marshalled to the UI thread by the platform boundary.
+
+Use a module for genuine native services and platform views, not as a replacement for ordinary C++ composition or root services. See [PlatformModule API](../../reference/platform-module/).

@@ -1,0 +1,41 @@
+---
+title: SegmentedButton
+description: Select one controlled index from a compact set of labeled or icon destinations.
+sidebar:
+  order: 33
+---
+
+`SegmentedButton` presents a fixed set of mutually exclusive choices.
+
+```cpp
+SegmentedButton(
+    {
+        SegmentedButtonItem("Day"),
+        SegmentedButtonItem(app::images::calendar, "Week"),
+        SegmentedButtonItem::IconOnly(app::images::grid, "Month"),
+    },
+    period
+).OnChanged([period](std::size_t index) {
+  period = index;
+})
+```
+
+Simple overloads accept an initializer list or vector of `StringVariant` labels.
+Rich overloads accept `SegmentedButtonItem` values with `ImageResource`, `ImageAsset`, or `VectorAsset` icons.
+`IconOnly` requires a semantic label even though that label is not drawn.
+
+The selected index is controlled.
+Passing `State<std::size_t>` reads its current value; the caller handles `OnChanged` and supplies the next value.
+The index must identify an item.
+
+`SegmentedButtonStyle` owns fills, labels, borders, padding, icon geometry, minimum segment size, radius, and normal and selected indications.
+The component exposes a grouped selection model and selected item semantics.
+
+## API
+
+- Constructors: label lists or `std::vector<SegmentedButtonItem>`, followed by an index or `State<std::size_t>`.
+- Item factories: label, icon plus label, or `SegmentedButtonItem::IconOnly`.
+- Event: `.OnChanged(function)` with the requested index.
+- Theme style: `SegmentedButtonStyle`.
+
+Use [`Tabs`](/docs/components/tabs/) when selection changes visible page content and participates in tab semantics.

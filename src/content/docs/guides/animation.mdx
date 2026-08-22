@@ -1,0 +1,23 @@
+---
+title: Animation
+description: Animate values, transitions, repeated motion, and scene changes without recomposing every frame.
+---
+
+HuxerUI retains animation state on mounted nodes. `AnimateTo` describes a target and timing policy; `Transition` binds animated presentation to a view.
+
+```cpp
+return Card().With(
+    Transition(AnimateTo(
+        visible ? 1.0F : 0.0F,
+        TweenSpec{.duration = 0.2, .easing = Easing::EaseOut}
+    ))
+        .Opacity(0.0F, 1.0F)
+        .Offset(Point{0.0F, 12.0F}, Point{})
+);
+```
+
+Animation specs are `SnapSpec`, `TweenSpec`, `SpringSpec`, or `KeyframeSpec`. `AnimationPlayback` adds delay, repeat count, and restart or reverse behavior. Animatable presentation values include opacity, offset, scale, and rotation with configurable transform origin.
+
+`UseSceneTransition()` returns a handle whose `Anchor()` modifier tags retained scene content and whose `Run` or `RunAt` method applies a mutation with a fade or circular reveal. Navigation and presentation services consume their own theme motion structures.
+
+Animations advance through the frame scheduler, not state recomposition. Reduced-motion preferences are resolved by the runtime and should remain respected by custom animation. See [Animation API](../../reference/animation/) and [Canvas](../../components/canvas/) for custom drawing.

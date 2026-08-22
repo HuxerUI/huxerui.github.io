@@ -1,0 +1,37 @@
+---
+title: Platform-specific API
+description: Explicit integration headers for platform views, external textures, JNI, and Web navigation.
+sidebar:
+  order: 26
+---
+
+Platform headers are not included by `<huxerui/huxerui.h>` unless needed by the selected entry. Include them explicitly.
+
+## Android
+
+- `<huxerui/android/platform_module.h>`: Android `PlatformModuleFactory` using JNI objects and UI-thread-safe instance callbacks.
+- `<huxerui/android/platform_view.h>`: Android `PlatformViewFactory` lifecycle and property/event bridge.
+- `<huxerui/android/external_texture.h>`: `ExternalTextureSource` for Android-produced frames.
+- `<huxerui/android/jni.h>`: JNI forward types, `DeleteLocalReference`, and move-only `LocalRef<Reference>` ownership helper.
+
+## iOS and macOS
+
+- `<huxerui/ios/platform_view.h>` and `<huxerui/macos/platform_view.h>`: `PlatformViewFactory` for `UIView` and `NSView` creation/update/disposal.
+- `<huxerui/ios/external_texture.h>` and `<huxerui/macos/external_texture.h>`: platform `ExternalTextureSource` types.
+
+## Windows
+
+- `<huxerui/windows/platform_view.h>`: HWND `PlatformViewFactory` with create/update/event/placement/lifetime callbacks.
+- `<huxerui/windows/external_texture.h>`: `ExternalTexturePixelFormat`, `ExternalTextureFrame`, and `ExternalTextureSource` for published pixel frames.
+
+## Linux
+
+`<huxerui/linux/external_texture.h>` declares `ExternalTexturePixelFormat`, `ExternalTextureFrame`, and `ExternalTextureSource` for retained pixel frames.
+
+## Web
+
+- `<huxerui/web/platform_view.h>`: DOM-oriented `PlatformViewFactory`.
+- `<huxerui/web/external_texture.h>`: browser `ExternalTextureSource`.
+- `<huxerui/web/navigation.h>`: `BrowserNavigationBinding`, `BrowserNavigationCoordinator`, and `BrowserNavigationStack(root, path, resolver, codec)` for typed URL/history integration.
+
+Factory field contracts and source publication methods are platform-sensitive; use the matching [platform guide](../../platforms/) and header for exact ownership and threading rules.

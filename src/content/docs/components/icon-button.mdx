@@ -1,0 +1,33 @@
+---
+title: IconButton
+description: Trigger an action with a raster or vector icon and a required accessible label.
+sidebar:
+  order: 21
+---
+
+`IconButton` displays an icon-only action.
+Its semantic label is required because the visible icon is not sufficient accessible text.
+
+```cpp
+IconButton(app::images::search, "Search")
+    .OnClick(OpenSearch)
+    .With(Tooltip("Search"))
+```
+
+Icons may be `ImageResource`, `ImageAsset`, or `VectorAsset`.
+Resource and vector forms can follow resource and theme configuration without application-side platform code.
+
+The shared activation path handles pointer input, Enter, and Space.
+`Enabled(false)` disables activation and resolves disabled icon styling.
+
+`IconButtonStyle` owns foreground colors, icon size, minimum interactive size, state-layer size, radius, and optional indication.
+The required `StringVariant` label becomes button semantics; add `Tooltip` when sighted pointer users also need a textual explanation.
+
+## API
+
+- Constructors: `IconButton(ImageResource|ImageAsset|VectorAsset, StringVariant semantic_label)`.
+- Event: `.OnClick(function)`.
+- Common modifiers: `Enabled`, `Tooltip`, `Frame`, `Semantics`.
+- Theme style: `IconButtonStyle`.
+
+Use [`Button`](/docs/components/button/) when text is part of the visible action.

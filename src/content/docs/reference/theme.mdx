@@ -1,0 +1,48 @@
+---
+title: Theme API
+description: Theme tokens, component styles, definitions, and built-in families.
+sidebar:
+  order: 13
+---
+
+Declared by `<huxerui/theme.h>`.
+
+## Theme tokens
+
+- `ColorScheme`: primary/secondary roles, containers, background/surface levels, on-colors, outline, inverse roles, scrim, and error.
+- `TypographyScheme`: body large/medium/small, label large, title large, and headline small sizes.
+- `ShapeScheme`: extra-small through extra-large plus full radius.
+- `SpacingScheme`: extra-small through extra-large spacing.
+- `ElevationScheme`: low, medium, and high elevation.
+- `MotionScheme`: fast/normal/slow durations and `reduced_motion`.
+- `InteractionScheme`: default `Indication`, `FocusRing`, and disabled opacity.
+- `ThemeSpec`: aggregates all schemes and provides `Default()`.
+
+## Component styles
+
+All style structures are equality-comparable and provide `Default()`:
+
+- `ButtonStyle`: background/label/disabled colors, padding, minimum geometry, radius, indication.
+- `IconButtonStyle`: foreground, icon and interactive geometry, radius, indication.
+- `ChipStyle`: normal/selected/disabled surfaces, labels, borders, icon geometry, indication.
+- `DividerStyle`: color and thickness.
+- `SegmentedButtonStyle`: segment surfaces, labels, borders, padding, geometry, indication.
+- `TabsStyle`: labels, indicator/divider geometry, item geometry, expansion, indication, and animation duration; `TabIndicatorSizing` is `Item` or `Content`.
+- `TextFieldVariantStyle` and `TextFieldStyle`: standard/filled/outlined surfaces and borders, typography, icons, selection/caret/composition, geometry, timing, and validation treatment.
+- `CheckboxStyle`, `RadioButtonStyle`, and `SwitchStyle`: state colors and control geometry.
+- `ProgressCircleStyle`; `ProgressCircleIndeterminateMotion` is `Sweep` or `PulsingArc`.
+- `ProgressBarStyle`; `ProgressBarIndeterminateMotion` is `Sweep` or `Segmented`.
+- `SliderStyle`: track, thumb, tick, disabled, focus, and animation values.
+
+Navigation styles (`TopAppBarStyle`, `NavigationBarStyle`, `NavigationPaneStyle`, `DrawerStyle`) are declared by `navigation.h`; presentation styles by `presentation.h`.
+
+## Definitions and providers
+
+- `ThemeDefinition(ThemeSpec)` and `Set(EnvironmentValue)` build typed overrides.
+- `UseTheme()` returns the nearest `ThemeSpec`.
+- `Theme(definition, factory, args...)` provides a definition.
+- `FlatLightThemeSpec`, `FlatDarkThemeSpec`, `MaterialLightThemeSpec`, and `MaterialDarkThemeSpec` create token sets.
+- `FlatThemeDefinition`, `FlatDarkThemeDefinition`, `MaterialThemeDefinition`, and `MaterialDarkThemeDefinition` create complete component definitions.
+- `FlatTheme`, `FlatDarkTheme`, `MaterialTheme`, and `MaterialDarkTheme` provide convenient factory wrappers; light-family overloads also accept a custom `ThemeSpec`.
+
+`HUXERUI_THEME(ThemeProvider, expression)` is a macro wrapper for expression-style code; component functions and normal provider calls are preferred in new DSL examples.

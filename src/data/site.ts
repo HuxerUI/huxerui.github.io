@@ -1,6 +1,6 @@
 export const site = {
   name: "HuxerUI",
-  tagline: "Declarative, native, cross-platform UI in modern C++.",
+  tagline: "Declarative cross-platform UI for modern C++.",
   description:
     "Build shared C++20 interfaces across desktop, mobile, and Web with one declarative runtime and platform-native integration.",
   repository: "https://github.com/HuxerUI/HuxerUI",

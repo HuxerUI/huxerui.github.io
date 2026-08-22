@@ -1,0 +1,33 @@
+---
+title: Presentation and layer API
+description: Window layers and typed handles for transient and modal content.
+sidebar:
+  order: 12
+---
+
+Declared by `<huxerui/layer.h>` and `<huxerui/presentation.h>`.
+
+## Low-level layers
+
+- `LayerId` is a `std::uint64_t`; `ViewFactory` is `std::function<View()>`.
+- `LayerLevel`: `Presentation`, `Notification`, `System`.
+- `LayerPointerPolicy`: `PassThrough`, `Content`, `Barrier`.
+- `LayerCancelPolicy`: `PassThrough`, `Consume`, `Dismiss`.
+- `LayerOptions`: level, pointer policy, focus trap, outside dismissal, cancel policy, dismissal callback, and optional barrier color.
+- `LayerController`: `Attach`, `Update`, and `Dismiss`, including bound-factory overloads.
+
+## Typed presentation
+
+- `ToastHandle` / `UseToast`, `ToastOptions`, `ToastStyle`.
+- `DialogHandle` / `UseDialog`, `DialogOptions`, `DialogContext`, `DialogFactory`, `DialogStyle`, and declarative `Dialog` modifier.
+- `BottomSheetHandle` / `UseBottomSheet`, `BottomSheetOptions`, `BottomSheetContext`, `BottomSheetFactory`, `BottomSheetStyle`.
+- `PopupHandle` / `UsePopup`, `PopupOptions`, `PopupContext`, `PopupFactory`.
+- `MenuHandle` / `UseMenu`, `MenuOptions`, `MenuItem`, `MenuEntry`, `MenuSection`, and `MenuStyle`.
+- `MenuSeparatorMode`: `None`, `BetweenSections`, or `BetweenItems`.
+- `Tooltip` retained modifier and `TooltipStyle`.
+
+## Anchoring and motion
+
+`LayerAnchor` is obtained from popup/menu handles and attached through `.With(...)`. `AnchorSide` (`Below`, `Above`, `Right`, `Left`), `AnchorAlignment` (`Start`, `Center`, `End`), and `AnchorPlacement` describe preference. `PresentationMotion` carries initial scale, slide distance, and enter/exit specs. `VerticalPlacement` is `Top`, `Center`, or `Bottom`.
+
+Each [presentation component page](../../components/dialog/) lists exact `Show`, `Update`, and dismissal overloads.

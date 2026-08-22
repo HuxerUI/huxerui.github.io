@@ -1,0 +1,32 @@
+---
+title: ProgressBar
+description: Show determinate or indeterminate linear progress using theme-owned motion and geometry.
+sidebar:
+  order: 16
+---
+
+`ProgressBar()` renders indeterminate progress.
+Pass a normalized value for determinate progress.
+
+```cpp
+Column {
+  ProgressBar(),
+  ProgressBar(download_progress),
+  Text::Format("Downloaded {}%", static_cast<int>(download_progress.Get() * 100.0F)),
+}.With(Spacing(8.0F))
+```
+
+The caller owns the progress value.
+The component does not start work, poll a task, or mutate a supplied `State<float>`.
+
+Progress-indicator semantics distinguish determinate range values from indeterminate busy state.
+Add a semantic label when surrounding text does not name the operation.
+
+`ProgressBarStyle` controls width, height, track and indicator colors, corner radius, gaps, stop indicator, indeterminate motion, segment fraction, and duration.
+Material and Flat themes can choose different sweep or segmented motion.
+
+## API
+
+- Constructors: `ProgressBar()`, `ProgressBar(float)`, `ProgressBar(State<float>)`.
+- Common modifiers: `Frame`, `Grow`, `Opacity`, `Semantics`.
+- Theme style: `ProgressBarStyle` and `ProgressBarIndeterminateMotion`.

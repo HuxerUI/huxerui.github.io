@@ -1,0 +1,35 @@
+---
+title: ProgressCircle
+description: Show determinate or indeterminate circular progress using the current theme.
+sidebar:
+  order: 15
+---
+
+Construct `ProgressCircle()` for ongoing work with unknown completion, or pass a normalized progress value for determinate work.
+
+```cpp
+Row {
+  ProgressCircle(),
+  Text("Connecting"),
+  ProgressCircle(progress),
+  Text::Format("{}%", static_cast<int>(progress.Get() * 100.0F)),
+}.With(
+    Spacing(10.0F),
+    CrossAlign(CrossAxisAlignment::Center)
+)
+```
+
+Progress is controlled by the caller.
+Passing `State<float>` reads its current value; update the state to supply the next progress.
+
+The component exposes progress-indicator semantics.
+Determinate mode reports its range value, while indeterminate mode communicates busy progress without inventing a percentage.
+
+`ProgressCircleStyle` controls size, stroke width, track and indicator colors, track gap, indeterminate motion, arc fractions, and animation duration.
+Reduced-motion themes suppress or simplify continuous motion.
+
+## API
+
+- Constructors: `ProgressCircle()`, `ProgressCircle(float)`, `ProgressCircle(State<float>)`.
+- Common modifiers: `Frame`, `Opacity`, `Semantics` for an application-specific label.
+- Theme style: `ProgressCircleStyle` and `ProgressCircleIndeterminateMotion`.

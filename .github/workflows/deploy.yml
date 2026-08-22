@@ -25,8 +25,10 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - name: Resolve canonical HuxerUI content
-        run: npm run sync:content
+      - name: Resolve HuxerUI source for Web examples
+        run: >-
+          node --input-type=module --eval
+          "import('./scripts/resolve-huxerui-source.mjs').then(async ({ resolveHuxerUISource }) => resolveHuxerUISource())"
       - uses: mymindstorm/setup-emsdk@v14
         with:
           version: 4.0.19
@@ -65,7 +67,6 @@ jobs:
       - name: Build website
         env:
           GITHUB_TOKEN: ${{ github.token }}
-          HUXERUI_SOURCE_DIR: ${{ github.workspace }}/.cache/huxerui
         run: npm run build
       - name: Check generated links
         run: npm run check:links

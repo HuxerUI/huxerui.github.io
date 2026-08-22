@@ -1,0 +1,40 @@
+---
+title: Modifier and indication API
+description: Property modifiers, retained node extensions, interaction visuals, and focus rings.
+sidebar:
+  order: 9
+---
+
+Declared by `<huxerui/modifier.h>` and `<huxerui/indication.h>`.
+
+## Modifier model
+
+`ViewModifier` accepts property modifiers with a `Descriptor()` or retained `NodeExtension` values. `ModifierDescriptor` identifies the modifier and its application/reconciliation behavior; `ModifierSpec` pairs a descriptor with immutable data. `View::With` applies modifiers left to right.
+
+## Built-in property modifiers
+
+- `Enabled{value}` and `Focusable{value}`.
+- `Padding(float|EdgeInsets)`.
+- `Background{VisualFill}`, `Foreground{Color}`, `Border{color, width}`, `Shadow{color, offset, blur_radius, spread}`.
+- `FontSize{value}`.
+- `Frame{width, height, min_width, max_width, min_height, max_height}`.
+- `CornerRadius{CornerRadii}` and marker `ClipChildren`.
+- `Spacing{value}`, `MainAlign{MainAxisAlignment}`, `CrossAlign{CrossAxisAlignment}`, and `Align{HorizontalAlignment, VerticalAlignment}`.
+- `Grow{factor}`.
+- `ScrollPhysics{fling_enabled, deceleration_rate, minimum_fling_velocity, maximum_fling_velocity}`.
+- `ScrollBar{optional<ScrollBarStyle>}`; style fields cover geometry, fade timing, track, and thumb.
+
+## `NodeExtension`
+
+Retained per-node behavior. Override only needed hooks for update, mount/unmount, interaction, frame advance, paint phases, text input/selection clients, semantics, semantic actions, focus traversal, and cancel handling. `InvalidatePaint()` marks its node paint dirty. `FrameInfo` supplies time and delta; returned `FrameResult` controls further scheduling.
+
+## Indication
+
+- `IndicationPlacement`: `BehindContent` or `AboveContent`.
+- `IndicationLayer`: optional fill, border, corner radii, placement, enter spec, and exit spec.
+- `RippleEffect`: color, placement, expansion, and fade-out specs.
+- `IndicationGeometry`: optional layer size and clip radii.
+- `Indication`: retained modifier with focus, hover, press, ripple, and geometry.
+- `FocusRing`: color, width, and offset.
+
+`VisualFill` comes from the paint API and supports colors, gradients, and images.

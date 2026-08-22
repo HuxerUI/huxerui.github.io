@@ -1,0 +1,19 @@
+---
+title: iOS
+description: Build HuxerUI applications for iOS 13 and later.
+sidebar:
+  order: 3
+---
+
+iOS support targets iOS 13 and later. The SDK and generated project configure CMake/Xcode sources, UIKit application lifecycle, and the HuxerUI static application link.
+
+```bash
+huxerui setup ios
+huxerui run ios
+```
+
+UIKit delivers touch, keyboard, `UITextInput`, accessibility, activation, lifecycle, file picking, HTTP, and display-link scheduling to the shared runtime. Safe-area and edge-to-edge policies use the same `WindowOptions`, `WindowMetrics`, `SafeAreaPadding`, and `SystemBarsAppearance` contracts as Android.
+
+Platform views are registered through `<huxerui/ios/platform_view.h>`. External texture producers use `<huxerui/ios/external_texture.h>`. UIKit and platform texture publication must follow the main-thread and ownership rules stated by those headers.
+
+Build and device validation require macOS with Xcode; non-macOS hosts can edit shared code but cannot validate the iOS adapter.

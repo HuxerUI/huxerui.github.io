@@ -1,0 +1,19 @@
+---
+title: Windows
+description: Build HuxerUI desktop applications with MSVC on Windows 10 and later.
+sidebar:
+  order: 5
+---
+
+Windows uses the native MSVC toolchain. The default backend targets Windows 10 and later; `HUXERUI_WINDOWS_7_COMPAT=ON` enables capability-based fallbacks for Windows 7 SP1 with Platform Update.
+
+```powershell
+huxerui setup windows
+huxerui run windows
+```
+
+The adapter owns Win32 window lifecycle, pointer/keyboard/IME conversion, UI-thread scheduling, accessibility, clipboard, files, HTTP, and rendering. HuxerUI geometry uses DIPs; screen, DPI, UTF-16, and IME coordinates are converted at the boundary.
+
+Custom desktop chrome uses `WindowChromeMode::Custom`, [WindowTitleBar](../../components/window-title-bar/), and `UseWindow()`. The framework renders caption controls while preserving native window commands and hit testing.
+
+Register HWND-backed views with `<huxerui/windows/platform_view.h>`. Windows uses a single HuxerUI render surface with platform-view placement slices, so native HWND content cannot provide arbitrary rotation, path clipping, or transparent interleaving with HuxerUI paint. External texture sources in `<huxerui/windows/external_texture.h>` are the better fit for pixel-only integration.

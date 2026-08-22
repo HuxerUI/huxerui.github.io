@@ -1,0 +1,57 @@
+---
+title: NavigationStack
+description: Retain pages, push destinations, and model typed route history.
+---
+
+`NavigationStack` presents a root page and retained destination pages with push and pop transitions.
+
+For local factory navigation:
+
+```cpp
+View HomePage() {
+  auto navigation = UseNavigation();
+  return Button("Open details").OnClick([navigation] {
+    navigation.Push(DetailsPage, 42);
+  });
+}
+
+View App() {
+  return NavigationStack(HomePage);
+}
+```
+
+For serializable or externally addressable destinations, use a typed `NavigationPath<Route>`:
+
+```cpp
+enum class Route { Details, Settings };
+
+View App() {
+  auto path = UseState(NavigationPath<Route>{});
+  return NavigationStack(HomePage, path, [](Route route) -> View {
+    switch (route) {
+    case Route::Details: return DetailsPage();
+    case Route::Settings: return SettingsPage();
+    }
+    return Text("Unknown route");
+  });
+}
+```
+
+`NavigationController` offers `Push`, `Pop`, `Replace`, `CanPop`, and `Depth`. `RouteNavigationController<Route>` adds `SetPath` and performs typed route mutations. `UseRootNavigation()` resolves the outermost compatible stack, which is useful from nested navigation. Route values must be copyable and equality-comparable.
+
+The stack retains covered pages and their local state. `NavigationStyle` and `NavigationMotion` define push/pop offsets, scale, opacity, timing, and whether motion is enabled.
+
+Pages keep the semantics declared by their child views rather than deriving labels from route values.
+Use labelled controls for push and pop actions, and keep route identity separate from user-facing labels.
+
+## API
+
+- `NavigationStack(root_factory)` and argument-binding overload.
+- `NavigationStack(root_factory, State<NavigationPath<Route>>, resolver)`.
+- `UseNavigation()` / `UseRootNavigation()` for factory stacks.
+- `UseNavigation<Route>()` / `UseRootNavigation<Route>()` for routed stacks.
+- `NavigationPath<Route>`: `Empty`, `Size`, `Routes`, equality.
+- `NavigationController`: `Push`, `Pop`, `Replace`, `CanPop`, `Depth`.
+- `RouteNavigationController<Route>`: `Push`, `Pop`, `Replace`, `SetPath`, `CanPop`, `Depth`.
+
+See [Navigation and routing](../../guides/navigation-and-routing/) for browser URL integration.
