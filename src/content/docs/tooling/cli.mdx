@@ -1,0 +1,142 @@
+---
+title: CLI reference
+description: Create, diagnose, build, run, and package HuxerUI projects from one platform-aware command line.
+---
+
+The `huxerui` CLI owns project generation and platform workflows.
+It discovers the SDK, validates the current host, and delegates each build to the platform shell generated with the project.
+
+## Command map
+
+```text
+huxerui create app <name> [--id <project-id>] [-p|--platform <platform-list>]
+huxerui create library <name> [--id <project-id>] [-p|--platform <platform-list>]
+huxerui platform add <platform-list>
+huxerui doctor [platform-list]
+huxerui setup <platform-list> [--yes]
+huxerui devices [platform]
+huxerui build [platform-list] [--device <id>] [--profile debug|release] [--generator <name>]
+huxerui run <platform> [--device <id>] [--profile debug|release] [--generator <name>]
+huxerui package <platform-list> [--device <id>] [--profile debug|release] [--generator <name>]
+huxerui open ios
+huxerui --version
+```
+
+A platform list is either a comma-separated list such as `windows,web` or the single value `all`.
+Commands still enforce host availability: a Windows host cannot build an iOS application, for example.
+
+## Create projects
+
+Create an application with a reverse-DNS project identifier and selected platform shells:
+
+```bash
+huxerui create app notes --id dev.example.notes --platform windows,android,web
+```
+
+Create a reusable component library with the same shared-source model:
+
+```bash
+huxerui create library rich_text --id dev.example.rich-text --platform windows,android
+```
+
+Generated projects keep shared C++ under `src/`, resources under `resources/`, and host-specific integration under `platform/<id>/`.
+The CLI scans the shared source tree; adding a source file does not require a second list in every platform shell.
+
+Add a platform later without replacing application-owned files:
+
+```bash
+huxerui platform add ios
+```
+
+## Diagnose and set up tools
+
+`doctor` is read-only.
+It reports the selected HuxerUI SDK, external tools, host restrictions, and project integration problems:
+
+```bash
+huxerui doctor
+huxerui doctor android,web
+```
+
+`setup` performs supported prerequisite installation or configuration.
+Without `--yes`, it describes each planned action and asks before changing the machine:
+
+```bash
+huxerui setup android,web
+huxerui setup web --yes
+```
+
+The SDK is resolved from `HUXERUI_HOME` first, then relative to the running CLI executable.
+Use an explicit environment variable when testing a source checkout or keeping multiple SDK versions.
+
+## Select devices
+
+List all device-capable platforms available on the current host, or select one platform:
+
+```bash
+huxerui devices
+huxerui devices android
+```
+
+If exactly one ready device is present, `run` selects it automatically.
+When several devices are ready, pass the stable identifier shown by `devices`:
+
+```bash
+huxerui run android --device emulator-5554
+```
+
+## Build and run
+
+`build` accepts one or more enabled platforms and defaults to the current host platform when it is part of the project:
+
+```bash
+huxerui build
+huxerui build windows,web --profile release
+```
+
+`run` accepts exactly one platform because it launches one application instance:
+
+```bash
+huxerui run windows
+huxerui run web --profile release
+```
+
+Windows selects an MSVC-compatible generator automatically; `--generator` is intended for other supported CMake workflows.
+Android and iOS builds are driven through their platform projects rather than a generic desktop generator.
+
+## Package artifacts
+
+`package` builds first and then replaces `dist/<platform>` with the platform driver's distributable artifacts.
+Its default profile is `release`:
+
+```bash
+huxerui package windows,web
+huxerui package android --device emulator-5554 --profile debug
+```
+
+Packaging is not code signing or store submission.
+The produced files are the input to the platform's signing, notarization, store, or deployment workflow.
+
+## Open the iOS project
+
+Generate the current library integration and open the Xcode project from a macOS host:
+
+```bash
+huxerui open ios
+```
+
+Use Xcode for signing, capabilities, device provisioning, and archive distribution; keep shared source and library ownership in the HuxerUI project.
+
+## Exit behavior
+
+Usage errors return exit code `2` and print the command synopsis hint.
+Environment, build, or platform failures return exit code `1`.
+A successful command returns `0`, making the CLI suitable for scripts and CI without parsing human-readable status text.
+
+## Related documentation
+
+- [Create a project](/docs/get-started/create-a-project/)
+- [Installation](/docs/get-started/installation/)
+- [CMake integration](/docs/tooling/cmake/)
+- [Testing and delivery](/docs/tooling/testing-and-delivery/)
+

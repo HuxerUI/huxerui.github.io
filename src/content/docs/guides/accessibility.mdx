@@ -3,11 +3,19 @@ title: Accessibility
 description: Build semantic UI that works with platform assistive technologies.
 ---
 
-Built-in controls publish roles, names, values, state, supported actions, collections, and text-editing information automatically. Start with meaningful labels, controlled state, and the correct component.
+Built-in controls publish roles, names, values, state, supported actions, collections, and text-editing information automatically.
+Start with meaningful labels, controlled state, and the correct component.
+
+## Prefer semantic components
 
 ```cpp
 IconButton(images::refresh, "Refresh messages")
 ```
+
+The second `IconButton` argument is both the accessible label and the action's human meaning.
+Do not replace a semantic control with raw pointer handlers on a painted shape unless the interface genuinely needs a custom interaction.
+
+## Add application meaning
 
 Use the `Semantics` modifier when composition needs additional or overridden meaning:
 
@@ -19,6 +27,29 @@ Canvas(PaintChart).With(Semantics{
 })
 ```
 
-`Semantics` can describe checked, selected, expanded, busy, required, invalid, range, text selection, scroll, collection, live-region, and descendant-policy state. Do not duplicate visible text mechanically; communicate the action or state an assistive user needs.
+`Semantics` can describe checked, selected, expanded, busy, required, invalid, range, text selection, scroll, collection, live-region, and descendant-policy state.
+Do not duplicate visible text mechanically; communicate the action or state an assistive user needs.
 
-Custom layouts and retained extensions can contribute structure through `SemanticBuilder`. `SemanticNode` and `SemanticFrame` are the platform adapter boundary, not the preferred application authoring surface. Platform support currently follows each adapter's guide. See [Semantics API](../../reference/semantics/).
+Use `SemanticDescendantPolicy::Merge` when several visual children form one accessible value, and `Exclude` only when the descendants would duplicate a complete parent description.
+Use a live region for asynchronous status that must be announced without moving focus.
+
+## Preserve state and actions
+
+Accessible state comes from the same controlled value used for painting.
+When a custom control exposes checked, selected, range, or expanded state, pair that value with the semantic action that can change it.
+Disabling a view through `Enabled(false)` also removes normal activation instead of merely changing its color.
+
+TextField, selection, scrolling, navigation collections, modal layers, and virtualized collections provide richer semantics automatically.
+Keep visible labels and state stable across compact and expanded responsive layouts so semantic identity does not depend on presentation.
+
+## Extend the semantic tree
+
+Custom layouts and retained extensions can contribute structure through `SemanticBuilder` when a single mounted node represents several logical items.
+`SemanticNode` and `SemanticFrame` are the platform adapter boundary, not the preferred application authoring surface.
+
+## Verify on each target
+
+Test labels, focus order, state changes, actions, modal isolation, text editing, and scrolling with the assistive technology of each target platform.
+A correct shared semantic tree still depends on the platform adapter translating supported roles and actions.
+
+See the [Semantics API](../../reference/semantics/) and the relevant [platform guide](../../platforms/).

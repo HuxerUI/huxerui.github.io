@@ -8,16 +8,22 @@ sidebar:
 `Scope` stores a `View` factory as an independent recomposition boundary.
 Most application code should use `[[huxerui::scope]]`, which generates this boundary automatically while preserving natural function syntax.
 
+## Prefer generated scope syntax
+
 ```cpp
 [[huxerui::scope]]
 View Counter() {
   auto count = UseState(0);
-  return Button("Count: " + std::to_string(count.Get()))
-      .OnClick([count] {
-        count += 1;
-      });
+  return Column {
+    Text::Format("Count: {}", count),
+    Button("Increment").OnClick([count] {
+      count += 1;
+    }),
+  }.With(Spacing(12.0F));
 }
 ```
+
+## Bind an existing factory
 
 Explicit construction is useful when a factory is already available as a value:
 
@@ -30,6 +36,8 @@ The variadic constructor binds a compatible factory and copyable arguments witho
 ```cpp
 Scope(ProfilePage, user_id)
 ```
+
+## Own scoped lifetime
 
 State, event hubs, task scopes, and lifecycle registrations belong to the scope that creates them.
 Do not add scopes to every helper function; stateless composition should stay an ordinary function returning `View`.

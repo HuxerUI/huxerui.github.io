@@ -1,0 +1,105 @@
+---
+title: Extension points
+description: Choose the smallest HuxerUI extension boundary for reusable composition, custom layout, retained behavior, and window services.
+---
+
+HuxerUI extensions stay inside the same composition, layout, interaction, paint, and platform boundaries as built-in UI.
+Choose the narrowest mechanism that owns the behavior instead of introducing a parallel widget, context, or callback system.
+
+## Start with composition
+
+An ordinary function returning `View` is the default extension:
+
+```cpp
+View LabeledValue(std::string label, std::string value) {
+  return Row {
+    Text(std::move(label)),
+    Spacer(),
+    Text(std::move(value)),
+  }.With(CrossAlign(CrossAxisAlignment::Center));
+}
+```
+
+Add `[[huxerui::scope]]` only when the reusable component owns local state, a local event hub, or an independent recomposition boundary.
+Use typed events for semantic outputs and controlled values for application-owned state.
+
+## Custom Layout
+
+Derive from `Layout<Derived>` when placement is the feature.
+The layout policy receives constraints and child access through its context, measures each child through that context, and returns a constrained size plus placements.
+
+Custom layout should not retain child references across reconciliation or take ownership of scrolling, clipping, keyed identity, and hit testing that already belong to Runtime.
+Use `LayoutValue<Key>` when children need strongly typed metadata understood by their parent layout.
+
+Prefer existing `Row`, `Column`, `Stack`, and `Flow` composition when the policy is only a fixed combination of those primitives.
+A custom layout earns its type when it owns a reusable measurement or placement algorithm.
+
+## VirtualLayout
+
+Derive from `VirtualLayout<Derived>` when a large or unbounded data set should compose and measure only the visible window.
+The virtual policy describes item identity, estimated or measured extents, viewport interaction, and placement; Runtime owns mounted item lifetime and cleanup.
+
+Stable semantic keys are required when items can reorder.
+Do not keep mounted child references in the data source or use virtualization as a replacement for ordinary conditional composition.
+
+Use `VirtualList` or `VirtualGrid` first.
+A custom virtual layout is appropriate for a genuinely different visible-range algorithm such as a timeline or spatial board.
+
+## NodeExtension
+
+A retained modifier can attach one `NodeExtension` to one mounted node.
+Use it for behavior that must survive recomposition without becoming application state, such as a gesture recognizer, animation controller, observation token, or paint-visible retained effect.
+
+The descriptor owns declarative configuration and creates the retained instance.
+Compatible recomposition updates that configuration while preserving retained state; replacement and unmount release the instance.
+
+A `NodeExtension` must not retain a raw node pointer.
+It requests frame work through its frame result and invalidates paint only when paint-visible retained state changes.
+Use public lifecycle and event capabilities rather than adding a concrete extension check to Runtime.
+
+## Root services
+
+A root service owns a per-window capability shared by composed UI, such as presentation, navigation coordination, or a platform-facing application service.
+It is installed at the application root and consumed through a typed access function rather than a global singleton.
+
+Root services are appropriate when all of these are true:
+
+- The capability has one authoritative owner per Runtime or window.
+- It must coordinate content from multiple scopes.
+- Its lifetime follows the application root rather than one component node.
+- A local Environment value would not own the necessary operations or retained state.
+
+Do not use a root service for ordinary theme values, component configuration, or state that naturally belongs to a scoped component.
+
+## Add a paint primitive only when necessary
+
+Canvas composition covers most custom graphics without extending the renderer.
+A new `PaintCommand` is a cross-platform rendering contract: it must carry immutable platform-neutral data and be implemented by every supported renderer.
+
+Prefer existing paths, images, text runs, transforms, clips, opacity, and shadows.
+Introduce a command only when the operation cannot be represented correctly and efficiently with the existing sequence.
+
+## Choose the boundary
+
+| Need | Extension |
+| --- | --- |
+| Reusable UI made from existing components | Function returning `View` |
+| Local state or recomposition identity | Scoped function component |
+| New measurement and placement policy | `Layout<Derived>` |
+| Visible-window composition for a new data geometry | `VirtualLayout<Derived>` |
+| Per-node retained behavior | Retained modifier and `NodeExtension` |
+| Typed semantic output | Event key and `.On<Key>()` |
+| Inherited configuration | Environment or Theme |
+| Per-window capability | Root service |
+| New platform-neutral drawing operation | `PaintCommand` |
+| Native SDK capability | `PlatformModule` |
+| Embedded native control | `PlatformView` |
+
+## Related documentation
+
+- [DSL fundamentals](/docs/dsl/fundamentals/)
+- [Layout and constraints](/docs/layout/)
+- [Modifiers](/docs/dsl/modifiers/)
+- [PlatformModule](/docs/guides/platform-module/)
+- [Canvas, paint, path, and vector](/docs/guides/graphics/)
+

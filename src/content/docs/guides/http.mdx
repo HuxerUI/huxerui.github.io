@@ -3,7 +3,10 @@ title: HTTP
 description: Send asynchronous HTTP requests through the platform transport.
 ---
 
-`HttpClient` is an application service backed by the current platform transport. Requests are explicit value objects and return `Task<HttpResult>`.
+`HttpClient` is an application service backed by the current platform transport.
+Requests are explicit value objects and return `Task<HttpResult>`.
+
+## Send a request
 
 ```cpp
 Task<void> LoadFeed(State<std::string> output) {
@@ -20,6 +23,28 @@ Task<void> LoadFeed(State<std::string> output) {
 }
 ```
 
-Specify method, headers, body, and optional timeout in `HttpRequest`. A response contains final URL, status code, headers, and body. HTTP status codes are responses; transport, timeout, and unsupported-platform failures use `HttpError`.
+Launch the task through `UseTaskScope()` so cancellation follows the component that requested the data.
 
-The runtime installs `HttpClient` as a root service; obtain it with `UseService<HttpClient>()`. Launch requests from `TaskScope` so cancellation follows UI lifetime. Never put credentials in documentation or source literals. See [HTTP API](../../reference/http/) for exact request and result methods.
+## Describe request intent
+
+Specify method, headers, body, and optional timeout in `HttpRequest`.
+Use `HttpMethod` for standard methods and provide binary body data only when the remote API requires it.
+
+The transport follows platform networking policy.
+Browser CORS, application transport security, Android network security, certificate trust, redirects, and proxy behavior remain platform concerns rather than shared-runtime bypasses.
+
+## Separate responses from transport errors
+
+A response contains final URL, status code, headers, and body.
+HTTP status codes, including 4xx and 5xx, are valid responses and remain available through `Response()`.
+DNS, connection, timeout, cancellation, malformed request, and unavailable-transport failures use `HttpError`.
+
+Inspect `HasResponse()` before accessing a response and preserve an error message appropriate for the user instead of displaying low-level transport diagnostics directly.
+
+## Follow component lifetime
+
+The runtime installs `HttpClient` as a root service; obtain it with `UseService<HttpClient>()`.
+Capture the shared service and controlled state by value in a task.
+Never put credentials in documentation, client source literals, or generated Web output.
+
+See the [HTTP API](../../reference/http/) for exact request and result methods and [Tasks](../tasks/) for cancellation ownership.

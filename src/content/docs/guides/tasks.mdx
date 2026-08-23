@@ -3,15 +3,25 @@ title: Tasks
 description: Run cancellable asynchronous work bound to a component scope.
 ---
 
-HuxerUI `Task<T>` is a lazy C++ coroutine type. Launch top-level work through a scoped `TaskScope` so unmount cancels outstanding operations.
+HuxerUI `Task<T>` is a lazy C++ coroutine type.
+Launch top-level work through a scoped `TaskScope` so unmount cancels outstanding operations.
+
+## Define an asynchronous operation
 
 ```cpp
 Task<void> LoadProfile(State<std::string> status) {
   status = "Loading";
-  co_await Delay(250ms);
+  co_await Delay(std::chrono::milliseconds(250));
   status = "Ready";
 }
+```
 
+A task does not begin merely because its value was created.
+It begins when awaited or launched by an owning scope.
+
+## Launch from UI lifetime
+
+```cpp
 View LoadButton(State<std::string> status) {
   auto tasks = UseTaskScope();
   return Button("Load").OnClick([tasks, status] {
@@ -20,6 +30,25 @@ View LoadButton(State<std::string> status) {
 }
 ```
 
-Tasks may await other HuxerUI tasks. `TaskScope::Launch` accepts a `Task<void>` or a factory returning one and returns `TaskHandle`; calling `Cancel` is idempotent. `Delay` resumes through the platform scheduler. Exceptions propagate through `co_await` and must be handled at the appropriate task boundary.
+`TaskScope::Launch` accepts a `Task<void>` or a factory returning one and returns a `TaskHandle`.
+The scope cancels all active handles when its component unmounts; explicit `Cancel()` is idempotent.
 
-Do not detach raw coroutines that retain component state. See [Task API](../../reference/task/) and the async [HTTP](../http/) and [Files](../files/) services.
+Capture `State` and service handles by value.
+Do not retain raw `View` objects or platform objects across suspension unless their API explicitly provides that lifetime.
+
+## Compose and handle failures
+
+Tasks may await other HuxerUI tasks.
+`Delay` resumes through the platform scheduler, and service operations such as HTTP and files return tasks that follow the same continuation model.
+
+Exceptions propagate through `co_await`.
+Catch failures at the boundary that can present a useful result, and make cancellation a normal control-flow outcome rather than a detached background exception.
+
+## Keep work off the composition path
+
+Composition declares current UI and must not block on I/O.
+Launch work from an event, lifecycle setup, activation handler, or another task.
+Update controlled state with the result so a later composition declares the new interface.
+
+Do not detach raw coroutines that retain component state.
+See the [Task API](../../reference/task/) and the asynchronous [HTTP](../http/) and [Files](../files/) services.

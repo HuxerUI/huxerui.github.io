@@ -56,6 +56,7 @@ export default defineConfig({
             { label: "DSL fundamentals", link: "/docs/dsl/fundamentals/" },
             { label: "State and recomposition", link: "/docs/dsl/state-and-recomposition/" },
             { label: "Events and interaction", link: "/docs/dsl/events-and-interaction/" },
+            { label: "Interaction visuals", link: "/docs/guides/interaction-visuals/" },
             { label: "Modifiers", link: "/docs/dsl/modifiers/" },
             { label: "Composition and identity", link: "/docs/dsl/composition-and-identity/" },
           ],
@@ -94,6 +95,21 @@ export default defineConfig({
             { label: "PlatformView", link: "/docs/guides/platform-view/" },
             { label: "PlatformModule", link: "/docs/guides/platform-module/" },
             { label: "ExternalTexture", link: "/docs/guides/external-texture/" },
+          ],
+        },
+        {
+          label: "Extend HuxerUI",
+          items: [
+            { label: "Extension points", link: "/docs/guides/extensions/" },
+          ],
+        },
+        {
+          label: "Tooling and delivery",
+          items: [
+            { label: "CLI reference", link: "/docs/tooling/cli/" },
+            { label: "CMake integration", link: "/docs/tooling/cmake/" },
+            { label: "SDK structure", link: "/docs/tooling/sdk/" },
+            { label: "Testing and delivery", link: "/docs/tooling/testing-and-delivery/" },
           ],
         },
         {

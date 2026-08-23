@@ -5,6 +5,8 @@ description: Show brief, non-modal window feedback through the presentation serv
 
 Toasts live in the window layer stack rather than the application layout tree. Obtain the window-scoped handle and show a message:
 
+## Show transient feedback
+
 ```cpp
 auto toast = UseToast();
 
@@ -14,6 +16,8 @@ Button("Save").OnClick([toast] {
 ```
 
 `ToastHandle::Show` accepts `StringVariant` and `ToastOptions`; the default duration is two seconds. It returns a `LayerId` that can be dismissed early with `Dismiss`.
+
+## Theme and announcement
 
 The captured environment determines theme and localized resources. `ToastStyle` controls placement, viewport padding, surface, typography, shadow, width, and optional motion. Toasts announce transient status through live-region semantics without taking focus.
 

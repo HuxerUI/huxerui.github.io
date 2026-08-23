@@ -8,6 +8,8 @@ sidebar:
 `IconButton` displays an icon-only action.
 Its semantic label is required because the visible icon is not sufficient accessible text.
 
+## Supply icon and meaning
+
 ```cpp
 IconButton(app::images::search, "Search")
     .OnClick(OpenSearch)
@@ -16,6 +18,8 @@ IconButton(app::images::search, "Search")
 
 Icons may be `ImageResource`, `ImageAsset`, or `VectorAsset`.
 Resource and vector forms can follow resource and theme configuration without application-side platform code.
+
+## Interaction and theme
 
 The shared activation path handles pointer input, Enter, and Space.
 `Enabled(false)` disables activation and resolves disabled icon styling.

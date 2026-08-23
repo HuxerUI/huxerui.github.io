@@ -51,6 +51,8 @@ export async function resolveHuxerUISource() {
   }
 
   await mkdir(cacheRoot, { recursive: true });
-  await runGit(["clone", "--depth", "1", "--branch", config.ref, config.repository, source]);
+  await runGit(["clone", "--filter=blob:none", "--no-checkout", config.repository, source]);
+  await runGit(["-C", source, "fetch", "--depth", "1", "origin", config.ref]);
+  await runGit(["-C", source, "checkout", "--detach", "FETCH_HEAD"]);
   return source;
 }

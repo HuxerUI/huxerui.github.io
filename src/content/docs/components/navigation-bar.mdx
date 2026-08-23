@@ -5,6 +5,8 @@ description: Select one primary destination in a compact bottom navigation bar.
 
 `NavigationBar` presents a controlled set of primary destinations. The owner supplies the selected index and handles requested changes.
 
+## Declare destinations
+
 ```cpp
 NavigationBar(
     {
@@ -20,7 +22,11 @@ NavigationBar(
 
 `NavigationItem` accepts a label alone or an `ImageResource`, `ImageAsset`, or `VectorAsset` plus label. `.SelectedIcon(...)` supplies an alternate selected icon and `.Enabled(false)` disables a destination.
 
+## Control selection
+
 The bar does not own selection. Pass `std::size_t` or `State<std::size_t>` and publish the new value after `NavigationEvents::Changed`. `NavigationBarStyle` controls height, icon and label treatment, selection indicator, indication, and animation.
+
+## Theme and semantics
 
 The component exposes collection and selected-item semantics. Labels remain important even when a theme hides unselected labels.
 

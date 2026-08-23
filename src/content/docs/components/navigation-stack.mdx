@@ -5,7 +5,7 @@ description: Retain pages, push destinations, and model typed route history.
 
 `NavigationStack` presents a root page and retained destination pages with push and pop transitions.
 
-For local factory navigation:
+## Push local page factories
 
 ```cpp
 View HomePage() {
@@ -19,6 +19,10 @@ View App() {
   return NavigationStack(HomePage);
 }
 ```
+
+Variadic `Push` and `Replace` bind copyable page arguments without a forwarding lambda.
+
+## Model addressable routes
 
 For serializable or externally addressable destinations, use a typed `NavigationPath<Route>`:
 
@@ -37,7 +41,13 @@ View App() {
 }
 ```
 
+Route values carry stable destination identity and parameters, not retained `View` objects.
+
+## Resolve nested and root navigation
+
 `NavigationController` offers `Push`, `Pop`, `Replace`, `CanPop`, and `Depth`. `RouteNavigationController<Route>` adds `SetPath` and performs typed route mutations. `UseRootNavigation()` resolves the outermost compatible stack, which is useful from nested navigation. Route values must be copyable and equality-comparable.
+
+## Retain page state and motion
 
 The stack retains covered pages and their local state. `NavigationStyle` and `NavigationMotion` define push/pop offsets, scale, opacity, timing, and whether motion is enabled.
 

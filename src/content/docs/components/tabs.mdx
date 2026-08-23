@@ -7,6 +7,8 @@ sidebar:
 
 `Tabs` renders a controlled tab list.
 
+## Declare tab items
+
 ```cpp
 Tabs(
     {
@@ -23,6 +25,8 @@ Tabs(
 Simple constructors accept string labels.
 `TabItem` adds raster or vector icons, icon-only presentation with a required semantic label, and per-item enabled state.
 
+## Control the active page
+
 The selected index is controlled and must identify an item.
 `OnChanged` requests a new index; use that state to choose the corresponding page content.
 
@@ -32,9 +36,11 @@ Column {
       .OnChanged([selected](std::size_t index) {
         selected = index;
       }),
-  selected.Get() == 0 ? FilesPage() : selected.Get() == 1 ? SearchPage() : HistoryPage(),
+  selected == 0 ? FilesPage() : selected == 1 ? SearchPage() : HistoryPage(),
 }
 ```
+
+## Theme and accessibility
 
 `TabsStyle` controls label states, icons, item geometry, optional equal expansion, divider, indicator color and sizing, and indicator motion.
 `TabIndicatorSizing::Item` follows the item; `Content` can produce a shorter content-width indicator.

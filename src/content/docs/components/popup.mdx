@@ -5,6 +5,8 @@ description: Show custom anchored or point-positioned floating content.
 
 `PopupHandle` supports content anchored to a view and content positioned at an explicit window point.
 
+## Anchor to a view
+
 ```cpp
 auto popup = UsePopup();
 
@@ -19,7 +21,11 @@ Button("Details")
 
 The anchor is a retained modifier and follows the view's final bounds. `ShowAt(point, ...)` skips anchoring. Factories may receive `PopupContext` to dismiss themselves.
 
+## Resolve placement
+
 `PopupOptions` controls preferred side/alignment, gap, viewport margin, offset, outside/cancel dismissal, focus trapping, and the dismissal callback. Placement may flip or constrain to remain usable inside the viewport.
+
+## Manage focus and semantics
 
 Popup content keeps the semantics declared by its child views.
 Set `focus_trap` for interactive floating surfaces that must contain keyboard and accessibility focus, and give application-defined content an explicit label or role when its visible children are not self-describing.

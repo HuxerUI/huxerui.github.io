@@ -7,6 +7,8 @@ sidebar:
 
 `Switch` represents a controlled binary setting.
 
+## Control an immediate setting
+
 ```cpp
 Switch("Use dark appearance", dark_mode)
     .OnChanged([dark_mode](bool checked) {
@@ -19,6 +21,8 @@ The caller remains authoritative and must accept or reject each emitted value.
 
 Use a switch for an immediately applied setting.
 Use a checkbox when the value participates in a form or a set of independently submitted choices.
+
+## Interaction and theme
 
 `SwitchStyle` controls track and thumb geometry, checked and unchecked colors and borders, disabled states, state-layer size, radius, and animation duration.
 Switch role, checked state, label, focus, and activation semantics are provided automatically.

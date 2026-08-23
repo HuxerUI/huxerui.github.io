@@ -1,22 +1,106 @@
 ---
 title: Resources and localization
-description: Package strings, images, vectors, and raw data with density and locale resolution.
+description: Package typed strings, images, vectors, and raw data with locale and density resolution.
 ---
 
-Place application resources under the generated project's `assets` tree. The HuxerUI resource compiler produces typed identifiers and a package consumed by every platform.
+Application resources live under the generated project's `resources/` directory.
+The HuxerUI resource compiler produces a typed header and one package consumed by every platform shell.
 
-Generated values can be passed directly to components:
+## Organize resources
+
+```text
+resources/
+  images/logo.png
+  images/logo@2x.png
+  images/logo@3x.png
+  images/mark.svg
+  raw/defaults.json
+  strings/default.properties
+  strings/zh.properties
+```
+
+The generated namespace is selected by the application's CMake resource declaration.
+An application package commonly exposes values such as `app::images::logo`, `app::raw::defaults`, and `app::strings::welcome`.
+
+## Pass resource IDs directly
+
+Components that own resource presentation accept the generated ID directly:
 
 ```cpp
 Column {
-  Text(strings::welcome),
-  Image(images::logo),
-  Button(StringVariant::Format(strings::greeting, user_name)),
+  Text(app::strings::welcome),
+  Image(app::images::logo),
+  Button(UseString(app::strings::greeting, user_name)),
 }
 ```
 
-`StringResource`, `ImageResource`, and `RawResource` are stable IDs. `UseString` resolves and formats a string immediately. `StringVariant` lets text-taking APIs defer resolution while safely representing a literal, owned string, string view, or resource plus positional arguments.
+`StringResource`, `ImageResource`, and `RawResource` are distinct stable identifiers.
+Do not resolve an image before passing it to `Image`; direct construction preserves the component's normal resource path.
 
-`UseImage` resolves raster variants using the current `ResourceConfiguration`, including locale, density, and color scheme where supplied. `UseVectorImage` resolves a `VectorAsset`; `UseRawResource` returns immutable bytes. `ImageAsset` can also be created from encoded bytes or a file when content is not packaged.
+## Format localized strings
 
-Resource selection responds to `Runtime::UpdateResourceContext` through the platform adapter. Application code normally consumes the resulting environment and does not query platform resource directories directly. See [Resource API](../../reference/resource/).
+String catalogs are UTF-8 `.properties` files with `key = value` entries and ordered placeholders:
+
+```properties
+welcome = Welcome
+greeting = Hello, {0}
+files_selected = {0} of {1} files selected
+```
+
+Use `Text::Format` when a `Text` node owns the result:
+
+```cpp
+Text::Format(app::strings::files_selected, selected_count, total_count)
+```
+
+Use `UseString` when another API requires an immediately resolved `std::string`:
+
+```cpp
+Button(UseString(app::strings::greeting, user_name))
+```
+
+`StringVariant` is for APIs that intentionally retain text and compose it after the call returns.
+For example, a dialog opened by an event handler captures the resource identity and formats it inside the presentation layer's environment:
+
+```cpp
+dialog.Show(
+    app::strings::archive_title,
+    StringVariant::Format(app::strings::archive_message, item_count),
+    app::strings::archive_action
+);
+```
+
+Do not use `StringVariant::Format` for an API such as `Button` that expects an already resolved label.
+
+## Resolve raster density and vectors
+
+Raster suffixes describe scale variants with the same logical intrinsic size.
+For example, 64-pixel, 128-pixel, and 192-pixel square files named `icon.png`, `icon@2x.png`, and `icon@3x.png` form one `ImageResource`.
+
+`Image(resource)` selects the best packaged raster for the current display scale.
+Call `UseImage(resource)` only when code needs the resolved `ImageAsset`, such as a custom `Canvas` painter.
+
+SVG files compile to platform-neutral `VectorAsset` payloads and do not use density suffixes.
+Use `Image(vector_resource)` for normal display or `UseVectorImage(resource)` when an API explicitly needs the resolved vector value.
+
+## Read raw data
+
+`UseRawResource` returns an immutable `RawAsset`:
+
+```cpp
+RawAsset defaults = UseRawResource(app::raw::defaults);
+std::string_view json = defaults.AsStringView();
+```
+
+Use `Bytes()` for binary data and `ToString()` when an owned string is required.
+`ImageAsset` and `RawAsset` also provide factories for runtime bytes or files that are not part of the packaged application resources.
+
+## Follow locale and display changes
+
+The platform adapter updates the runtime `ResourceConfiguration` when locale or display scale changes.
+Composition reads the resulting environment, and subscribed scopes recompose when the effective configuration changes.
+
+Application code should consume typed IDs instead of querying platform resource directories.
+The same resource package contract is used by desktop bundles, Android assets, iOS bundles, and Web output.
+
+See [Image](/docs/components/image/), [Text](/docs/components/text/), and the [Resource API](/docs/reference/resource/).

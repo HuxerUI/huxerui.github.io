@@ -1,0 +1,167 @@
+---
+title: CMake integration
+description: Use HuxerUI from an installed SDK or source checkout with the same application, library, resource, and codegen functions.
+---
+
+HuxerUI exports one CMake package for SDK and source-based development.
+Generated projects already contain the selection logic; custom projects can use the public targets and functions directly.
+
+## Locate HuxerUI
+
+An installed SDK exposes `HuxerUIConfig.cmake`:
+
+```cmake
+find_package(HuxerUI CONFIG REQUIRED)
+```
+
+Select a required binary form when the distinction matters:
+
+```cmake
+find_package(HuxerUI CONFIG REQUIRED COMPONENTS static)
+```
+
+The public targets are:
+
+| Target | Purpose |
+| --- | --- |
+| `HuxerUI::huxerui` | Shared HuxerUI where the platform package provides it; otherwise the platform's primary form. |
+| `HuxerUI::huxerui_static` | Explicit static linkage. |
+
+Web and iOS support the static library form only.
+Do not link implementation targets or include files from `src/`.
+
+For a source checkout, configure the desired library form before adding HuxerUI:
+
+```cmake
+set(HUXERUI_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+set(HUXERUI_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+set(HUXERUI_BUILD_SHARED OFF CACHE BOOL "" FORCE)
+set(HUXERUI_BUILD_STATIC ON CACHE BOOL "" FORCE)
+add_subdirectory(path/to/HuxerUI build/huxerui EXCLUDE_FROM_ALL)
+```
+
+## Define an application
+
+`huxerui_add_app` creates the platform-appropriate application target, links HuxerUI, enables scope code generation, and attaches resources:
+
+```cmake
+huxerui_add_app(notes
+        SOURCES
+            src/app.cpp
+            src/editor.cpp
+        RESOURCES
+            resources
+        RESOURCE_NAMESPACE
+            app
+        BUNDLE_NAME
+            "Notes"
+        BUNDLE_IDENTIFIER
+            "dev.example.notes"
+)
+```
+
+`SOURCES` is required.
+When `RESOURCES` is present, `RESOURCE_NAMESPACE` is also required and the application currently accepts one resource root.
+`BUNDLE_NAME` and `BUNDLE_IDENTIFIER` carry product identity into supported application shells.
+
+Generated projects discover `.cpp`, `.cc`, and `.cxx` files under `src/` and pass that result to this function.
+Explicit source lists remain useful in hand-authored projects that prefer strict build manifests.
+
+## Define a HuxerUI library
+
+`huxerui_add_library` creates a static, position-independent component library, links the selected framework form, and enables `[[huxerui::scope]]` transformation:
+
+```cmake
+huxerui_add_library(charts
+        SOURCES
+            src/chart.cpp
+            src/axis.cpp
+        RESOURCES
+            resources
+        RESOURCE_NAMESPACE
+            charts
+)
+
+target_include_directories(charts PUBLIC
+        "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>"
+        "$<INSTALL_INTERFACE:include>"
+)
+
+add_library(Charts::Charts ALIAS charts)
+```
+
+The resource namespace belongs to generated C++ identifiers and must be a valid C++ identifier.
+Libraries without resources omit both resource arguments.
+
+## Use a HuxerUI library
+
+Attach a target that already exists in the build:
+
+```cmake
+huxerui_use_library(notes TARGET Charts::Charts)
+```
+
+Acquire a local library project and then attach its exported target:
+
+```cmake
+huxerui_use_library(notes
+        TARGET Charts::Charts
+        PATH ../charts
+)
+```
+
+Acquire a remote library from an immutable revision:
+
+```cmake
+huxerui_use_library(notes
+        TARGET Charts::Charts
+        URL https://github.com/example/charts.git
+        REVISION 0123456789abcdef0123456789abcdef01234567
+)
+```
+
+Remote URLs must use HTTPS, omit embedded credentials, and provide a full commit SHA.
+`PATH` and `URL` are mutually exclusive.
+The library target remains the identity used by the application; acquisition is not a second dependency model.
+
+## Add resources to an existing target
+
+Use the lower-level resource function when the target was created outside `huxerui_add_app` or `huxerui_add_library`:
+
+```cmake
+huxerui_add_resources(my_target
+        ROOT resources
+        NAMESPACE app
+)
+```
+
+The resource compiler generates typed identifiers and a package consumed by the runtime.
+Registered roots for one target may not overlap, which keeps generated identifiers and packaging ownership unambiguous.
+
+## Enable scope code generation
+
+Use the lower-level codegen function for an ordinary target that contains `[[huxerui::scope]]` components:
+
+```cmake
+add_library(custom_widgets STATIC src/widgets.cpp)
+target_link_libraries(custom_widgets PRIVATE HuxerUI::huxerui_static)
+huxerui_enable_codegen(custom_widgets)
+```
+
+Call it after all source files have been added.
+Marked definitions belong in `.cpp`, `.cc`, or `.cxx` files; generated files are build output and must not be edited or committed.
+`huxerui_add_app` and `huxerui_add_library` already call this function.
+
+## Source and SDK parity
+
+The public functions are installed with the SDK and used by source builds too.
+Application CMake should select where HuxerUI comes from, then describe the application once.
+Avoid platform-specific copies of the shared source list, resource compiler invocation, or generated-code rules.
+
+## Related documentation
+
+- [SDK structure](/docs/tooling/sdk/)
+- [Resources and localization](/docs/guides/resources-and-localization/)
+- [CLI reference](/docs/tooling/cli/)
+- [Testing and delivery](/docs/tooling/testing-and-delivery/)
+

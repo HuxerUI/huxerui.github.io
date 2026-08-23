@@ -16,9 +16,11 @@ Declared by `<huxerui/layout.h>`, `<huxerui/scroll.h>`, and `<huxerui/virtual_la
 
 ## Custom layout
 
-`LayoutContext` exposes child count, child measurement, layout values, resolved environment, and window/title-bar metrics. `LayoutResult` contains the constrained layout size and child placements. `LayoutDescriptor` erases a `Layout<Derived>` measurement function. `MountedNode` is the retained node visible to framework layout implementations; applications should not retain it.
+`LayoutContext` exposes child count, child measurement, layout values, resolved environment, and window/title-bar metrics.
+`LayoutResult` contains the constrained layout size and child placements.
+Applications implement the static measurement contract on `Layout<Derived>` and do not retain child or mounted-node state.
 
-`LayoutValue<Key>` is typed parent-child metadata and uses `ErasedLayoutValue` internally.
+`LayoutValue<Key>` is typed parent-child metadata for values understood by the immediate parent layout.
 
 ## Scrolling
 

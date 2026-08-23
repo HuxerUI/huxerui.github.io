@@ -5,6 +5,8 @@ description: Display frames produced by a platform texture source.
 
 `ExternalTexture` is an immutable handle to a platform-owned texture stream. Display it with the `Image` component:
 
+## Display a published frame
+
 ```cpp
 Image(texture)
     .Fit(ImageFit::Contain)
@@ -12,6 +14,8 @@ Image(texture)
 ```
 
 The handle reports `IntrinsicSize()` and `HasValue()`. Platform-specific `ExternalTextureSource` types publish frames and produce the shared handle; source lifetime and thread rules are documented by each platform header.
+
+## Keep layout and pixels separate
 
 External textures are suitable for video, camera, GPU, and other externally updated content. They are distinct from `ImageAsset`: the platform source owns the changing frame while HuxerUI owns layout and compositing commands.
 

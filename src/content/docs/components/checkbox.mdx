@@ -7,6 +7,8 @@ sidebar:
 
 `Checkbox` represents a controlled on/off choice that can be selected independently of neighboring checkboxes.
 
+## Control the checked value
+
 ```cpp
 Checkbox("Include diagnostics", include_diagnostics)
     .OnChanged([include_diagnostics](bool checked) {
@@ -17,8 +19,12 @@ Checkbox("Include diagnostics", include_diagnostics)
 Construct it with a `bool` or `State<bool>`, with or without a `StringVariant` label.
 The state overload reads the current value; `OnChanged` emits the requested next value and does not mutate the state automatically.
 
+## Interaction and semantics
+
 The shared activation path supports pointer input, Enter, and Space.
 `Enabled(false)` disables activation and applies disabled styling.
+
+## Theme behavior
 
 `CheckboxStyle` controls box size, interactive and state-layer size, checked fill, checkmark, unchecked border, disabled colors, border width, and radius.
 Checkbox role, checked state, label, focus, and activate action are exposed automatically to accessibility services.

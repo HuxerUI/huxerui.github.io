@@ -19,6 +19,18 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      - name: Resolve documented HuxerUI revision
+        run: >-
+          node --input-type=module --eval
+          "import('./scripts/resolve-huxerui-source.mjs').then(async ({ resolveHuxerUISource }) => resolveHuxerUISource())"
+      - name: Compile documentation snippets
+        run: >-
+          cmake
+          -S tests/snippets
+          -B .cache/docs-snippets
+          -G Ninja
+          -DHUXERUI_SOURCE_DIR=${{ github.workspace }}/.cache/huxerui
+      - run: cmake --build .cache/docs-snippets --parallel
       - name: Check and build
         env:
           GITHUB_TOKEN: ${{ github.token }}

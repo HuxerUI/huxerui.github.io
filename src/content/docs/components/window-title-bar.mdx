@@ -5,6 +5,8 @@ description: Compose application-defined desktop title-bar content around standa
 
 `WindowTitleBar` is a layout for windows created with `WindowChromeMode::Custom`. It automatically contributes a draggable region and centers its children vertically.
 
+## Compose custom chrome
+
 ```cpp
 WindowTitleBar {
   Text("Studio"),
@@ -15,6 +17,8 @@ WindowTitleBar {
 ```
 
 Interactive descendants remain client controls and do not drag the window. The layout reserves platform- or framework-managed caption-control space through `WindowTitleBarMetrics`. Use `UseWindow()` when custom controls must invoke minimize, maximize, restore, toggle, or close.
+
+## Preserve desktop behavior
 
 The component is meaningful when custom chrome is enabled in `WindowOptions`; system chrome remains the default. Give custom caption actions accessible labels and preserve a usable drag region.
 

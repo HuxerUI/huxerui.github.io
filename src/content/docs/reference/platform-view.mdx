@@ -13,6 +13,7 @@ Declared by `<huxerui/platform_view.h>`.
 
 The type must match a platform-specific `PlatformViewFactory` registered in `RootContext::Modules()`. Recomposition supplies replacement property payloads; the adapter owns create/update/place/hide/dispose behavior.
 
-## Event descriptor
+## Typed events
 
-`detail::PlatformEventDescriptor` stores event key type, platform name, and typed dispatch function. `MakePlatformEventDescriptor<Key>()` and `DispatchPlatformViewEvent` connect payload decoding to `EventBindings`; these are template plumbing for `.Events`, not separate application APIs.
+Declare every platform event a view can emit with `.Events<Key...>()`, then bind it with `.On<Key>(handler)`.
+The event key owns its platform event name and payload decoder, keeping platform payload handling out of ordinary component code.

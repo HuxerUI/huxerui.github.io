@@ -13,7 +13,9 @@ Copy-on-write declarative value. Public rvalue-qualified operations are `OnClick
 
 ## Children and factories
 
-`Views` is a dynamic child collection with `Reserve`, `Add`, `Size`, `Items`, and rvalue `Take`. `ForEach(range, factory)` and the `State<Range>` overload build it. Containers accept `View` and `Views` children. `detail::ViewFactoryFor` and `BindViewFactory` define the copyable factory/argument contract used across components.
+`Views` is a dynamic child collection with `Reserve`, `Add`, `Size`, `Items`, and rvalue `Take`.
+`ForEach(range, factory)` and the `State<Range>` overload build it.
+Containers accept `View` and `Views` children, and component factories retain copyable arguments when an API defers their invocation.
 
 ## Extension layouts
 

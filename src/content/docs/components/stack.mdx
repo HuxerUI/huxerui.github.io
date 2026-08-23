@@ -8,6 +8,8 @@ sidebar:
 `Stack` measures and overlays children in declaration order.
 Later children paint above earlier children.
 
+## Overlay local content
+
 ```cpp
 Stack {
   Image(app::images::cover)
@@ -24,6 +26,8 @@ Stack {
 
 Use child `Align` modifiers to position content within the stack's available size.
 Apply `ClipChildren` with `CornerRadius` when overlays must remain inside a shaped surface.
+
+## Keep window layers separate
 
 Stack controls painting order but does not create a window-level overlay.
 Use presentation services and layers for dialogs, menus, popups, tooltips, and other content that must escape the application subtree.

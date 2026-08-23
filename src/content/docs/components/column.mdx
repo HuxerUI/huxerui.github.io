@@ -7,6 +7,8 @@ sidebar:
 
 `Column` is a braced layout container whose main axis is vertical.
 
+## Arrange vertical content
+
 ```cpp
 Column {
   Text("Account", TextRole::Title),
@@ -22,6 +24,8 @@ Column {
 `Spacing` sets the gap between adjacent children.
 `MainAlign` distributes remaining vertical space; `CrossAlign` positions or stretches children horizontally.
 Children carrying `Grow(factor)` share available vertical space proportionally.
+
+## Preserve child order and identity
 
 The container accepts individual `View` values and flattened `Views` groups from `ForEach`.
 Children retain declaration order for layout, painting, hit testing, and semantics.

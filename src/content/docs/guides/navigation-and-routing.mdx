@@ -20,7 +20,12 @@ View App() {
 }
 ```
 
-The variadic `Push` and `Replace` overloads bind copyable factory arguments without an application-authored forwarding lambda. Covered pages remain mounted, preserving state until popped or replaced.
+The variadic `Push` and `Replace` overloads bind copyable factory arguments without an application-authored forwarding lambda.
+Covered pages remain mounted, preserving state until popped or replaced.
+
+`NavigationController::Depth()` reports the current factory-stack depth.
+`Pop()` returns to the retained previous page, while `Replace()` changes only the top page and keeps the retained prefix.
+Use factory navigation for transient local flows whose parameters do not need serialization.
 
 ## Typed routes
 
@@ -43,12 +48,87 @@ View RoutedApp() {
 }
 ```
 
-`RouteNavigationController<Route>` mutates the controlled path through `Push`, `Pop`, `Replace`, and `SetPath`. A route type must be copyable and equality-comparable. Prefer a small value type that carries stable route parameters, not retained UI objects.
+`RouteNavigationController<Route>` mutates the controlled path through `Push`, `Pop`, `Replace`, and `SetPath`.
+A route type must be copyable and equality-comparable.
+Prefer a small value type that carries stable route parameters, not retained UI objects.
 
-Nested stacks resolve the nearest compatible controller through `UseNavigation`. `UseRootNavigation` deliberately resolves the outermost compatible stack for app-level transitions.
+The path is the authoritative history.
+Replacing it from application state supports deep links, session restoration, external activation, and tests without issuing a sequence of imperative pushes.
+
+```cpp
+navigation.SetPath(NavigationPath<Route> {
+  Route{Route::Kind::Article, 42},
+  Route{Route::Kind::Settings},
+});
+```
+
+Equal route prefixes retain their mounted page state when the path changes.
+Changing one route replaces that page and the suffix above it.
+
+## Nested and root navigation
+
+`UseNavigation()` resolves the nearest stack compatible with the requested controller type.
+This makes a local flow or an article's internal pages independent of the application's outer route stack.
+
+Use `UseRootNavigation()` when an action intentionally targets the outermost stack:
+
+```cpp
+View ArticleNotes(int article_id) {
+  auto local = UseNavigation();
+  auto root = UseRootNavigation<Route>();
+
+  return Row {
+    Button("Back to article").OnClick([local] { local.Pop(); }),
+    Button("Home").OnClick([root] {
+      root.SetPath(NavigationPath<Route>{});
+    }),
+  };
+}
+```
+
+Do not use the root controller merely to avoid passing a value.
+Nearest-stack resolution keeps reusable flows composable; root navigation is for explicit application-level transitions.
+
+## Motion and back behavior
+
+Navigation transitions come from `NavigationStyle` in the active Theme.
+Push, pop, and replace can use different motion while retaining both participating pages for the transition.
+Reduced-motion preferences simplify or remove spatial movement without changing path semantics.
+
+Platform Back requests are offered to the active navigation stack before application-level fallback.
+On platforms with predictive Back, the stack can preview the pop and commit or cancel it without mutating application history early.
 
 ## Browser URLs
 
-On Web, include `<huxerui/web/navigation.h>` and use `BrowserNavigationStack`. A codec maps the complete `NavigationPath<Route>` to and from the browser URL. Back/forward actions update the same controlled path, while application mutations commit browser history. Keep parsing deterministic and return a valid root path for unsupported URLs.
+On Web, include `<huxerui/web/navigation.h>` and use `BrowserNavigationStack`.
+A codec maps the complete `NavigationPath<Route>` to and from the browser location:
 
-Navigation motion comes from `NavigationStyle`; reduced-motion preferences suppress or simplify transitions. See [NavigationStack](../../components/navigation-stack/) for the complete component API.
+```cpp
+struct RouteCodec {
+  std::optional<NavigationPath<Route>> Decode(std::string_view location) const;
+  std::string Encode(const NavigationPath<Route>& path) const;
+};
+
+View RoutedApplication(State<NavigationPath<Route>> path) {
+  return web::BrowserNavigationStack(Home, path, ResolveRoute, RouteCodec{});
+}
+```
+
+Application pushes and replacements commit browser history.
+Browser Back and Forward decode a location into the same controlled path without echoing another history entry.
+One browser document can have one URL-synchronizing stack at a time.
+
+`Decode` returns `std::nullopt` for locations the application does not own.
+`Encode` must produce a same-document path, query, fragment, or same-origin URL accepted by the History API.
+Keep the codec deterministic and canonicalize equivalent locations through `Encode`.
+
+## Route design checklist
+
+- Keep routes small, copyable, equality-comparable values.
+- Store stable identifiers and user-visible navigation parameters, not services or mounted UI.
+- Let the resolver create the page from a route; do not store a `View` in the route.
+- Lift the controlled path above responsive branches that replace navigation chrome.
+- Validate external URL and activation data before constructing a route.
+- Keep local factory stacks for flows that should not appear in the global URL or restored session.
+
+See [NavigationStack](../../components/navigation-stack/) for the component API and run the [Navigation example](/examples/navigation/) to inspect nested factory and typed route stacks.

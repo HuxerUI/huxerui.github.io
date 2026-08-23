@@ -5,6 +5,8 @@ description: Present primary destinations as a compact rail or expanded side pan
 
 `NavigationPane` uses the same controlled `NavigationItem` model as `NavigationBar`, but lays destinations out vertically.
 
+## Choose compact or expanded presentation
+
 ```cpp
 const bool expanded = UseViewportClass() == ViewportClass::Expanded;
 
@@ -22,7 +24,11 @@ NavigationPane(
 
 The third constructor argument is `expanded` and defaults to `false`. Compact mode behaves like a navigation rail; expanded mode exposes a wider label-oriented pane. Responsiveness remains explicit application composition rather than a hidden component rewrite.
 
+## Control selection
+
 Selection is controlled and updates through `NavigationEvents::Changed`. `NavigationPaneStyle` owns compact and expanded widths, item geometry, content colors, indication, and selection animation.
+
+## Preserve destination semantics
 
 Both visual modes publish the same `Navigation` collection.
 Each destination is a labelled semantic button with stable selected and disabled state, so changing `expanded` does not replace its accessible identity.

@@ -3,10 +3,13 @@ title: Animation
 description: Animate values, transitions, repeated motion, and scene changes without recomposing every frame.
 ---
 
-HuxerUI retains animation state on mounted nodes. `AnimateTo` describes a target and timing policy; `Transition` binds animated presentation to a view.
+HuxerUI retains animation state on mounted nodes.
+`AnimateTo` describes a target and timing policy; `Transition` maps one animated progress value to several presentation properties.
+
+## Animate a presentation value
 
 ```cpp
-return Card().With(
+return ContentCard().With(
     Transition(AnimateTo(
         visible ? 1.0F : 0.0F,
         TweenSpec{.duration = 0.2, .easing = Easing::EaseOut}
@@ -16,8 +19,36 @@ return Card().With(
 );
 ```
 
-Animation specs are `SnapSpec`, `TweenSpec`, `SpringSpec`, or `KeyframeSpec`. `AnimationPlayback` adds delay, repeat count, and restart or reverse behavior. Animatable presentation values include opacity, offset, scale, and rotation with configurable transform origin.
+Changing `visible` updates the target during recomposition.
+The retained transition continues advancing opacity and offset through scheduled frames without rebuilding the component every frame.
+
+## Choose a motion specification
+
+Animation specs are `SnapSpec`, `TweenSpec`, `SpringSpec`, or `KeyframeSpec`.
+Use a tween for duration-based interface motion, a spring for responsive settling, keyframes for an authored progress curve, and snap when motion must resolve immediately.
+
+`AnimationPlayback` adds delay, a finite or unbounded iteration count, and restart or reverse behavior.
+Animatable presentation values include opacity, offset, scale, and rotation with configurable transform origin.
+
+## Coordinate several properties
+
+Use one `Transition` when opacity and transforms describe one visual state change.
+Use independent `AnimateTo` modifiers when properties have unrelated targets or timing.
+Presentation animation does not change measurement, so reserve layout changes for composition and layout rather than attempting to animate parent constraints indirectly.
+
+For procedural motion, retain a `MotionController` in a `NodeExtension` and advance it from `FrameInfo`.
+Application code should not update `State` on every display frame.
+
+## Run a scene transition
 
 `UseSceneTransition()` returns a handle whose `Anchor()` modifier tags retained scene content and whose `Run` or `RunAt` method applies a mutation with a fade or circular reveal. Navigation and presentation services consume their own theme motion structures.
 
-Animations advance through the frame scheduler, not state recomposition. Reduced-motion preferences are resolved by the runtime and should remain respected by custom animation. See [Animation API](../../reference/animation/) and [Canvas](../../components/canvas/) for custom drawing.
+Scene transitions capture the current visual state around a declared mutation.
+They are appropriate for theme changes and other whole-scene changes; use ordinary `Transition` for a component that remains in the same scene.
+
+## Respect reduced motion
+
+Reduced-motion preference is resolved by the runtime.
+Built-in transitions simplify or suppress their motion automatically; custom retained animation should resolve to a stable result without requiring the user to watch repeated movement.
+
+See the [Animation API](../../reference/animation/) and [Canvas](../../components/canvas/) for custom drawing.

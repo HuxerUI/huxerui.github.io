@@ -5,12 +5,17 @@ description: Attach a theme-aware descriptive hint to a view.
 
 `Tooltip` is a retained modifier for concise labels or explanations revealed by hover, focus, or long press.
 
+## Attach supplemental help
+
 ```cpp
 IconButton(images::refresh, "Refresh")
     .With(Tooltip("Refresh messages"))
 ```
 
 The message accepts `StringVariant`. Tooltip timing, placement, viewport margin, surface, typography, and touch duration come from `TooltipStyle`. Because the trigger already requires an accessible name, the tooltip supplements rather than replaces the control's semantics.
+
+Keep tooltip text concise and non-interactive.
+Use Popup when users must focus, activate, or navigate the floating content.
 
 ## API
 

@@ -7,6 +7,8 @@ sidebar:
 
 `ScrollView` hosts one content `View` and scrolls vertically by default.
 
+## Scroll one measured subtree
+
 ```cpp
 [[huxerui::scope]]
 View Document() {
@@ -27,8 +29,12 @@ View Document() {
 Set `.ScrollAxis(Axis::Horizontal)` for horizontal content.
 `.Controller(ScrollController)` connects imperative coordination without moving the scroll offset into component state.
 
+## Coordinate through a controller
+
 `ScrollController` reports `ScrollMetrics` and supports `ScrollTo`, `ScrollBy`, and virtual-layout `ScrollToItem`.
 Create a scope-stable controller with `UseScrollController(initial_offset)`.
+
+## Preserve user scrolling
 
 The runtime owns pointer wheel or touch scrolling, momentum, bounds, clipping, scrollbar interaction, and nested scroll arbitration.
 Focused text input may request visibility, but user scrolling remains authoritative and can move away from the field.

@@ -3,6 +3,7 @@ import DemoFrame from "../../components/DemoFrame.astro";
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import { examples } from "../../data/examples";
 import { site } from "../../data/site";
+import sourceConfig from "../../../huxerui-source.json";
 
 export function getStaticPaths() {
   return examples.map((example) => ({ params: { slug: example.slug }, props: { example } }));
@@ -21,7 +22,7 @@ const { example } = Astro.props;
       <div>
         <p>{example.description}</p>
         <div class="button-row">
-          <a class="button" href={`${site.repository}/blob/main/${example.source}`}>View C++ source</a>
+          <a class="button" href={`${site.repository}/blob/${sourceConfig.ref}/${example.source}`}>View C++ source</a>
           <a class="button" href="/examples/">All examples</a>
         </div>
       </div>

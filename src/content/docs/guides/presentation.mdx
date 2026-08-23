@@ -3,7 +3,10 @@ title: Presentation
 description: Present toasts, dialogs, bottom sheets, popups, menus, and tooltips.
 ---
 
-Presentation content belongs to the current window's layer stack. `UseToast`, `UseDialog`, `UseBottomSheet`, `UsePopup`, and `UseMenu` return lightweight handles connected to window-scoped services.
+Presentation content belongs to the current window's layer stack.
+`UseToast`, `UseDialog`, `UseBottomSheet`, `UsePopup`, and `UseMenu` return lightweight handles connected to window-scoped services.
+
+## Present from an event
 
 ```cpp
 auto toast = UseToast();
@@ -17,8 +20,35 @@ Button("Save").OnClick([toast, dialog] {
 })
 ```
 
+Handles are safe to capture by value.
+An empty action callback on a standard alert uses the default dismissal behavior.
+
+## Capture the presenting environment
+
 Calling `Show` captures the current `Environment`, so theme and localized resources follow the presenting subtree even though the content is rendered outside the application layout tree. Handles return `LayerId` values for explicit updates or dismissal.
 
+Pass a view factory when content needs to compose after `Show` returns.
+Use the context-aware Dialog, BottomSheet, or Popup factory when content needs its own layer ID or `Dismiss()` operation.
+
+## Choose a presentation
+
+- Use Toast for brief non-modal feedback.
+- Use Dialog for a blocking decision or focused custom modal surface.
+- Use BottomSheet for a bottom-aligned modal task whose style may differ from a dialog.
+- Use Popup for arbitrary content anchored to a view or point.
+- Use Menu for structured actions, sections, checked state, and submenus.
+- Use Tooltip for delayed explanatory text attached to an existing control.
+
+## Control dismissal and focus
+
 Modal presentations trap the relevant interaction and restore focus after dismissal. Anchored presentations use a retained `LayerAnchor` modifier and follow final view bounds. Point-positioned popup and menu overloads are available for pointer context menus.
+
+Options decide whether outside press and platform cancel dismiss the layer.
+After an action completes, dismiss or replace the layer unless the interaction explicitly continues inside it.
+
+Declarative presentation modifiers are appropriate when visibility is controlled by the surrounding tree.
+Imperative handles are appropriate for event-driven alerts, menus, transient feedback, and content that naturally returns a result through callbacks.
+
+## Let the theme own presentation style
 
 Themes own presentation style: placement, scrim, shape, shadow, spacing, item treatment, and motion can differ without changing application intent. See the individual component pages for [Toast](../../components/toast/), [Dialog](../../components/dialog/), [BottomSheet](../../components/bottom-sheet/), [Popup](../../components/popup/), [Menu](../../components/menu/), and [Tooltip](../../components/tooltip/).

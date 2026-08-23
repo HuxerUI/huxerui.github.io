@@ -11,6 +11,8 @@ Declared by `<huxerui/lifecycle.h>`.
 
 Registers setup in the current scope. Setup may return `void` or a callable cleanup returning `void`. Dependencies may be equality-comparable copyable values, `State<T>`, or `StateList<T>`; setup reruns when a captured value/version changes.
 
-The previous cleanup runs before replacement. Final cleanup runs when the declaring scope unmounts. Without dependencies, the registration follows that scope's mount lifetime.
+The previous cleanup runs before replacement.
+Final cleanup runs when the declaring scope unmounts.
+Without dependencies, the registration follows that scope's mount lifetime.
 
-`detail::LifecycleSetup`, `LifecycleCleanup`, and `LifecycleDependency` are public template plumbing for `Lifecycle`, not alternate application entry points.
+Call `Lifecycle` from composition rather than constructing its template machinery directly.

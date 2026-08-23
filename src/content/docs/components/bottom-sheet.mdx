@@ -5,6 +5,8 @@ description: Present custom modal content from the bottom edge of the window.
 
 `BottomSheetHandle` presents application-defined content in a theme-shaped, bottom-aligned modal surface.
 
+## Present bottom-aligned content
+
 ```cpp
 auto sheets = UseBottomSheet();
 
@@ -22,6 +24,13 @@ Button("Share").OnClick([sheets] {
 ```
 
 The factory may take no context or receive `BottomSheetContext`. `BottomSheetOptions` controls cancel and outside-press dismissal. The handle returns a `LayerId` and can dismiss it explicitly.
+
+## Dismiss from content
+
+Use the context-aware factory when an action completes the sheet's task.
+An outside or platform-cancel request follows `BottomSheetOptions` rather than bypassing application policy.
+
+## Theme and environment
 
 `BottomSheetStyle` controls scrim, surface, top corners, shadow, drag-handle geometry, maximum width, and enter/exit animation. Content retains the environment captured at `Show` time.
 

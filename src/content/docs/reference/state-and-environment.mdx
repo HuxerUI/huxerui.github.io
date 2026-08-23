@@ -9,7 +9,14 @@ Declared by `<huxerui/state.h>` and `<huxerui/environment.h>`.
 
 ## `State<T>`
 
-Copyable handle to one observed value. `Get()` and implicit const conversion read and subscribe the current scope; assignment and supported arithmetic/increment operators update the cell. `IsValid()` reports whether the handle is connected.
+Copyable handle to one observed value.
+Implicit conversion to `const T&`, `operator->`, and `Get()` read the value and subscribe the current scope.
+Prefer ordinary conversion and member access in application expressions; use `Get()` when an explicit reference or overload disambiguation is useful.
+
+Assignment publishes a replacement value.
+Supported compound operators are `+=`, `-=`, `*=`, `/=`, `%=`, `&=`, `|=`, `^=`, `<<=`, and `>>=` when the stored type supports them.
+Prefix and postfix increment and decrement are also available.
+`Update(function)` mutates the stored value and publishes one update, while `IsValid()` reports whether the handle is connected.
 
 ## `StateList<T>`
 

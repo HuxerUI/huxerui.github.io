@@ -1,0 +1,112 @@
+---
+title: SDK structure
+description: Understand host SDK contents, library variants, platform artifacts, tool discovery, installation, and upgrades.
+---
+
+A HuxerUI SDK is a relocatable development kit for one host system and architecture.
+It combines the host CLI and code generators with CMake metadata, public headers, host libraries, built-in resources, and packaged target-platform artifacts.
+
+## Directory layout
+
+A complete installation follows this logical structure:
+
+```text
+HuxerUI/
+├── bin/                         # huxerui CLI and host shared runtime files
+├── include/huxerui/             # public C++ headers
+├── lib/                         # host shared import/static libraries
+│   └── cmake/HuxerUI/           # package config and public CMake functions
+├── share/huxerui/
+│   ├── resources/               # built-in HuxerUI resource package
+│   ├── tools/<host>/<arch>/     # hcg and hrc host executables
+│   └── platform/
+│       ├── android/             # AAR and ABI-specific libraries
+│       └── web/emscripten-*/    # Emscripten static library
+└── LICENSE
+```
+
+Some hosts include additional dependency archives or license files required by their static package.
+Applications should discover these through CMake and the CLI rather than construct paths into the SDK.
+
+## Host tools and target artifacts
+
+`hcg` transforms `[[huxerui::scope]]` source on the development host.
+`hrc` compiles application and library resources on the development host.
+Their directory therefore follows the host OS and architecture, not the application target ABI.
+
+Android and Web artifacts are target outputs carried by the host SDK so one installed tool can build those platforms.
+The Android package contains the HuxerUI AAR plus supported ABI libraries.
+The Web package is tied to the Emscripten version named in its directory.
+
+## Shared and static libraries
+
+Desktop SDKs can expose both forms:
+
+- `HuxerUI::huxerui` selects the shared runtime when that package provides it.
+- `HuxerUI::huxerui_static` requests static linkage explicitly.
+- iOS and Web expose the static form only.
+- Generated Android applications use the shared runtime expected by the Java host shell.
+
+Windows SDKs can contain both release and debug libraries so a multi-configuration application does not mix C runtime variants.
+Do not copy a `.dll`, `.so`, or `.a` into an application manually; use the exported CMake targets so runtime files and transitive dependencies remain correct.
+
+## Locate an SDK
+
+The CLI resolves an explicit `HUXERUI_HOME` before looking relative to itself:
+
+```powershell
+$env:HUXERUI_HOME = "D:\Environment\HuxerUI"
+$env:Path = "$env:HUXERUI_HOME\bin;$env:Path"
+```
+
+```bash
+export HUXERUI_HOME=/opt/huxerui
+export PATH="$HUXERUI_HOME/bin:$PATH"
+```
+
+Generated CMake projects accept the same location.
+When the path is a source checkout containing `CMakeLists.txt` and public headers, they use `add_subdirectory`; otherwise they resolve the installed package from that path.
+
+## Install and verify
+
+Extract an official SDK archive without flattening its top-level directory, then add `bin/` to `PATH` or set `HUXERUI_HOME`.
+Verify the installation before opening a project:
+
+```bash
+huxerui --version
+huxerui doctor
+```
+
+`doctor` confirms the selected SDK and separately diagnoses platform toolchains.
+A valid HuxerUI SDK does not imply that Android Studio, Xcode, Emscripten, or another external platform SDK is installed.
+
+## Upgrade safely
+
+Install a new SDK into a new directory, point `HUXERUI_HOME` at it, and run `doctor` plus a clean configure of the application.
+Do not overlay files from different HuxerUI versions: stale CMake exports, generators, or platform artifacts can create a package that appears valid but is internally inconsistent.
+
+Commit application source and platform shells, not generated `.huxerui/` build state or copied SDK files.
+After validating the new version, remove the old installation independently of project cleanup.
+
+## Build an SDK from source
+
+Repository maintainers use the host packaging script, which builds Android and Web target artifacts before producing the host archive:
+
+```powershell
+scripts\package_sdk.ps1 -Configuration Release
+```
+
+```bash
+./scripts/package_sdk.sh
+```
+
+The scripts require the relevant platform toolchains, including Emscripten 4.0.19 for the current package format.
+Application developers normally consume a release archive instead of running SDK packaging.
+
+## Related documentation
+
+- [Installation](/docs/get-started/installation/)
+- [CMake integration](/docs/tooling/cmake/)
+- [CLI reference](/docs/tooling/cli/)
+- [Platform guides](/docs/platforms/)
+

@@ -3,7 +3,10 @@ title: Window and system UI
 description: Configure safe-area policy, system bars, desktop chrome, and window commands.
 ---
 
-`WindowOptions` is stable for one runtime. It sets title, initial logical size, content mode, chrome mode, preferred custom title-bar height, and caption labels.
+`WindowOptions` is stable for one runtime.
+It sets title, initial logical size, content mode, chrome mode, preferred custom title-bar height, and caption labels.
+
+## Choose the root content mode
 
 `WindowContentMode::SafeArea` keeps root content inside platform obstructions. `EdgeToEdge` gives the app the complete drawing surface; apply `SafeAreaPadding` only where content must avoid selected edges.
 
@@ -17,6 +20,31 @@ return Content().With(
 );
 ```
 
+In `SafeArea` mode the runtime consumes physical safe-area insets before measuring the root.
+In `EdgeToEdge` mode the root receives the complete viewport and can apply selected insets to individual surfaces instead of padding the entire application.
+
+Software-keyboard viewport changes are distinct from persistent safe-area insets.
+
+## Style system bars
+
+`SystemBarsAppearance` sets available status-bar and navigation-bar backgrounds and chooses automatic, light, or dark system content.
+Use automatic brightness when the adapter can infer it from the resolved background; set an explicit value when the application owns a contrasting surface.
+
+System bar availability varies by mobile platform and window mode.
+Unsupported fields remain platform-neutral intent rather than emulated desktop bars.
+
+## Use system or custom desktop chrome
+
 Desktop windows default to `WindowChromeMode::System`. `Custom` lets application UI occupy the title-bar surface; compose [WindowTitleBar](../../components/window-title-bar/) and use `UseWindow()` for window commands.
 
+`WindowTitleBar` separates draggable and interactive regions while caption controls invoke the same `WindowHandle` commands as application controls.
+Custom caption height comes from `WindowOptions`; choose it to match the application's shell rather than assuming one system height.
+
+## Read current metrics
+
 `WindowMetrics` is an environment value containing viewport, remaining safe-area insets, and optional title-bar metrics. System-bar brightness can be automatic, light, or dark. Availability and native behavior vary by platform; see the platform guides.
+
+Responsive composition should normally use `UseViewportClass()`.
+Read complete metrics only when geometry such as an edge surface or custom title bar genuinely depends on the exact viewport or remaining insets.
+
+See the [Window API](../../reference/window/) and the relevant [platform guide](../../platforms/).

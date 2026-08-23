@@ -37,6 +37,14 @@ jobs:
           chmod +x
           .cache/huxerui/tools/prebuilt/linux/x86_64/hcg
           .cache/huxerui/tools/prebuilt/linux/x86_64/hrc
+      - name: Compile documentation snippets
+        run: >-
+          cmake
+          -S tests/snippets
+          -B .cache/docs-snippets
+          -G Ninja
+          -DHUXERUI_SOURCE_DIR=${{ github.workspace }}/.cache/huxerui
+      - run: cmake --build .cache/docs-snippets --parallel
       - name: Configure Web examples
         run: >-
           emcmake cmake
@@ -53,7 +61,17 @@ jobs:
         run: >-
           cmake --build .cache/huxerui-web-build --parallel
           --target
+          example_counter
           example_ui_gallery
+          example_dynamic_list
+          example_scroll_view
+          example_virtual_list
+          example_virtual_grid
+          example_task
+          example_http
+          example_files
+          example_lifecycle
+          example_application
           example_canvas
           example_tabs
           example_navigation

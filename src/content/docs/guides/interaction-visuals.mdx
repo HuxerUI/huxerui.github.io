@@ -1,0 +1,123 @@
+---
+title: Interaction visuals
+description: Resolve enabled, hover, focus, press, ripple, and focus-ring feedback from one retained interaction model.
+---
+
+HuxerUI records interaction as runtime state and lets the active theme translate that state into visual feedback.
+Applications do not need one `State<bool>` for hover, focus, or press, and built-in controls share the same pointer and keyboard activation path.
+
+## InteractionState
+
+`InteractionState` contains five application-visible facts:
+
+| Field | Meaning |
+| --- | --- |
+| `enabled` | The node can participate in ordinary semantic activation. |
+| `hovered` | A hover-capable pointer is inside the node. |
+| `focused` | The node owns keyboard focus. |
+| `focus_visible` | Focus should receive a visible keyboard-style cue. |
+| `pressed` | At least one active pointer or keyboard press belongs to the node. |
+
+`pressed` aggregates all active press sessions.
+Releasing or cancelling the last session returns it to `false`; pointer and keyboard sessions cannot incorrectly clear each other.
+
+The normal visual is the component's base style.
+`Indication` describes layers that enter while a state is active and exit when it becomes inactive, so it does not need separate `not_pressed` or `not_hovered` fields.
+
+## Indication layers
+
+An `IndicationLayer` can add an optional `VisualFill`, border, corner radii, placement, and enter/exit animation.
+The fill can be a color, linear gradient, radial gradient, or image fill.
+
+```cpp
+Indication action_feedback {
+  .hover = IndicationLayer {
+    .fill = VisualFill(Color::Rgb(255, 255, 255, 0.10F)),
+    .placement = IndicationPlacement::AboveContent,
+  },
+  .press = IndicationLayer {
+    .fill = VisualFill(Color::Rgb(255, 255, 255, 0.18F)),
+    .placement = IndicationPlacement::AboveContent,
+  },
+  .ripple = RippleEffect {
+    .color = Color::Rgb(255, 255, 255, 0.24F),
+  },
+};
+
+Button("Run")
+    .OnClick(RunProject)
+    .With(std::move(action_feedback))
+```
+
+`BehindContent` paints before node content; `AboveContent` paints after it.
+State fills and borders may sit behind content, while a Material-style state layer or ripple usually belongs above it.
+
+Use `IndicationGeometry::layer_size` when the feedback target differs from the component's measured bounds, such as an icon with a larger circular state layer.
+Use `clip_corner_radii` to keep a ripple or state fill inside the intended shape.
+
+## Ripple
+
+`RippleEffect` is a specialized animated foreground or background effect with a color, placement, expansion spec, and fade-out spec.
+Its origin comes from pointer interaction when available; keyboard activation uses a non-spatial origin appropriate to the component.
+
+A ripple remains color based because it represents transient interaction energy rather than a replacement surface.
+Use an `IndicationLayer` when hover or press should swap a gradient, image, or border.
+
+The expansion begins on press and the fade completes after release or cancellation.
+Theme motion and reduced-motion policy can shorten or remove the spatial effect without changing activation behavior.
+
+## Focus and FocusRing
+
+`focused` and `focus_visible` are distinct.
+A pointer may focus a text field without requesting a keyboard focus ring, while Tab navigation normally sets both.
+
+`FocusRing` provides color, width, and offset for theme-owned focus treatment:
+
+```cpp
+ThemeSpec spec = MaterialLightThemeSpec();
+spec.interactions.focus_ring = FocusRing {
+  .color = Color::Rgb(38, 99, 218),
+  .width = 2.0F,
+  .offset = 2.0F,
+};
+```
+
+An offset of zero follows the component edge.
+A positive offset separates the ring from the surface and avoids confusing it with a selected or validation border.
+Choose a focus color with reliable contrast against both the component and surrounding surface; it does not have to equal the primary brand color.
+
+## Theme ownership
+
+`ThemeSpec::interactions` supplies the default `Indication`, `FocusRing`, and disabled opacity.
+Component styles can replace the indication when geometry or visual intent differs:
+
+- `ButtonStyle` and `IconButtonStyle` can provide control-specific indication.
+- `ChipStyle` can distinguish selected and unselected indication.
+- Menu, navigation, text-field, and presentation styles can choose feedback consistent with their visual family.
+
+Material can use state layers and ripple while Flat can use direct hover and press fills.
+The component event contract remains unchanged when the theme changes.
+
+## Custom interactive nodes
+
+Use a built-in control when its semantics fit.
+`Button` receives default indication even when it has no click handler so its visual recipe remains a complete control; `Enabled(false)` suppresses activation and resolves disabled styling.
+
+For a genuinely custom node:
+
+- Add `Focusable` only when it has a keyboard interaction contract.
+- Bind typed pointer or key events rather than maintaining a parallel platform listener.
+- Attach `Indication` for retained feedback.
+- Add `Semantics` and semantic actions so accessibility activation matches pointer and keyboard behavior.
+- Handle pointer cancellation and focus loss, not only successful release.
+
+Do not recompose the component every animation frame.
+Indication animation is retained on the mounted node and invalidates paint only while visible state changes.
+
+## Related documentation
+
+- [Events and interaction](/docs/dsl/events-and-interaction/)
+- [Theme and styling](/docs/guides/theme-and-styling/)
+- [Modifier and indication API](/docs/reference/modifier/)
+- [Accessibility](/docs/guides/accessibility/)
+

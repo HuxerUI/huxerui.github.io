@@ -7,6 +7,8 @@ sidebar:
 
 `Row` is a braced layout container whose main axis is horizontal.
 
+## Arrange horizontal content
+
 ```cpp
 Row {
   Image(app::images::avatar).With(Frame{.width = 40.0F, .height = 40.0F}),
@@ -24,6 +26,8 @@ Row {
 `Spacing` sets horizontal gaps.
 `MainAlign` distributes remaining width and `CrossAlign` positions or stretches children vertically.
 `Grow(factor)` lets a child consume a proportional share of remaining width.
+
+## Choose flexible or wrapping layout
 
 Use `Spacer()` for a simple flexible empty region.
 Use `Flow` instead when a horizontal collection must wrap rather than overflow or shrink.

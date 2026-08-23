@@ -1,0 +1,113 @@
+---
+title: Testing and delivery
+description: Validate HuxerUI applications, diagnose platform environments, package artifacts, and keep release builds reproducible.
+---
+
+HuxerUI separates application tests, platform diagnosis, compilation, and distributable packaging.
+Use each layer as evidence for the contract it actually covers.
+
+## Test application logic
+
+Keep state reducers, parsers, route codecs, validation rules, and service code independent of a native window where possible.
+They can use the project's ordinary C++ test framework and link the same HuxerUI target as the application.
+
+For UI behavior, test controlled outputs rather than implementation details:
+
+- Provide an authoritative value and verify the component emits the requested change.
+- Exercise disabled and cancellation paths as well as success.
+- Use stable keys when a test inserts, removes, or reorders stateful siblings.
+- Drive deterministic time for animation tests instead of sleeping.
+- Verify semantic roles, labels, values, and actions for accessibility-sensitive controls.
+
+Platform adapters still require integration tests on their real host because native text input, accessibility, clipboard, windows, and graphics services cannot be proven by a shared unit test alone.
+
+## Diagnose before building
+
+Run the non-mutating environment check in CI and on a new workstation:
+
+```bash
+huxerui doctor windows,web
+```
+
+Use `huxerui setup <platforms>` only in provisioning jobs that are allowed to install tools.
+For repeatable CI, pin the HuxerUI SDK and external platform SDK versions rather than relying on the newest globally available tools.
+
+## Build profiles
+
+Use debug builds for diagnostics and release builds for performance and packaging:
+
+```bash
+huxerui build windows --profile debug
+huxerui build windows --profile release
+```
+
+A release build is not proof of a valid installer, store archive, or signed binary.
+Run the packaged application from its staged directory so missing runtime libraries and resource packages are visible before distribution.
+
+## Package per platform
+
+Create distributable inputs under `dist/<platform>`:
+
+```bash
+huxerui package windows,web
+```
+
+The platform driver replaces its destination directory on each successful package operation.
+Apply signing and publication after this boundary:
+
+| Platform | Typical next step |
+| --- | --- |
+| Windows | Installer or archive creation, code signing, clean-machine launch test. |
+| macOS | Bundle signing, notarization, and distribution packaging. |
+| iOS | Xcode archive, provisioning validation, and App Store export. |
+| Android | Release signing and Play-compatible bundle or APK workflow. |
+| Linux | Distribution-specific package or portable archive. |
+| Web | Deploy the generated site with correct MIME types, caching, and cross-origin policy. |
+
+## Release checklist
+
+Before publishing an application:
+
+- Run focused tests and the full shared suite used by the project.
+- Build every affected platform from an available supported host.
+- Verify generated resources and localized fallback strings.
+- Exercise startup activation, warm activation, suspend/background transitions, and route restoration.
+- Test keyboard, pointer, touch, text input, selection, and accessibility on applicable devices.
+- Run without a developer SDK on `PATH` to expose accidental runtime dependencies.
+- Record the HuxerUI SDK version and external toolchain versions used by the release.
+
+Treat a platform unavailable to CI as explicitly unverified, not implicitly passing.
+
+## Common failures
+
+### HUXERUI_HOME is not found
+
+Set `HUXERUI_HOME` to the extracted SDK root or place the SDK's `bin/` directory on `PATH`, then rerun `huxerui doctor`.
+
+### A generated scope is not transformed
+
+Keep the marked definition in a `.cpp`, `.cc`, or `.cxx` source and ensure `huxerui_enable_codegen` runs after the target owns that source.
+Applications and libraries created by HuxerUI CMake helpers already enable it.
+
+### Resources compile but do not load
+
+Use `huxerui_add_app`, `huxerui_add_library`, or `huxerui_add_resources` so the generated header and binary package share one namespace and packaging owner.
+Do not copy only the generated header.
+
+### A remote library changes unexpectedly
+
+`huxerui_use_library` requires a full commit SHA for remote URLs.
+Update that revision deliberately and review the dependency as application source.
+
+### A device command is ambiguous
+
+Run `huxerui devices <platform>` and pass `--device <id>`.
+Automatic selection occurs only when one ready device is available.
+
+## Related documentation
+
+- [CLI reference](/docs/tooling/cli/)
+- [CMake integration](/docs/tooling/cmake/)
+- [SDK structure](/docs/tooling/sdk/)
+- [Accessibility](/docs/guides/accessibility/)
+

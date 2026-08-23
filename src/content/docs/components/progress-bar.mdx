@@ -8,16 +8,20 @@ sidebar:
 `ProgressBar()` renders indeterminate progress.
 Pass a normalized value for determinate progress.
 
+## Choose determinate or indeterminate progress
+
 ```cpp
 Column {
   ProgressBar(),
   ProgressBar(download_progress),
-  Text::Format("Downloaded {}%", static_cast<int>(download_progress.Get() * 100.0F)),
+  Text::Format("Downloaded {}%", static_cast<int>(download_progress * 100.0F)),
 }.With(Spacing(8.0F))
 ```
 
 The caller owns the progress value.
 The component does not start work, poll a task, or mutate a supplied `State<float>`.
+
+## Semantics and theme
 
 Progress-indicator semantics distinguish determinate range values from indeterminate busy state.
 Add a semantic label when surrounding text does not name the operation.

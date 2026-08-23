@@ -3,10 +3,38 @@ title: PlatformView
 description: Integrate native controls while preserving HuxerUI layout and typed events.
 ---
 
-`PlatformView` is the shared UI-side contract for a view supplied by `PlatformModule`. The application names a registered type, passes `PlatformPayload` properties, and declares typed event keys.
+`PlatformView` is the shared UI-side contract for an interactive view supplied by `PlatformModule`.
+The application names a registered type, passes `PlatformPayload` properties, and declares typed event keys.
+
+## Keep values controlled
+
+```cpp
+PlatformView("video_player", EncodePlayerProperties(source, playing))
+    .Events<PlaybackChanged>()
+    .On<PlaybackChanged>([playing](bool next) {
+      playing = next;
+    })
+```
 
 The runtime measures and positions a platform-view slot. The adapter creates, updates, shows, hides, and disposes the native object according to mounted lifetime. Platform views must not become a second state system: authoritative values remain in application state and property updates flow through recomposition.
 
+Properties describe the complete accepted native state for the current composition.
+Events request application changes through typed HuxerUI event keys.
+
+## Follow mounted lifetime
+
+The registered factory creates one native object for one compatible mounted node.
+Recomposition updates properties; temporary hiding does not imply disposal; unmount releases the platform object and its event connection.
+
+Do not cache a platform handle in a transient `View` or use a resolver callback outside the registered module boundary.
+
+## Understand composition limits
+
 Native composition differs by backend. Android, Apple, and Web can use their platform view hierarchies; Windows currently uses a single HuxerUI surface with HWND placement slices and therefore has stricter overlap and transform constraints. Check the specific platform guide before relying on clipping, opacity, rotation, or interleaving.
+
+Layout remains in shared logical coordinates.
+Each adapter converts placement, visibility, clipping, and input at its native boundary.
+
+## Choose PlatformView or ExternalTexture
 
 Use [ExternalTexture](../external-texture/) when the integration only needs changing pixels and HuxerUI should retain input/composition ownership. See the [PlatformView component](../../components/platform-view/) and [PlatformModule](../platform-module/).

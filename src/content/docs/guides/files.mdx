@@ -3,7 +3,10 @@ title: Files
 description: Read and write files and present platform-native file pickers.
 ---
 
-`FileSystem` provides application directories and asynchronous file operations. `FilePicker` returns capability-bearing `FileReference` values instead of assuming every platform exposes a durable filesystem path.
+`FileSystem` provides application directories and asynchronous file operations.
+`FilePicker` returns capability-bearing `FileReference` values instead of assuming every platform exposes a durable filesystem path.
+
+## Open a user-selected file
 
 ```cpp
 Task<void> OpenText(State<std::string> content) {
@@ -21,6 +24,31 @@ Task<void> OpenText(State<std::string> content) {
 }
 ```
 
-Use `FileReference` for user-selected and externally activated files. It carries metadata and platform authority, and supports reading, importing, and replacement when writable without exposing provider URLs as local paths. `File` and `FileSystem` cover app-owned paths; `AppDirectories` identifies platform-resolved locations. Obtain the installed services with `UseService<FileSystem>()` and `UseService<FilePicker>()`.
+An empty optional means the user cancelled the picker.
+It is not a framework error and should not produce an error message.
 
-Picker filters are intent, not a security boundary. Handle cancellation as an empty successful selection and inspect `FileErrorCode` for failures. See [File API](../../reference/file/) for exact overloads and result types.
+## Keep provider authority
+
+Use `FileReference` for user-selected and externally activated files.
+It carries metadata and platform authority and supports reading, importing, and replacement when writable without pretending that every provider value is a durable local path.
+
+Retain the reference only for as long as its platform contract permits.
+Import content into application storage when the application needs durable ownership.
+
+## Work with application files
+
+`File` and `FileSystem` cover application-owned paths.
+`AppDirectories` identifies platform-resolved data, cache, documents, and temporary locations according to the current adapter.
+Obtain the installed services with `UseService<FileSystem>()` and `UseService<FilePicker>()`.
+
+All read and write operations are asynchronous and return `FileResult<T>`.
+Inspect `Succeeded()` before taking `Value()`, and use `FileErrorCode` to choose a recoverable application response.
+
+## Filter and save
+
+Picker filters describe names, extensions, and MIME intent where supported.
+They improve the platform picker experience but are not a security boundary; validate content after opening it.
+
+Use the save picker for a new destination and the replacement operations on a writable `FileReference` when updating an existing user-selected document.
+
+See the [File API](../../reference/file/) for exact overloads and result types, and [Lifecycle and activation](../lifecycle-and-activation/) for files delivered when another application opens content with HuxerUI.

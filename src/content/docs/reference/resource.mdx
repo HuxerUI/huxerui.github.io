@@ -13,7 +13,13 @@ Declared by `<huxerui/resource.h>`.
 
 ## `StringVariant`
 
-Retains direct text or a localized template. Constructors accept empty, `std::string`, `std::string_view`, C string, or `StringResource`. `Format(resource, arguments...)` retains positional formatted arguments. `UseString` overloads resolve a `StringVariant` or `StringResource` plus arguments.
+Retains direct text or a localized template for an API that composes the value after the call returns.
+Constructors accept empty, `std::string`, `std::string_view`, C string, or `StringResource` values.
+`Format(resource, arguments...)` retains positional formatted arguments.
+
+`UseString(StringResource, arguments...)` resolves immediately to `std::string`.
+`UseString(const StringVariant&)` and `UseString(StringVariant&&)` resolve a retained value during the consumer's composition.
+Prefer `Text::Format(resource, ...)` for `Text`, `UseString(resource, ...)` for an immediate string, and `StringVariant::Format` only for a parameter whose declared type is `StringVariant`.
 
 ## Locale and configuration
 

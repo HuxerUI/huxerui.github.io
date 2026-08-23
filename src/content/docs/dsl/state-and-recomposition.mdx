@@ -5,20 +5,22 @@ sidebar:
   order: 2
 ---
 
-`State<T>` stores an observable value in the current component scope.
-Reading it during composition subscribes that scope; writing a different value requests recomposition.
+`State<T>` is a copyable handle to an observable value owned by the current component scope.
+Reading the value during composition subscribes that scope; writing a different value requests local recomposition.
 
-## Declare a stateful scope
+## Declare state in a scope
 
 ```cpp
 [[huxerui::scope]]
 View Counter() {
   auto count = UseState(0);
 
-  return Button("Count: " + std::to_string(count.Get()))
-      .OnClick([count] {
-        count += 1;
-      });
+  return Column {
+    Text::Format("Count: {}", count),
+    Button("Increment").OnClick([count] {
+      count += 1;
+    }),
+  }.With(Spacing(12.0F));
 }
 ```
 
@@ -26,25 +28,52 @@ View Counter() {
 Use it when a reusable component owns local state, calls `UseEvents`, or needs an independent recomposition boundary.
 The application root already owns a scope and must not be annotated.
 
-`Button` accepts a string label rather than a child `Text` view, so the example constructs that label from the current value.
-Use `Text::Format` when the formatted value is rendered by `Text`.
+## Read naturally
 
-## Read and write
-
-Use `Get()` when an explicit value is clearest:
+`State<T>` converts to `const T&`, so ordinary expressions read the current value and register the same observation as `Get()`:
 
 ```cpp
-bool is_open = open.Get();
+auto expanded = UseState(false);
+auto profile = UseState(Profile{});
+
+if (expanded) {
+  ShowDetails();
+}
+
+Text(profile->display_name)
 ```
 
-`State<T>` also converts to `const T&`, supports `operator->`, assignment, common compound operators, increment and decrement, and `Update`:
+Prefer the conversion or `operator->` when the surrounding C++ expression already makes the value type clear.
+`Get()` remains available when an explicit reference is useful or overload resolution would otherwise be ambiguous; it is not the default spelling for routine reads.
+
+`Text` and many controlled components accept `State<T>` directly:
+
+```cpp
+Text(count)
+Switch("Notifications", enabled)
+Slider(volume).Range(0.0F, 100.0F)
+```
+
+Passing a state handle reads its current value.
+It does not transfer ownership or install an implicit write-back handler.
+
+## Update through the handle
+
+Assignment and the supported C++ operators publish a new authoritative value:
 
 ```cpp
 count = 10;
 count += 2;
+++count;
+enabled = !enabled;
+```
 
+Use `Update` for an in-place mutation that should become one observed update:
+
+```cpp
 profile.Update([](Profile& value) {
   value.display_name = "Ada";
+  value.signed_in = true;
 });
 ```
 
@@ -53,7 +82,7 @@ For equality-comparable values, assigning an equal value does not notify subscri
 ## Controlled components
 
 User-owned values remain authoritative in application state.
-A component renders the current value and emits the requested next value:
+A component renders the current value and emits a requested next value:
 
 ```cpp
 [[huxerui::scope]]
@@ -68,11 +97,11 @@ View Settings() {
 ```
 
 Checkboxes, radio buttons, switches, sliders, tabs, segmented buttons, text editing values, navigation selection, progress, and declarative visibility follow this model.
-Passing `State<T>` to a constructor is a convenient read; it does not transfer ownership or install an implicit write-back handler.
+Always feed an accepted event value back into a later composition; the component does not mutate application state on its own.
 
-## Lists
+## Observable lists
 
-`UseStateList<T>` exposes structural operations that notify the declaring scope:
+`UseStateList<T>` owns a vector-like collection whose structural operations notify the declaring scope:
 
 ```cpp
 auto items = UseStateList<Item>({
@@ -88,14 +117,15 @@ items.Erase(1);
 ```
 
 It also provides `Size`, `Empty`, `At`, `operator[]`, const iteration, `PopBack`, and `Clear`.
+Use `Update(index, function)` when one stored value needs an in-place mutation.
 
-## State identity
+## Preserve state identity
 
-State identity is determined by the current `RecomposeScope`, the `UseState` source location, and the occurrence at that location.
+State identity is the current `RecomposeScope`, the `UseState` source location, and the occurrence at that location.
 Keep state calls structurally stable within a component.
 
-Dynamic siblings reconcile by position unless they have keys.
-Use stable semantic keys when items can be inserted, removed, or reordered:
+Unkeyed siblings reconcile by position.
+Give dynamic stateful children stable semantic keys when entries can be inserted, removed, or reordered:
 
 ```cpp
 Column {
@@ -106,16 +136,17 @@ Column {
 ```
 
 Keys must be unique among siblings under the same parent.
-They accept signed and unsigned integers, enums, strings, string views, and string literals.
+They accept integral values, enums, strings, string views, and string literals.
 
-## Recomposition is local
+## Recomposition stays local
 
 Only scopes that read a changed state are invalidated.
-Recomposition creates new declarations, then reconciliation updates compatible mounted nodes and replaces incompatible ones.
+Recomposition creates new transient declarations, then reconciliation updates compatible mounted nodes and replaces incompatible ones.
 
-Transient runtime facts such as hover, press, focus, momentum, caret blink, and active animations do not need application `State` and do not force component recomposition every frame.
+Hover, press, focus, momentum, caret blink, and active animation are retained runtime facts.
+They do not need application `State` and do not force component recomposition every frame.
 
-## State is safe to capture by value
+## Capture handles by value
 
 `State<T>` and `StateList<T>` are shared handles.
 Capture them by value in event handlers and task continuations:
@@ -126,4 +157,7 @@ Button("Clear").OnClick([items] {
 })
 ```
 
-An empty default-constructed handle is invalid; obtain application state through `UseState` or `UseStateList` inside a valid scope.
+An empty default-constructed handle is invalid.
+Obtain application state through `UseState` or `UseStateList` inside a valid scope.
+
+See [Scope](/docs/components/scope/), [Composition and identity](/docs/dsl/composition-and-identity/), and the [State API](/docs/reference/state-and-environment/).

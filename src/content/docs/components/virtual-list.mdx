@@ -7,6 +7,8 @@ sidebar:
 
 `VirtualList` accepts a range and item factory, a `State<Range>`, or an item count and index factory.
 
+## Declare lazy items
+
 ```cpp
 VirtualList(items, [](const Item& item) {
   return ItemRow(item).Key(item.id);
@@ -18,9 +20,13 @@ VirtualList(items, [](const Item& item) {
 Items are materialized on demand for the viewport plus cache extent.
 The factory must return a `View`; use stable keys for items whose state must follow semantic identity.
 
+## Tune extent and cache
+
 `.ItemExtent(...)` enables fixed-extent positioning.
 Use `.EstimatedItemExtent(...)` for variable-height items so initial range and scroll corrections start from a useful estimate.
 `.CacheExtent(...)` keeps nearby content realized to reduce visible creation during scrolling.
+
+## Control axis and position
 
 `.ScrollAxis(Axis::Horizontal)` changes the main axis.
 `.Controller(...)` connects a `ScrollController`, including `ScrollToItem(index, alignment)`.

@@ -5,6 +5,8 @@ description: Present themed actions, sections, checked items, and nested submenu
 
 `MenuHandle` presents structured menu entries from a view anchor or explicit point.
 
+## Declare items and submenus
+
 ```cpp
 auto menu = UseMenu();
 
@@ -25,7 +27,11 @@ IconButton(images::more, "More actions")
 
 Leaf items contain a callback; parent items contain `std::vector<MenuEntry>` children. Icons may be `ImageResource` or `ImageAsset`. `.Enabled(bool)` and `.Checked(bool)` add state without changing entry structure. `MenuSection` marks a logical boundary; the active theme decides whether and how to draw separators.
 
+## Size and place the menu
+
 Natural width follows the widest entry subject to theme and viewport limits. Set `MenuOptions::width` only when the application requires a fixed width. `MenuStyle` owns item padding and height, foreground, indication, separators, surface, shadow, and motion.
+
+## Theme and accessibility
 
 An open menu publishes a modal `Menu` collection and semantic `MenuItem` children.
 Checked, disabled, and expanded submenu state is exposed to assistive technology, and compatible entries provide activate or expand actions.

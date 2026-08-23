@@ -3,7 +3,10 @@ title: PlatformModule
 description: Define typed method, event, and PlatformView bridges to platform code.
 ---
 
-`PlatformModule` is the application-facing native capability boundary. A root hook registers platform-specific factories in `RootContext::Modules`; shared code opens an instance by type.
+`PlatformModule` is the application-facing boundary for a native capability that cannot be implemented in shared C++.
+A root hook registers platform-specific factories in `RootContext::Modules`; shared code opens an instance by type.
+
+## Define a typed method
 
 ```cpp
 struct GetBatteryLevel {
@@ -20,8 +23,30 @@ instance.Call<GetBatteryLevel>({}, [](PlatformResult<double> result) {
 });
 ```
 
+The method key owns wire encoding and decoding, so application call sites exchange typed values rather than inspecting payload objects.
+
+## Use payloads only at the boundary
+
 `PlatformPayload` is an immutable recursive value supporting null, boolean, signed integer, double, string, bytes, list, object, and `ExternalTexture`. Typed method keys encode requests and decode results. Typed event keys reuse HuxerUI's event signatures and decode platform payloads.
+
+Keep `PlatformPayload` inside module declarations, platform factories, and PlatformView property or event adapters.
+Do not pass it through ordinary application state when a domain type can describe the value more clearly.
+
+## Own requests and instances
 
 Each call returns a `PlatformRequestId`; cancellation and instance closure are explicit. Factories return cleanup functions so adapters can release native work. Completion and event delivery are marshalled to the UI thread by the platform boundary.
 
-Use a module for genuine native services and platform views, not as a replacement for ordinary C++ composition or root services. See [PlatformModule API](../../reference/platform-module/).
+Closing an instance prevents new calls and ends its event connection.
+Cancel an individual request when the result is no longer useful, and close the instance when the owning feature is disposed.
+
+## Register platform implementations
+
+Use an `AppOptions::root_hooks` entry to register factories before the application root composes.
+Each platform supplies its implementation under the same module and method names; unsupported platforms should report an explicit `PlatformError` or omit the module rather than silently changing behavior.
+
+## Choose the narrowest extension
+
+Use a module for genuine native services and PlatformViews.
+Use ordinary C++ for shared behavior, a root service for a shared per-window capability, `ExternalTexture` for pixel producers, and `PlatformView` for an embedded native view.
+
+See the [PlatformModule API](../../reference/platform-module/) and [PlatformView](../platform-view/).

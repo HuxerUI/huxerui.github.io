@@ -7,6 +7,8 @@ sidebar:
 
 `SelectionArea` makes static text in one content subtree selectable.
 
+## Select static text
+
 ```cpp
 SelectionArea(
     Column {
@@ -22,6 +24,8 @@ Platform clipboard services perform the final copy operation.
 
 `SelectionArea` is for static `Text` content.
 `TextField` already owns editable selection and must not rely on a surrounding selection area for its editing behavior.
+
+## Clipboard and semantics
 
 The selected text remains represented by descendant text semantics rather than a new application state value.
 Add application-specific semantics to the content only when its visible text does not communicate enough context.

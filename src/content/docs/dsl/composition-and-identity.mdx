@@ -35,9 +35,9 @@ View ExpandableSection(std::string title, View content) {
 
   return Column {
     Button(std::move(title)).OnClick([expanded] {
-      expanded = !expanded.Get();
+      expanded = !expanded;
     }),
-    expanded.Get() ? std::move(content) : View{},
+    expanded ? std::move(content) : View{},
   };
 }
 ```

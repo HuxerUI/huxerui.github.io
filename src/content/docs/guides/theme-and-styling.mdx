@@ -3,7 +3,10 @@ title: Theme and styling
 description: Apply inherited visual systems and customize component styles.
 ---
 
-Theme is HuxerUI's visual specialization of `Environment`. Wrap a subtree in a built-in theme or provide a customized `ThemeDefinition`.
+Theme is HuxerUI's visual specialization of `Environment`.
+A generated application does not force a visual family; choose a built-in theme or provide an application `ThemeDefinition` when the product is ready to own that decision.
+
+## Select a visual family
 
 ```cpp
 View App() {
@@ -12,6 +15,11 @@ View App() {
 ```
 
 Built-in entry points include `MaterialTheme`, `MaterialDarkTheme`, `FlatTheme`, and `FlatDarkTheme`. Each accepts a view factory and copyable arguments; overloads accepting `ThemeSpec` let applications replace tokens while retaining the component recipes for that family.
+
+Material and Flat are complete theme definitions rather than color presets.
+They may resolve different geometry, interaction indication, menu separators, dialog placement, presentation motion, and typography from the same component intent.
+
+## Customize theme tokens
 
 ```cpp
 View BrandedApp() {
@@ -23,4 +31,27 @@ View BrandedApp() {
 
 `ThemeSpec` groups color, typography, shape, spacing, elevation, motion, and interaction schemes. `ThemeDefinition` additionally owns component and presentation style resolvers. Use `UseTheme()` to read the resolved `ThemeSpec`; use `Theme(definition, factory, ...)` for a custom definition.
 
+Start from `MaterialLightThemeSpec`, `MaterialDarkThemeSpec`, `FlatLightThemeSpec`, or `FlatDarkThemeSpec` when a branded theme should retain the corresponding component recipes.
+Use a complete `ThemeDefinition` when the application needs its own style-resolution policy.
+
+## Override one composition
+
 Common modifiers can still override a particular view's background, foreground, border, shadow, opacity, transform, and indication. Prefer theme customization for repeated visual intent and modifiers for local composition. Component-specific style structures are documented in the [Theme API](../../reference/theme/).
+
+Local modifiers apply to the declared node and do not rewrite its component recipe.
+For example, a local `Background` can change one surface while `ButtonStyle` still owns button minimum size, typography, disabled state, and interaction visuals.
+
+## Configure interaction visuals
+
+`InteractionScheme` supplies the default `Indication`, `FocusRing`, and disabled opacity.
+An `Indication` can animate focus, hover, and press layers and an optional ripple; layers support color, gradient, or image `VisualFill`, border, radii, placement, and enter/exit animation.
+
+Keep interaction state in the runtime.
+Do not introduce application `State<bool>` for hover or press only to select colors during composition.
+
+## Style presentation surfaces
+
+Dialog, BottomSheet, Menu, Popup, Toast, and navigation transitions resolve through theme-owned style structures.
+This lets a Material, Flat, or application theme change placement and motion as well as color without changing call sites.
+
+See the [Theme API](../../reference/theme/), [Modifiers](/docs/dsl/modifiers/), and [Presentation](/docs/guides/presentation/).

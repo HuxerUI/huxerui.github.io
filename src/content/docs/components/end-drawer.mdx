@@ -5,6 +5,8 @@ description: Configure content that enters from the logical end edge of DrawerLa
 
 `EndDrawer` is the end-side counterpart to `StartDrawer`.
 
+## Control the end edge
+
 ```cpp
 EndDrawer(ToolsPane())
     .Open(tools_open)
@@ -14,6 +16,8 @@ EndDrawer(ToolsPane())
 ```
 
 The application owns the open value. The component emits `DrawerEvents::OpenChanged` after gestures, outside presses, or other drawer interactions request a transition. The active `DrawerStyle` controls modal and persistent presentation.
+
+## Preserve content semantics
 
 `EndDrawer` is a structural wrapper and preserves the semantic order and meaning of its content instead of publishing a separate control role.
 

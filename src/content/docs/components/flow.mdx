@@ -7,6 +7,8 @@ sidebar:
 
 `Flow` lays out children in declaration order and starts another line when the current line cannot fit the next child.
 
+## Wrap content-dependent items
+
 ```cpp
 Flow {
   ForEach(tags, [](const Tag& tag) {
@@ -23,6 +25,8 @@ Unlike `Row`, it does not require every child to remain on one horizontal line.
 
 `Spacing` controls the gap between items and wrapped lines according to the built-in flow policy.
 Alignment modifiers affect placement within available line space.
+
+## Keep dynamic identity stable
 
 Use stable keys for dynamic stateful items that can reorder.
 For a very large scrollable data set, use `VirtualGrid` rather than mounting every item in a flow.

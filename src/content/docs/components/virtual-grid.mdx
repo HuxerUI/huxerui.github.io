@@ -7,6 +7,8 @@ sidebar:
 
 `VirtualGrid` virtualizes a vertically scrolling grid.
 
+## Resolve columns from available width
+
 ```cpp
 VirtualGrid(items, [](const Item& item) {
   return ItemCard(item).Key(item.id);
@@ -20,12 +22,16 @@ VirtualGrid(items, [](const Item& item) {
 
 Choose `GridColumns::Fixed(count)` for a stable column count or `GridColumns::Adaptive(minimum_width)` to resolve as many columns as available width can support.
 
+## Tune rows and spans
+
 `.RowExtent(...)` describes fixed-height rows.
 Use `.EstimatedRowExtent(...)` when rows can vary.
 `.ItemSpans(...)` supplies the number of columns consumed by each corresponding item.
 
 The same range, state range, and count-factory constructors as `VirtualList` are available.
 `.Controller(...)` supports metrics and indexed scrolling.
+
+## Preserve grid semantics
 
 VirtualGrid publishes grid, row and column counts, and realized cell coordinates through accessibility semantics.
 

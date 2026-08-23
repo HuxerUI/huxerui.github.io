@@ -35,7 +35,7 @@ View Counter() {
 }
 
 View App() {
-  return MaterialTheme(Counter);
+  return Counter();
 }
 
 const Application application{
@@ -56,6 +56,9 @@ The root already owns a composition scope, so `App` does not need `[[huxerui::sc
 
 `Counter` does need an independent scope because it owns local `State`.
 The code generator rewrites the attribute into the runtime scope boundary used to preserve the state across recomposition.
+
+The generated project starts without choosing a visual family.
+Wrap `Counter` in `MaterialTheme`, `FlatTheme`, or an application `ThemeDefinition` when the application is ready to select and customize its visual system.
 
 `Column` and `Row` receive child `View` values through braced DSL syntax.
 `.With(...)` applies reusable modifiers from left to right, while `.OnClick(...)` binds the typed click event.

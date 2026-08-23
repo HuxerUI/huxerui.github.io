@@ -8,6 +8,8 @@ sidebar:
 `Slider` edits a controlled floating-point value.
 Its default range is `0.0F` through `1.0F`.
 
+## Control value and range
+
 ```cpp
 Row {
   Slider(volume)
@@ -16,7 +18,7 @@ Row {
       .OnChanged([volume](float next) {
         volume = next;
       }),
-  Text::Format("{}%", static_cast<int>(volume.Get())),
+  Text::Format("{}%", static_cast<int>(volume)),
 }.With(
     Spacing(12.0F),
     CrossAlign(CrossAxisAlignment::Center)
@@ -27,10 +29,15 @@ Row {
 `.Step(step)` snaps requested values to discrete increments.
 The caller must feed accepted values back into the next composition.
 
+## Interaction and accessibility
+
 Pointer dragging, keyboard range adjustment, focus, and accessibility increment or decrement actions share the same controlled output path.
 
-`SliderStyle` controls track, tick, stop-indicator, thumb, disabled geometry and colors, focus treatment, and animation duration.
 The slider exposes role, current range, optional step, enabled state, and focus semantics automatically.
+
+## Theme behavior
+
+`SliderStyle` lets a theme vary track gaps, tick treatment, stop indicators, thumb geometry, colors, focus treatment, and motion without changing the controlled value contract.
 
 ## API
 

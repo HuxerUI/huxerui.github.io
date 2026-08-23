@@ -3,10 +3,28 @@ title: ExternalTexture
 description: Publish externally produced frames into HuxerUI image composition.
 ---
 
-The shared `ExternalTexture` handle is platform-neutral; each backend exposes an `ExternalTextureSource` in its platform-specific header. A source publishes frame data or a native texture according to that backend's ownership rules, then provides an `ExternalTexture` consumed by `Image` or paint commands.
+The shared `ExternalTexture` handle is platform-neutral; each backend exposes an `ExternalTextureSource` in its platform-specific header.
+A source publishes frame data or a native texture according to that backend's ownership rules, then provides an `ExternalTexture` consumed by `Image` or paint commands.
+
+## Choose a pixel integration
 
 Choose an external texture for video, cameras, decoders, and GPU producers when the integration is pixel-oriented. Choose `PlatformView` when native interaction, accessibility, or platform view semantics must remain intact.
 
+`Image(texture)` participates in normal HuxerUI fitting, clipping, opacity, transforms, and semantics.
+The producer supplies pixels; HuxerUI continues to own layout, hit testing, and composition.
+
+## Own source lifetime
+
 Keep the source alive while frames are in use, publish only supported formats, and follow the adapter's threading rules. Intrinsic pixel dimensions and scale determine logical size. HuxerUI schedules repaint when the source publishes a new frame without requiring application-state recomposition.
+
+Releasing the source ends publication, while copied `ExternalTexture` handles continue to identify the same shared state until all owners release it.
+Do not rebuild application state for every frame.
+
+## Follow backend formats
+
+Each platform header documents the accepted CPU frame or native texture representation, synchronization, and ownership transfer.
+The shared API deliberately does not expose one platform's GPU handles to another backend.
+
+Use a `PlatformModule` when native code must control the producer or publish events in addition to frames.
 
 See [ExternalTexture component](../../components/external-texture/) and the relevant platform API reference.

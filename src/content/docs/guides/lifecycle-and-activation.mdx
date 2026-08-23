@@ -3,11 +3,14 @@ title: Lifecycle and activation
 description: Observe scoped setup/cleanup, application activation, and foreground state.
 ---
 
-`Lifecycle` registers setup work in the current recomposition scope. It runs after the scope is committed, reruns when captured dependencies change, and runs its returned cleanup before replacement or unmount.
+`Lifecycle` registers setup work in the current recomposition scope.
+It runs after the scope is committed, reruns when captured dependencies change, and runs its returned cleanup before replacement or unmount.
+
+## Own an external effect
 
 ```cpp
 Lifecycle([document_id] {
-  auto subscription = ObserveDocument(document_id.Get());
+  auto subscription = ObserveDocument(document_id);
   return [subscription = std::move(subscription)]() mutable {
     subscription.Close();
   };
@@ -16,6 +19,33 @@ Lifecycle([document_id] {
 
 Dependencies may be equality-comparable values, `State`, or `StateList`. An overload with no dependencies behaves like scoped mount/unmount work. Keep UI values controlled and use lifecycle only for external effects.
 
+Setup may return `void` when no cleanup is required.
+Changing dependencies always runs the previous cleanup before the next setup, and final unmount runs the active cleanup exactly once.
+
+Do not use `Lifecycle` to mirror one application state value into another.
+Use it for subscriptions, observers, registrations, and resources whose lifetime must follow the component scope.
+
+## Separate startup from later activation
+
 `ApplicationHandle` separates cold-start activation from later activation. `StartupActivation()` exposes the launch, URL, or file activation used to create the runtime; `OnActivation(...)` observes subsequent requests. `LifecycleState()` is observable during composition, while `OnLifecycleChange(...)` registers transition callbacks for `ApplicationLifecycleState`.
 
-Use activation to translate external intent into application route or state changes. Platform adapters own native intent/session conversion. See [Application API](../../reference/app/) and [Lifecycle API](../../reference/lifecycle/).
+The startup value is stable for the lifetime of one runtime.
+Later file or URL requests do not replace it; they arrive through `OnActivation` so an application can distinguish initial route construction from an already-running session.
+
+`ApplicationActivation` contains `LaunchActivation`, `UrlActivation`, or `FileActivation`.
+Translate the value into application route or document state instead of retaining platform intent objects in the UI tree.
+
+## Observe foreground state
+
+`ApplicationLifecycleState` is `Active`, `Inactive`, or `Background`.
+Read `LifecycleState()` during composition when visible UI depends on the current state, and use `OnLifecycleChange` for an external effect such as pausing a producer or saving a session.
+
+Background work remains subject to platform policy.
+A lifecycle callback is notification, not permission to run indefinitely after the application leaves the foreground.
+
+## Route external intent
+
+Use activation to translate external intent into application route or state changes.
+Platform adapters own native intent and session conversion, while shared application code owns what destination or document the activation selects.
+
+See the [Application API](../../reference/app/), [Lifecycle API](../../reference/lifecycle/), and [Navigation and routing](../navigation-and-routing/).
