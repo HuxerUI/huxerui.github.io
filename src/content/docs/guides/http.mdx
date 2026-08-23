@@ -9,8 +9,7 @@ Requests are explicit value objects and return `Task<HttpResult>`.
 ## Send a request
 
 ```cpp fragment
-Task<void> LoadFeed(State<std::string> output) {
-  auto http = UseService<HttpClient>();
+Task<void> LoadFeed(std::shared_ptr<HttpClient> http, State<std::string> output) {
   HttpResult result = co_await http->Send({
       .url = "https://example.com/feed.json",
       .method = HttpMethod::Get,
@@ -21,14 +20,24 @@ Task<void> LoadFeed(State<std::string> output) {
     output = result.Error().message;
   }
 }
+
+[[huxerui::scope]]
+View LoadFeedButton(State<std::string> output) {
+  auto http = UseService<HttpClient>();
+  auto tasks = UseTaskScope();
+  return Button("Load feed").OnClick([http, tasks, output] {
+    tasks.Launch(LoadFeed(http, output));
+  });
+}
 ```
 
-Launch the task through `UseTaskScope()` so cancellation follows the component that requested the data.
+Resolve the root service and task scope during composition, then capture those stable handles in the event.
+Cancellation follows the component that requested the data.
 
 ## Describe request intent
 
 Specify method, headers, body, and optional timeout in `HttpRequest`.
-Use `HttpMethod` for standard methods and provide binary body data only when the remote API requires it.
+Use `HttpMethod` for standard methods; the body is a `std::string`, so set the corresponding content type and encoding explicitly when sending text or arbitrary bytes.
 
 The transport follows platform networking policy.
 Browser CORS, application transport security, Android network security, certificate trust, redirects, and proxy behavior remain platform concerns rather than shared-runtime bypasses.
@@ -41,10 +50,33 @@ DNS, connection, timeout, cancellation, malformed request, and unavailable-trans
 
 Inspect `HasResponse()` before accessing a response and preserve an error message appropriate for the user instead of displaying low-level transport diagnostics directly.
 
+## Decode at the application boundary
+
+Treat `HttpResponse::body` as untrusted data.
+Check the status code and any required content type before decoding, validate the decoded shape, and translate it into an application model before updating UI state.
+Keep JSON, authentication, retry, and caching policy outside components that only present the result.
+
+Redirect handling is reflected in `final_url` when the platform transport supplies it.
+Do not use the original request origin as proof that the final response came from the same origin.
+Apply application limits before retaining large bodies, especially on mobile and Web.
+
+## Model retry and cancellation explicitly
+
+Launch one request from a `TaskScope` owned by the feature that presents it.
+User cancellation and unmount should not be shown as a server error.
+Timeout, transport failure, and an HTTP error status are different outcomes and may deserve different retry policy.
+
+Automatic retries are application policy.
+Only retry idempotent operations by default, include backoff, and ensure a newer request cannot be overwritten by an older completion.
+The shared client deliberately does not hide these choices behind implicit global behavior.
+
 ## Follow component lifetime
 
-The runtime installs `HttpClient` as a root service; obtain it with `UseService<HttpClient>()`.
+The runtime installs `HttpClient` as a root service; obtain it with `UseService<HttpClient>()` while composing the owning component.
 Capture the shared service and controlled state by value in a task.
 Never put credentials in documentation, client source literals, or generated Web output.
+
+Browser CORS and cookie rules, Apple transport security, Android network security configuration, system proxy settings, and certificate stores remain native policy.
+The same C++ request can therefore be accepted on one platform and rejected by another configuration; surface `HttpError` rather than bypassing that policy.
 
 See the [HTTP API](../../reference/http/) for exact request and result methods and [Tasks](../tasks/) for cancellation ownership.

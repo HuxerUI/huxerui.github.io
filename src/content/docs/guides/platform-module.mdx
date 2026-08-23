@@ -39,14 +39,43 @@ Each call returns a `PlatformRequestId`; cancellation and instance closure are e
 Closing an instance prevents new calls and ends its event connection.
 Cancel an individual request when the result is no longer useful, and close the instance when the owning feature is disposed.
 
+Method completion is exactly one typed result at the shared boundary.
+Return `PlatformError` for unavailable APIs, invalid arguments, denied permission, native failure, or a result that cannot be encoded.
+Keep error codes stable enough for application policy and keep platform diagnostics in the message/details rather than changing the shared result type per backend.
+
+Events are for repeated native output after instance creation.
+Use a method completion for one request, a typed event for an ongoing stream, and ordinary controlled component events for UI values already owned by HuxerUI.
+
 ## Register platform implementations
 
 Use an `AppOptions::root_hooks` entry to register factories before the application root composes.
 Each platform supplies its implementation under the same module and method names; unsupported platforms should report an explicit `PlatformError` or omit the module rather than silently changing behavior.
 
+Registration is platform setup, not component composition:
+
+```cpp fragment
+AppOptions Options() {
+  AppOptions options;
+  options.root_hooks.push_back([](RootContext& root) {
+    RegisterDeviceModule(root.Modules());
+  });
+  return options;
+}
+```
+
+`RegisterDeviceModule` belongs in the platform source selected by the application build.
+It registers one `PlatformModuleFactory` under the shared type name and owns native request cleanup and instance disposal.
+The shared component opens that type and uses typed keys; it does not include the platform implementation header.
+
+Keep one source of truth for each value conversion.
+The method/event key owns shared encode/decode, while the platform factory owns conversion between `PlatformPayload` and its native SDK types.
+Do not duplicate ad-hoc object-key parsing at every call site.
+
 ## Choose the narrowest extension
 
 Use a module for genuine native services and PlatformViews.
 Use ordinary C++ for shared behavior, a root service for a shared per-window capability, `ExternalTexture` for pixel producers, and `PlatformView` for an embedded native view.
+
+Before shipping a module, test missing registration, invalid payload/result, cancellation before completion, completion after cancellation, close with active work, repeated events, and UI-thread delivery.
 
 See the [PlatformModule API](../../reference/platform-module/) and [PlatformView](../platform-view/).

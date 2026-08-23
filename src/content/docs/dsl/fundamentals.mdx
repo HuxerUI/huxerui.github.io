@@ -13,13 +13,13 @@ Its DSL is a small set of ordinary types and conventions designed to make a decl
 A component is any function whose result converts to `View`.
 
 ```cpp fragment
-View ProfileHeader(std::string name) {
+View ProfileHeader(std::string_view name) {
   return Row {
     Image(images::avatar)
         .Fit(ImageFit::Cover)
         .With(Frame{.width = 48.0F, .height = 48.0F}, CornerRadius(24.0F)),
     Column {
-      Text(std::move(name), TextRole::Title),
+      Text(name, TextRole::Title),
       Text("Online", TextRole::Label),
     }.With(Spacing(4.0F)),
   }.With(

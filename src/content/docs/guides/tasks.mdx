@@ -22,6 +22,7 @@ It begins when awaited or launched by an owning scope.
 ## Launch from UI lifetime
 
 ```cpp fragment
+[[huxerui::scope]]
 View LoadButton(State<std::string> status) {
   auto tasks = UseTaskScope();
   return Button("Load").OnClick([tasks, status] {
@@ -43,6 +44,29 @@ Tasks may await other HuxerUI tasks.
 
 Exceptions propagate through `co_await`.
 Catch failures at the boundary that can present a useful result, and make cancellation a normal control-flow outcome rather than a detached background exception.
+
+## Choose the owner before launching
+
+Create the `TaskScope` in the smallest scoped component that owns the result.
+A page-level refresh belongs to the page scope; a row-level thumbnail load belongs to the keyed row scope.
+Moving the scope higher keeps work alive longer, while moving it lower cancels work as soon as that feature leaves composition.
+
+Keep the returned `TaskHandle` only when the user needs an explicit cancel or a newer request must supersede an older one.
+Calling `Cancel()` more than once or after completion is safe.
+Scope destruction remains the final backstop, so a forgotten handle does not detach the coroutine from UI lifetime.
+
+For repeated requests, decide which result wins.
+Cancel the previous handle for "latest request wins," or associate a generation/key with the request and ignore a stale completion.
+Do not let an older response overwrite newer controlled state merely because it completed later.
+
+## Understand suspension and state
+
+The coroutine may resume after composition has run many times.
+Captured `State<T>` and service handles are stable value handles; transient `View` values and mounted-node pointers are not.
+Read request inputs before launch when one operation must use a snapshot, and read state after suspension only when the latest value is intentionally required.
+
+Cancellation stops continuation of work owned by the HuxerUI execution, but a platform operation may still need time to release its native request.
+Do not use cancellation as a transaction rollback; commit external mutations only where the underlying service defines that guarantee.
 
 ## Keep work off the composition path
 

@@ -9,8 +9,7 @@ description: Read and write files and present platform-native file pickers.
 ## Open a user-selected file
 
 ```cpp fragment
-Task<void> OpenText(State<std::string> content) {
-  auto picker = UseService<FilePicker>();
+Task<void> OpenText(std::shared_ptr<FilePicker> picker, State<std::string> content) {
   auto picked = co_await picker->OpenFileAsync({
       .name = "Text",
       .extensions = {"txt"},
@@ -22,10 +21,20 @@ Task<void> OpenText(State<std::string> content) {
     }
   }
 }
+
+[[huxerui::scope]]
+View OpenTextButton(State<std::string> content) {
+  auto picker = UseService<FilePicker>();
+  auto tasks = UseTaskScope();
+  return Button("Open text file").OnClick([picker, tasks, content] {
+    tasks.Launch(OpenText(picker, content));
+  });
+}
 ```
 
 An empty optional means the user cancelled the picker.
 It is not a framework error and should not produce an error message.
+Resolve the picker and task scope during composition; the event captures stable handles rather than consulting composition context from inside a coroutine.
 
 ## Keep provider authority
 
@@ -34,6 +43,13 @@ It carries metadata and platform authority and supports reading, importing, and 
 
 Retain the reference only for as long as its platform contract permits.
 Import content into application storage when the application needs durable ownership.
+
+A reference is not a path string.
+On Android it may represent a document-provider URI, on Apple a security-scoped or picker-provided object, and on Web a browser file capability.
+Use `Name`, `Size`, and `ContentType` as hints; validate the bytes you actually read.
+
+An edit workflow normally keeps the original reference while the document is open, writes an application-owned temporary file, then calls `ReplaceWithAsync` only when `CanWrite()` is true.
+If replacement is unavailable, offer `SaveFileAsync` and let the platform picker choose a destination.
 
 ## Work with application files
 
@@ -45,11 +61,29 @@ Obtain the installed services with `UseService<FileSystem>()` and `UseService<Fi
 Read, stat, and listing operations return `FileResult<T>`; mutation methods report success with `bool`.
 Inspect `Succeeded()` before taking `Value()`, and use `FileErrorCode` to choose a recoverable application response.
 
+Synchronous methods are appropriate only when the caller is already off the UI thread and the platform exposes a synchronous path.
+Component event handlers should use the `Async` forms through `TaskScope`; blocking the UI thread can stall rendering, input, and native picker completion.
+
+Treat data, cache, and temporary directories differently.
+User documents do not become durable merely because they were copied to cache, and temporary files may disappear between sessions.
+Use the data directory for application-owned persistent state and keep user-facing export in the picker workflow.
+
 ## Filter and save
 
 Picker filters describe names, extensions, and MIME intent where supported.
 They improve the platform picker experience but are not a security boundary; validate content after opening it.
 
 Use the save picker for a new destination and the replacement operations on a writable `FileReference` when updating an existing user-selected document.
+
+Map errors deliberately:
+
+| Result | Typical application response |
+| --- | --- |
+| Empty picker optional | No message; the user cancelled |
+| `PermissionDenied` | Explain what operation needs permission and offer another file |
+| `TooLarge` | Keep the current document and report the accepted limit |
+| `InvalidEncoding` | Offer binary/import handling instead of displaying corrupt text |
+| `Unsupported` | Hide or disable the unavailable workflow when capability queries allow it |
+| `Io` | Preserve the user's current state and offer retry or another destination |
 
 See the [File API](../../reference/file/) for exact overloads and result types, and [Lifecycle and activation](../lifecycle-and-activation/) for files delivered when another application opens content with HuxerUI.

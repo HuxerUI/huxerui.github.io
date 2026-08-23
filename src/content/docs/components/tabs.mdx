@@ -14,7 +14,7 @@ Tabs(
     {
         TabItem("Overview"),
         TabItem(app::images::activity, "Activity"),
-        std::move(TabItem("Reports")).Enabled(false),
+        TabItem("Reports").Enabled(false),
     },
     selected
 ).OnChanged([selected](std::size_t index) {

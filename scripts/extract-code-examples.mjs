@@ -5,6 +5,20 @@ const docsRoot = path.resolve("src/content/docs");
 const outputRoot = path.resolve(process.argv[2] ?? ".cache/docs-examples");
 const failures = [];
 const examples = [];
+const reviewedMoves = new Map([
+  [
+    "dsl/events-and-interaction.mdx:std::move(query)",
+    "transfers the event payload into the operation that owns the search",
+  ],
+  ["reference/file.mdx:std::move(text)", "extracts the owned value from an rvalue FileResult"],
+  ["guides/files.mdx:std::move(text)", "extracts the owned value from an rvalue FileResult"],
+  [
+    "guides/lifecycle-and-activation.mdx:std::move(subscription)",
+    "transfers the subscription into the cleanup that owns it",
+  ],
+  ["guides/theme-and-styling.mdx:std::move(spec)", "transfers a completed ThemeSpec into the theme provider"],
+]);
+const observedMoves = new Map();
 
 async function collectDocuments(directory) {
   const documents = [];
@@ -29,6 +43,20 @@ for (const document of await collectDocuments(docsRoot)) {
     ++blockIndex;
     const metadata = match[1].trim();
     const source = match[2];
+    if (source.includes(".Get(")) {
+      failures.push(
+        `${relative} C++ block ${blockIndex} uses State::Get(); documentation examples must prefer natural reads and operator->`,
+      );
+    }
+    for (const move of source.matchAll(/std::move\([^\n)]+\)/g)) {
+      const key = `${relative}:${move[0]}`;
+      if (!reviewedMoves.has(key)) {
+        failures.push(
+          `${relative} C++ block ${blockIndex} contains unreviewed ownership transfer ${move[0]}; remove teaching noise or add a reasoned audit entry`,
+        );
+      }
+      observedMoves.set(key, (observedMoves.get(key) ?? 0) + 1);
+    }
     const compileMatch = metadata.match(/(?:^|\s)compile="([a-z0-9_-]+)"(?:\s|$)/);
     const isFragment = /(?:^|\s)fragment(?:\s|$)/.test(metadata);
     if (Boolean(compileMatch) === isFragment) {
@@ -53,6 +81,13 @@ for (const document of await collectDocuments(docsRoot)) {
   }
 }
 
+for (const [key, reason] of reviewedMoves) {
+  const count = observedMoves.get(key) ?? 0;
+  if (count !== 1) {
+    failures.push(`Reviewed ownership transfer ${key} must occur exactly once (found ${count}); reason: ${reason}`);
+  }
+}
+
 if (examples.length === 0) {
   failures.push("No C++ documentation blocks are marked for compilation");
 }
@@ -73,4 +108,6 @@ await writeFile(
   "utf8"
 );
 
-console.log(`Classified ${fragmentCount} fragments and extracted ${examples.length} complete C++ examples.`);
+console.log(
+  `Classified ${fragmentCount} fragments, extracted ${examples.length} complete C++ examples, and reviewed ${reviewedMoves.size} ownership transfers.`,
+);

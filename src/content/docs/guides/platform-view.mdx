@@ -28,12 +28,23 @@ Recomposition updates properties; temporary hiding does not imply disposal; unmo
 
 Do not cache a platform handle in a transient `View` or use a resolver callback outside the registered module boundary.
 
+Mount and update are separate contracts.
+The factory should create the platform object once for a compatible mounted node, while every property update must be able to bring that object to the complete declared state.
+Do not encode imperative commands such as "toggle" in properties; encode the resulting `playing`, `selected`, or `text` value.
+
+If native output changes a controlled property, emit the typed event and wait for application state to supply the next property value.
+Avoid updating a private native model and HuxerUI state independently, because they will disagree after recomposition or restoration.
+
 ## Understand composition limits
 
 Native composition differs by backend. Android, Apple, and Web can use their platform view hierarchies; Windows currently uses a single HuxerUI surface with HWND placement slices and therefore has stricter overlap and transform constraints. Check the specific platform guide before relying on clipping, opacity, rotation, or interleaving.
 
 Layout remains in shared logical coordinates.
 Each adapter converts placement, visibility, clipping, and input at its native boundary.
+
+Test the actual overlap pattern used by the product on every target backend.
+At minimum cover resize, scrolling, temporary hiding, unmount/remount, focus transfer, keyboard/IME behavior, accessibility, and an HuxerUI overlay both before and after the platform slot.
+Platform differences are acceptable only when documented by the component that relies on them.
 
 ## Choose PlatformView or ExternalTexture
 

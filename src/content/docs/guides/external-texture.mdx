@@ -20,10 +20,30 @@ Keep the source alive while frames are in use, publish only supported formats, a
 Releasing the source ends publication, while copied `ExternalTexture` handles continue to identify the same shared state until all owners release it.
 Do not rebuild application state for every frame.
 
+The source and consumer have different ownership.
+The platform-specific source owns writable publication state and synchronization; copied `ExternalTexture` values are read-only identities suitable for UI state, component arguments, and platform payloads.
+Destroying one consumer does not stop a producer that still has other owners.
+
+Publish only when the platform source reports that its publication contract is ready, and never mutate a buffer while the backend may still read it.
+The platform header defines whether publication copies bytes, retains an object, or transfers a native resource.
+Follow that rule rather than assuming all backends upload synchronously.
+
 ## Follow backend formats
 
 Each platform header documents the accepted CPU frame or native texture representation, synchronization, and ownership transfer.
 The shared API deliberately does not expose one platform's GPU handles to another backend.
+
+Intrinsic pixel size and scale determine logical size; `Image` fitting then maps that logical content into layout bounds.
+Use a stable intrinsic size for a video or camera stream unless a format change genuinely changes layout intent.
+Frequent intrinsic-size changes can invalidate layout as well as paint.
+
+Frame publication invalidates paint without recomposing application state.
+Use ordinary state for playback controls, loading/error status, and accessibility labels, not for each frame number.
+
+## Validate a producer
+
+Verify first-frame behavior, resize/format change, hidden and clipped consumers, producer shutdown, source replacement, device/context loss where applicable, and publication from the documented thread.
+Native GPU and media resources require device testing; a successful shared-header build does not validate synchronization or lifetime on another backend.
 
 Use a `PlatformModule` when native code must control the producer or publish events in addition to frames.
 

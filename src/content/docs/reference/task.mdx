@@ -36,6 +36,7 @@ Task<void> Refresh(State<std::string> status) {
   status = "Ready";
 }
 
+[[huxerui::scope]]
 View RefreshButton(State<std::string> status) {
   auto tasks = UseTaskScope();
   return Button("Refresh").OnClick([tasks, status] {

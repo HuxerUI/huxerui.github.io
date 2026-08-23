@@ -25,6 +25,11 @@ In `EdgeToEdge` mode the root receives the complete viewport and can apply selec
 
 Software-keyboard viewport changes are distinct from persistent safe-area insets.
 
+Choose the mode once from product intent.
+Use `SafeArea` for conventional document and form surfaces that never draw behind system UI.
+Use `EdgeToEdge` when a background, image, map, or shell should reach the physical edge, then apply `SafeAreaPadding` to the specific controls and readable content that must remain unobstructed.
+Do not add manual status-bar constants; consume the adapter-provided inset in logical units.
+
 ## Style system bars
 
 `SystemBarsAppearance` sets available status-bar and navigation-bar backgrounds and chooses automatic, light, or dark system content.
@@ -33,6 +38,10 @@ Use automatic brightness when the adapter can infer it from the resolved backgro
 System bar availability varies by mobile platform and window mode.
 Unsupported fields remain platform-neutral intent rather than emulated desktop bars.
 
+System-bar appearance is declarative and follows the mounted surface that supplies it.
+Keep background and content brightness in the same modifier so a theme or route change cannot briefly produce unreadable system icons.
+Automatic brightness is a convenience, not an accessibility guarantee; verify contrast on the actual system-bar treatment used by each mobile platform.
+
 ## Use system or custom desktop chrome
 
 Desktop windows default to `WindowChromeMode::System`. `Custom` lets application UI occupy the title-bar surface; compose [WindowTitleBar](../../components/window-title-bar/) and use `UseWindow()` for window commands.
@@ -40,11 +49,26 @@ Desktop windows default to `WindowChromeMode::System`. `Custom` lets application
 `WindowTitleBar` separates draggable and interactive regions while caption controls invoke the same `WindowHandle` commands as application controls.
 Custom caption height comes from `WindowOptions`; choose it to match the application's shell rather than assuming one system height.
 
+Custom chrome makes the entire top surface application UI.
+Mark only non-interactive drag regions, keep buttons and text fields outside those regions, and provide localized `WindowCaptionLabels` for the built-in caption actions.
+Window commands are requests to the current platform window; an embedded host may not support every operation.
+
+Test custom chrome at normal and maximized sizes, multiple DPI values, all resize edges, keyboard focus, double-click maximize, and screen-reader navigation.
+macOS traffic-light geometry and Linux window-manager behavior are not Windows caption geometry, so keep platform reservations in `WindowTitleBarMetrics` rather than hard-coded layout constants.
+
 ## Read current metrics
 
 `WindowMetrics` is an environment value containing viewport, remaining safe-area insets, and optional title-bar metrics. System-bar brightness can be automatic, light, or dark. Availability and native behavior vary by platform; see the platform guides.
 
 Responsive composition should normally use `UseViewportClass()`.
 Read complete metrics only when geometry such as an edge surface or custom title bar genuinely depends on the exact viewport or remaining insets.
+
+## React to the software keyboard
+
+The platform may reduce the viewport when the input method appears.
+That is a window-metrics change, not a new safe-area edge and not a reason to permanently pad the root.
+Scrollable text-editing surfaces should let HuxerUI bring the active caret into view while preserving user-driven scroll behavior.
+
+Validate focused fields near every edge, keyboard dismissal, orientation/resize, and transitions between hardware and software keyboards on the target device.
 
 See the [Window API](../../reference/window/) and the relevant [platform guide](../../platforms/).

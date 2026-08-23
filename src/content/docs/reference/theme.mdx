@@ -66,7 +66,7 @@ View DestructiveAction() {
     },
     .ripple = RippleEffect {.color = Color::Rgb(255, 255, 255, 0.24F)},
   };
-  return Button("Delete").OnClick([] {}).With(std::move(feedback));
+  return Button("Delete").OnClick([] {}).With(feedback);
 }
 
 View ThemedPanel() {

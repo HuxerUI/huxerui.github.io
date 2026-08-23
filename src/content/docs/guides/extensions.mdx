@@ -1,105 +1,238 @@
 ---
 title: Extension points
-description: Choose the smallest HuxerUI extension boundary for reusable composition, custom layout, retained behavior, and window services.
+description: Choose the smallest HuxerUI boundary for reusable composition, layout policy, retained behavior, rendering, and platform integration.
 ---
 
-HuxerUI extensions stay inside the same composition, layout, interaction, paint, and platform boundaries as built-in UI.
-Choose the narrowest mechanism that owns the behavior instead of introducing a parallel widget, context, or callback system.
+HuxerUI does not require a base widget class or plugin registry.
+Extensions participate in the same composition, reconciliation, layout, interaction, paint, and platform boundaries as built-in UI.
+Start with ordinary composition and move outward only when the behavior has a different owner.
 
 ## Start with composition
 
 An ordinary function returning `View` is the default extension:
 
 ```cpp fragment
-View LabeledValue(std::string label, std::string value) {
+View LabeledValue(std::string_view label, std::string_view value) {
   return Row {
-    Text(std::move(label)),
+    Text(label),
     Spacer(),
-    Text(std::move(value)),
+    Text(value),
   }.With(CrossAlign(CrossAxisAlignment::Center));
 }
 ```
 
 Add `[[huxerui::scope]]` only when the reusable component owns local state, a local event hub, or an independent recomposition boundary.
-Use typed events for semantic outputs and controlled values for application-owned state.
+Keep application-owned values controlled: accept the current value and emit a typed event that asks the owner to update it.
 
-## Custom Layout
+Use an existing property modifier when reusable declarative data changes existing node behavior.
+Use `LayoutValue<Key>` instead when the value is metadata interpreted specifically by a parent layout.
+Neither mechanism needs a wrapper component or context object.
 
-Derive from `Layout<Derived>` when placement is the feature.
-The layout policy receives constraints and child access through its context, measures each child through that context, and returns a constrained size plus placements.
+The pinned application API does not expose a stable custom property-modifier descriptor.
+Application-defined retained behavior should use the automatic `NodeExtension` modifier pattern below; adding a new property modifier is a framework/library change because its descriptor applies directly to internal view properties.
 
-Custom layout should not retain child references across reconciliation or take ownership of scrolling, clipping, keyed identity, and hit testing that already belong to Runtime.
-Use `LayoutValue<Key>` when children need strongly typed metadata understood by their parent layout.
+## Own a measurement policy with `Layout`
 
-Prefer existing `Row`, `Column`, `Stack`, and `Flow` composition when the policy is only a fixed combination of those primitives.
-A custom layout earns its type when it owns a reusable measurement or placement algorithm.
+Derive from `Layout<Derived>` when the new abstraction is a reusable measurement and placement algorithm.
+The policy measures children only through `LayoutContext`, obeys the incoming `Constraints`, and returns placements in local coordinates.
 
-## VirtualLayout
+This complete wrapping layout uses the generic `Spacing` modifier rather than inventing a second gap API:
 
-Derive from `VirtualLayout<Derived>` when a large or unbounded data set should compose and measure only the visible window.
-The virtual policy describes item identity, estimated or measured extents, viewport interaction, and placement; Runtime owns mounted item lifetime and cleanup.
+```cpp compile="custom-layout-extension"
+#include <huxerui/huxerui.h>
 
-Stable semantic keys are required when items can reorder.
-Do not keep mounted child references in the data source or use virtualization as a replacement for ordinary conditional composition.
+#include <algorithm>
 
-Use `VirtualList` or `VirtualGrid` first.
-A custom virtual layout is appropriate for a genuinely different visible-range algorithm such as a timeline or spatial board.
+using namespace huxerui;
 
-## NodeExtension
+class WrapLayout final : public Layout<WrapLayout> {
+public:
+  using Layout::Layout;
 
-A retained modifier can attach one `NodeExtension` to one mounted node.
-Use it for behavior that must survive recomposition without becoming application state, such as a gesture recognizer, animation controller, observation token, or paint-visible retained effect.
+  static LayoutResult Measure(LayoutContext& context, MountedNode& node, Constraints constraints) {
+    LayoutResult result;
+    float x = 0.0F;
+    float y = 0.0F;
+    float line_height = 0.0F;
+    float measured_width = 0.0F;
 
-The descriptor owns declarative configuration and creates the retained instance.
-Compatible recomposition updates that configuration while preserving retained state; replacement and unmount release the instance.
+    for (MountedNode& child : node.Children()) {
+      const Size size = context.Measure(child, constraints.Loose());
+      if (x > 0.0F && x + size.width > constraints.max_width) {
+        measured_width = std::max(measured_width, x - node.Spacing());
+        x = 0.0F;
+        y += line_height + node.Spacing();
+        line_height = 0.0F;
+      }
+      result.Place(child, {x, y});
+      x += size.width + node.Spacing();
+      line_height = std::max(line_height, size.height);
+    }
 
-A `NodeExtension` must not retain a raw node pointer.
-It requests frame work through its frame result and invalidates paint only when paint-visible retained state changes.
-Use public lifecycle and event capabilities rather than adding a concrete extension check to Runtime.
+    if (x > 0.0F) {
+      measured_width = std::max(measured_width, x - node.Spacing());
+    }
+    return result.SetSize(constraints.Constrain({measured_width, y + line_height}));
+  }
+};
 
-## Root services
+View App() {
+  return WrapLayout {
+    Button("Build"),
+    Button("Test"),
+    Button("Package"),
+  }.With(Spacing(8.0F), Padding(24.0F));
+}
 
-A root service owns a per-window capability shared by composed UI, such as presentation, navigation coordination, or a platform-facing application service.
-It is installed at the application root and consumed through a typed access function rather than a global singleton.
+const Application application{App};
+```
 
-Root services are appropriate when all of these are true:
+The layout must not retain child references across reconciliation.
+Runtime continues to own keyed identity, clipping, hit testing, scrolling, and mounted-node lifetime.
+Prefer `Row`, `Column`, `Stack`, and `Flow` when their composition already expresses the policy.
 
-- The capability has one authoritative owner per Runtime or window.
-- It must coordinate content from multiple scopes.
-- Its lifetime follows the application root rather than one component node.
-- A local Environment value would not own the necessary operations or retained state.
+Derive from `VirtualLayout<Derived>` only for a genuinely different visible-range algorithm over a large or unbounded data set.
+Its policy decides what range is needed and where realized items are placed; Runtime owns realization and cleanup.
+Try `VirtualList` or `VirtualGrid` first, and use stable semantic keys when data can reorder.
 
-Do not use a root service for ordinary theme values, component configuration, or state that naturally belongs to a scoped component.
+## Retain node-local behavior with `NodeExtension`
 
-## Add a paint primitive only when necessary
+A retained modifier attaches one `NodeExtension` instance to one mounted node.
+This is the boundary for behavior that must survive compatible recomposition but is not application state: a recognizer, animation clock, observation token, text client, semantic contributor, or paint-visible effect.
 
-Canvas composition covers most custom graphics without extending the renderer.
-A new `PaintCommand` is a cross-platform rendering contract: it must carry immutable platform-neutral data and be implemented by every supported renderer.
+The public pattern has two parts:
 
-Prefer existing paths, images, text runs, transforms, clips, opacity, and shadows.
-Introduce a command only when the operation cannot be represented correctly and efficiently with the existing sequence.
+```cpp fragment
+struct ActivityPulse;
 
-## Choose the boundary
+class ActivityPulseExtension final : public NodeExtension {
+public:
+  ActivityPulseExtension(MountedNode&, const ActivityPulse& pulse);
+  void Update(MountedNode&, const ActivityPulse& pulse);
+  FrameResult OnFrame(MountedNode&, const FrameInfo& frame) override;
+  void PaintAboveContent(const MountedNode&, PaintContext& context) const override;
+
+private:
+  Color color_;
+  float phase_ = 0.0F;
+};
+
+struct ActivityPulse {
+  using Extension = ActivityPulseExtension;
+
+  Color color;
+  bool operator==(const ActivityPulse&) const = default;
+};
+```
+
+Construction starts retained state, while `Update` applies new declarative configuration without resetting compatible state.
+`OnFrame` returns whether another frame is needed; when retained state changes visible output, call protected `InvalidatePaint(...)` before returning.
+Paint through `PaintBehindContent` or `PaintAboveContent` instead of mutating the component tree.
+
+Do not retain a raw `MountedNode*`, request frames through a platform callback, or add a concrete-extension branch to Runtime.
+Implement only the `NodeExtension` capabilities the behavior owns, and invalidate semantics separately when semantic output changes.
+
+## Emit semantic output with typed events
+
+Define an event key when a composed control produces a reusable semantic result:
+
+```cpp fragment
+struct RatingChanged : Event<int> {};
+
+[[huxerui::scope]]
+View Rating(int value) {
+  return Row {
+    Button("Lower").OnClick([events = UseEvents(), value] { events.Emit<RatingChanged>(value - 1); }),
+    Text::Format("{}", value),
+    Button("Raise").OnClick([events = UseEvents(), value] { events.Emit<RatingChanged>(value + 1); }),
+  };
+}
+
+Rating(rating).On<RatingChanged>([rating](int next) {
+  rating = next;
+});
+```
+
+The event-key type is the identity.
+Do not add a second callback property when `.On<Key>()` already models the output, and do not hide the current controlled value inside the component.
+
+## Share inherited configuration
+
+Use an Environment key for typed hierarchical configuration that descendants read during composition.
+Use Theme when the value is visual policy shared by themed components.
+These are propagation mechanisms, not owners of mutable services or substitutes for explicit required arguments.
+
+Use a root service for a per-window capability with one authoritative retained owner:
+
+```cpp fragment
+struct DocumentCommands {
+  virtual ~DocumentCommands() = default;
+  virtual void Save() = 0;
+};
+
+AppOptions Options() {
+  AppOptions options;
+  options.root_hooks.push_back([](RootContext& root) {
+    root.Provide<DocumentCommands>(CreateDocumentCommands());
+  });
+  return options;
+}
+
+View SaveAction() {
+  auto commands = UseService<DocumentCommands>();
+  return Button("Save").OnClick([commands] { commands->Save(); });
+}
+```
+
+Choose a root service only when lifetime follows the Runtime/window and multiple scopes need coordinated operations.
+Ordinary state, theme values, and component configuration remain in composition or Environment.
+
+## Extend rendering or the platform boundary
+
+Canvas and existing `PaintCommand` variants cover most custom graphics.
+A new command is a cross-platform rendering contract: it carries immutable platform-neutral data and requires implementation in every supported renderer.
+Add one only when paths, images, text runs, transforms, clips, opacity, and shadows cannot represent the operation correctly and efficiently.
+
+Native integration has three distinct boundaries:
+
+| Need | Boundary | Owner |
+| --- | --- | --- |
+| Call an SDK service without embedding a control | `PlatformModule` | platform module instance for the Runtime |
+| Place an actual platform control in HuxerUI layout | `PlatformView` | platform view controller and adapter |
+| Present producer-owned GPU or media content | `ExternalTexture` | producer plus platform texture surface |
+
+Do not use `NodeExtension` as an escape hatch for native handles.
+Do not simulate an embedded control with `PlatformModule`, or use `PlatformView` for an operation that has no native visual surface.
+
+## Choose the narrowest boundary
 
 | Need | Extension |
 | --- | --- |
-| Reusable UI made from existing components | Function returning `View` |
+| Reusable UI from existing components | Function returning `View` |
 | Local state or recomposition identity | Scoped function component |
+| Reusable node data already modeled by HuxerUI | Existing property modifier |
+| Parent-specific child metadata | `LayoutValue<Key>` |
 | New measurement and placement policy | `Layout<Derived>` |
-| Visible-window composition for a new data geometry | `VirtualLayout<Derived>` |
+| New visible-window data geometry | `VirtualLayout<Derived>` |
 | Per-node retained behavior | Retained modifier and `NodeExtension` |
 | Typed semantic output | Event key and `.On<Key>()` |
 | Inherited configuration | Environment or Theme |
-| Per-window capability | Root service |
+| Per-window retained capability | Root service |
 | New platform-neutral drawing operation | `PaintCommand` |
 | Native SDK capability | `PlatformModule` |
 | Embedded native control | `PlatformView` |
 
+If two rows appear to fit, start with the earlier and narrower one.
+Move outward only when ownership, lifetime, or platform behavior cannot be expressed correctly there.
+`PaintCommand` variants and new property-modifier descriptors are framework extension work; the other rows have public application-facing authoring paths at the pinned revision.
+
 ## Related documentation
 
 - [DSL fundamentals](/docs/dsl/fundamentals/)
+- [State and recomposition](/docs/dsl/state-and-recomposition/)
+- [Events and interaction](/docs/dsl/events-and-interaction/)
 - [Layout and constraints](/docs/layout/)
 - [Modifiers](/docs/dsl/modifiers/)
 - [PlatformModule](/docs/guides/platform-module/)
+- [PlatformView](/docs/guides/platform-view/)
 - [Canvas, paint, path, and vector](/docs/guides/graphics/)
-

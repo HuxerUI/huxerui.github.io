@@ -29,14 +29,23 @@ Non-copyable root service. `Send(HttpRequest) const -> Task<HttpResult>`. Obtain
 
 using namespace huxerui;
 
-Task<void> LoadStatus(State<std::string> output) {
-  auto http = UseService<HttpClient>();
+Task<void> LoadStatus(std::shared_ptr<HttpClient> http, State<std::string> output) {
   HttpResult result = co_await http->Send({
       .url = "https://example.com/status",
       .method = HttpMethod::Get,
   });
   output = result.HasResponse() ? std::to_string(result.Response().status_code) : result.Error().message;
 }
+
+[[huxerui::scope]]
+View LoadStatusButton(State<std::string> output) {
+  auto http = UseService<HttpClient>();
+  auto tasks = UseTaskScope();
+  return Button("Load status").OnClick([http, tasks, output] {
+    tasks.Launch(LoadStatus(http, output));
+  });
+}
 ```
 
+Resolve `HttpClient` and `TaskScope` during composition, then capture them in the event.
 HTTP status codes are responses; transport, timeout, and unsupported-service failures use `HttpError`.

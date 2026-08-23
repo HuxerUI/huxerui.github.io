@@ -40,8 +40,7 @@ Capability for a selected or activated file. Metadata: `Name`, optional `Size`, 
 
 using namespace huxerui;
 
-Task<void> OpenText(State<std::string> content) {
-  auto picker = UseService<FilePicker>();
+Task<void> OpenText(std::shared_ptr<FilePicker> picker, State<std::string> content) {
   auto selected = co_await picker->OpenFileAsync({
       .name = "Text",
       .extensions = {"txt"},
@@ -55,6 +54,16 @@ Task<void> OpenText(State<std::string> content) {
     content = std::move(text).Value();
   }
 }
+
+[[huxerui::scope]]
+View OpenTextButton(State<std::string> content) {
+  auto picker = UseService<FilePicker>();
+  auto tasks = UseTaskScope();
+  return Button("Open text file").OnClick([picker, tasks, content] {
+    tasks.Launch(OpenText(picker, content));
+  });
+}
 ```
 
-Cancellation is represented by an empty optional. A returned `FileReference` preserves provider authority without inventing a local path.
+Resolve services and task scope during composition before capturing them in an event.
+Picker cancellation is represented by an empty optional. A returned `FileReference` preserves provider authority without inventing a local path.

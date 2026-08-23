@@ -47,7 +47,7 @@ View InteractionVisualSnippet() {
     },
   };
 
-  return Button("Run").OnClick([] {}).With(std::move(action_feedback));
+  return Button("Run").OnClick([] {}).With(action_feedback);
 }
 
 struct DocumentationRoute {

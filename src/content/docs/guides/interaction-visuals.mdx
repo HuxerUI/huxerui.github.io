@@ -46,7 +46,7 @@ Indication action_feedback {
 
 Button("Run")
     .OnClick(RunProject)
-    .With(std::move(action_feedback))
+    .With(action_feedback)
 ```
 
 `BehindContent` paints before node content; `AboveContent` paints after it.
@@ -120,4 +120,3 @@ Indication animation is retained on the mounted node and invalidates paint only 
 - [Theme and styling](/docs/guides/theme-and-styling/)
 - [Modifier and indication API](/docs/reference/modifier/)
 - [Accessibility](/docs/guides/accessibility/)
-

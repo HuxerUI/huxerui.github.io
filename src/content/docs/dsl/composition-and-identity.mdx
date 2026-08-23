@@ -11,8 +11,8 @@ Build small functions with explicit required input, then assemble them through o
 ## Stateless composition
 
 ```cpp fragment
-View StatusBadge(std::string label, Color color) {
-  return Text(std::move(label), TextRole::Label)
+View StatusBadge(std::string_view label, Color color) {
+  return Text(label, TextRole::Label)
       .With(
           Padding(EdgeInsets::Symmetric(10.0F, 4.0F)),
           Background(color),
@@ -30,14 +30,14 @@ Add a scope when the component owns `UseState`, `UseStateList`, `UseEvents`, `Us
 
 ```cpp fragment
 [[huxerui::scope]]
-View ExpandableSection(std::string title, View content) {
+View ExpandableSection(std::string_view title, View content) {
   auto expanded = UseState(false);
 
   return Column {
-    Button(std::move(title)).OnClick([expanded] {
+    Button(title).OnClick([expanded] {
       expanded = !expanded;
     }),
-    expanded ? std::move(content) : View{},
+    expanded ? content : View{},
   };
 }
 ```

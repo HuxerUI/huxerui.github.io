@@ -20,6 +20,10 @@ Canvas([](PaintContext& paint, Size size) {
 The canvas rectangle is always local `(0, 0, size.width, size.height)`.
 Padding and parent placement are resolved before the painter runs, so drawing code does not need the node's world position.
 
+The painter is retained paint input, not a composition callback.
+Capture stable values needed for drawing and let recomposition replace the painter when those declarative inputs change.
+For frame-by-frame motion, use `Transition`, `MotionController`, or another retained animation source rather than writing application `State` every frame.
+
 ## Append paint commands
 
 Paint operations append immutable platform-neutral commands. Available primitives cover rectangles, linear/radial gradients, text and text runs, raster/vector images, external textures, circles, arcs, borders, shadows, filled/stroked paths, clips, and transforms.
@@ -30,6 +34,10 @@ The platform renderer consumes the supplied layout geometry; custom paint code s
 Use `DrawImage` or `DrawImageRect` after resolving an `ImageAsset` with `UseImage`.
 Normal UI should prefer `Image(resource)`, which owns resource resolution, fitting, tint, and semantics.
 
+Text geometry must come from HuxerUI measurement.
+`DrawText` and `DrawTextRuns` consume the supplied layout and style; renderers should not reinterpret the string with a second independent measurement pass.
+Choose runs when several measured spans share one drawing operation, such as syntax coloring or diagnostics, and ordinary `Text` when the content participates in standard layout and accessibility.
+
 ## Build paths and vectors
 
 `Path` builds line, curve, arc, and closed contours with a fill rule. `VectorBuilder` combines paths into a reusable `VectorAsset`. Prefer `Image(VectorAsset)` for reusable icons and `Canvas` for size-dependent or animated custom drawing.
@@ -37,6 +45,24 @@ Normal UI should prefer `Image(resource)`, which owns resource resolution, fitti
 Stroke width, joins, caps, and path geometry remain platform-neutral.
 Build stable vector assets outside a per-frame painter when the same geometry is reused.
 
+Paths are value geometry and can be rebuilt when size changes.
+Cache expensive size-independent geometry in the retained owner that already controls it; do not add a global cache or keep platform path handles in shared code.
+Use explicit fill and stroke operations so a diagnostic underline, outline, or hit region does not depend on a backend's implicit defaults.
+
 ## Balance paint state
 
-Balance every pushed clip or transform. Paint commands use local coordinates; runtime composition supplies node transforms and opacity. Custom drawing does not automatically add semantics, so attach `Semantics` when the result communicates information. See [Paint API](../../reference/paint/) and [Vector API](../../reference/vector/).
+Balance every pushed clip or transform on every control-flow path.
+Paint commands use local coordinates; runtime composition supplies node transforms and unified opacity for the node, descendants, and foreground paint.
+Prefer structured save/restore helpers in application drawing code when early returns would make balancing difficult.
+
+Custom drawing does not automatically add semantics or interaction.
+Attach `Semantics` when the result communicates information, and use a semantic control or retained input extension when it must be actionable.
+Hit testing follows the mounted view bounds unless an explicit extension supplies a narrower interaction policy; the painted path alone does not become a hit region.
+
+## Keep rendering portable
+
+Paint data is platform-neutral and immutable after it enters the sequence.
+Avoid device pixels, native font/path/image handles, and backend-specific blend assumptions in Canvas code.
+Validate gradients, text baselines, stroke joins, clipping, shadows, and external textures on every renderer used by the product because compile-time command coverage cannot prove pixel equivalence.
+
+See [Paint API](../../reference/paint/), [Vector API](../../reference/vector/), [Animation](../animation/), and [Accessibility](../accessibility/).

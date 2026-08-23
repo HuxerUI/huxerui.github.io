@@ -1,12 +1,15 @@
 ---
 title: Lifecycle and activation
-description: Observe scoped setup/cleanup, application activation, and foreground state.
+description: Tie external work to a component scope and translate cold- or warm-start application activations into shared state.
 ---
 
-`Lifecycle` registers setup work in the current recomposition scope.
-It runs after the scope is committed, reruns when captured dependencies change, and runs its returned cleanup before replacement or unmount.
+`Lifecycle` and application activation solve different lifetime problems.
+`Lifecycle` owns an external effect for one composed scope; `ApplicationHandle` reports what caused the process or an existing window session to receive attention.
+Neither API is a second state system: application-owned values remain controlled `State` and activation should be translated into routes or document state.
 
 ## Own an external effect
+
+Register an effect while composing the scope that owns it:
 
 ```cpp fragment
 Lifecycle([document_id] {
@@ -17,35 +20,141 @@ Lifecycle([document_id] {
 }, document_id);
 ```
 
-Dependencies may be equality-comparable values, `State`, or `StateList`. An overload with no dependencies behaves like scoped mount/unmount work. Keep UI values controlled and use lifecycle only for external effects.
+Setup runs after the scope is committed, never during speculative composition.
+When a dependency changes, HuxerUI runs the active cleanup before the replacement setup; unmount runs the last cleanup exactly once.
+The move above is intentional: it transfers the subscription into the cleanup that now owns its lifetime.
 
-Setup may return `void` when no cleanup is required.
-Changing dependencies always runs the previous cleanup before the next setup, and final unmount runs the active cleanup exactly once.
+Setup may return `void` when there is nothing to release.
+Dependencies may be equality-comparable values, `State`, or `StateList`; the overload without dependencies behaves like mount/unmount work.
 
-Do not use `Lifecycle` to mirror one application state value into another.
-Use it for subscriptions, observers, registrations, and resources whose lifetime must follow the component scope.
+Use `Lifecycle` for subscriptions, registrations, observation tokens, and external resources.
+Do not use it to copy one UI state value into another, launch work during every recomposition, or compensate for a missing controlled-value event.
 
-## Separate startup from later activation
+## Handle cold and warm activation
 
-`ApplicationHandle` separates cold-start activation from later activation. `StartupActivation()` exposes the launch, URL, or file activation used to create the runtime; `OnActivation(...)` observes subsequent requests. `LifecycleState()` is observable during composition, while `OnLifecycleChange(...)` registers transition callbacks for `ApplicationLifecycleState`.
+`StartupActivation()` is the immutable activation that created the current Runtime.
+`OnActivation(...)` receives only later requests delivered to that Runtime.
+This split prevents a startup URL or file from being replayed merely because a component recomposed.
 
-The startup value is stable for the lifetime of one runtime.
-Later file or URL requests do not replace it; they arrive through `OnActivation` so an application can distinguish initial route construction from an already-running session.
+The following application presents the startup reason and replaces it when a later URL or file activation arrives:
 
-`ApplicationActivation` contains `LaunchActivation`, `UrlActivation`, or `FileActivation`.
-Translate the value into application route or document state instead of retaining platform intent objects in the UI tree.
+```cpp compile="application-activation"
+#include <huxerui/huxerui.h>
+
+#include <string>
+#include <type_traits>
+
+using namespace huxerui;
+
+std::string DescribeActivation(const ApplicationActivation& activation) {
+  return std::visit(
+      [](const auto& value) {
+        using Value = std::decay_t<decltype(value)>;
+        if constexpr (std::is_same_v<Value, LaunchActivation>) {
+          return std::string{"Ordinary launch"};
+        } else if constexpr (std::is_same_v<Value, UrlActivation>) {
+          return "URL: " + value.url;
+        } else {
+          return value.files.empty() ? std::string{"No files"} : "File: " + value.files.front().Name();
+        }
+      },
+      activation
+  );
+}
+
+[[huxerui::scope]]
+View ActivationStatus() {
+  const ApplicationHandle application = UseApplication();
+  auto latest = UseState(DescribeActivation(application.StartupActivation()));
+
+  application.OnActivation([latest](ApplicationActivation activation) {
+    latest = DescribeActivation(activation);
+  });
+
+  return Column {
+    Text("Latest activation", TextRole::Title),
+    Text(latest),
+  }.With(Spacing(8.0F), Padding(24.0F));
+}
+
+View App() {
+  return ActivationStatus();
+}
+
+const Application application{App};
+```
+
+`ApplicationActivation` is a variant of:
+
+- `LaunchActivation` for an ordinary start.
+- `UrlActivation` with the platform-delivered URL string.
+- `FileActivation` with one or more capability-bearing `FileReference` values.
+
+Treat the variant as an input to application policy.
+For example, parse a URL into a typed `NavigationPath`, or launch a scoped task that reads a `FileReference` and updates controlled document state.
+Do not retain Android intents, Apple URLs, Win32 command-line handles, or other platform objects in shared UI.
+
+## Route an activation once
+
+Keep route translation deterministic and separate from presentation:
+
+```cpp fragment
+NavigationPath<AppRoute> RouteFor(const ApplicationActivation& activation) {
+  if (const auto* url = std::get_if<UrlActivation>(&activation)) {
+    return DecodeApplicationUrl(url->url).value_or(NavigationPath<AppRoute>{});
+  }
+  if (const auto* files = std::get_if<FileActivation>(&activation); files && !files->files.empty()) {
+    return NavigationPath<AppRoute>{{DocumentRoute{files->files.front().Name()}}};
+  }
+  return {};
+}
+```
+
+Apply `RouteFor(application.StartupActivation())` when constructing the initial controlled path, and keep any `FileReference` required to open the document in document state rather than inside an equality-comparable route.
+In `OnActivation`, replace or extend that same path according to application policy.
+If the platform repeats an equivalent request, deduplicate it in application state when opening it twice would be harmful; HuxerUI does not guess whether repeated activations are meaningful.
+
+File contents are asynchronous.
+Capture the `FileReference` in a task launched by `UseTaskScope()`, handle `FileResult` failure explicitly, and let scope unmount cancel the work.
+The [Files guide](/docs/guides/files/) covers that ownership path.
 
 ## Observe foreground state
 
-`ApplicationLifecycleState` is `Active`, `Inactive`, or `Background`.
-Read `LifecycleState()` during composition when visible UI depends on the current state, and use `OnLifecycleChange` for an external effect such as pausing a producer or saving a session.
+`LifecycleState()` returns `Active`, `Inactive`, or `Background` and subscribes the composing scope to changes.
+Use it when visible UI depends on the current state:
 
-Background work remains subject to platform policy.
-A lifecycle callback is notification, not permission to run indefinitely after the application leaves the foreground.
+```cpp fragment
+const ApplicationHandle application = UseApplication();
+const bool active = application.LifecycleState() == ApplicationLifecycleState::Active;
 
-## Route external intent
+return Text(active ? "Connected" : "Paused");
+```
 
-Use activation to translate external intent into application route or state changes.
-Platform adapters own native intent and session conversion, while shared application code owns what destination or document the activation selects.
+Use `OnLifecycleChange(...)` for an external side effect such as pausing a producer or saving a session.
+It follows the declaring component's lifecycle and accepts dependencies just like `Lifecycle`.
+Background notification is not permission to keep running indefinitely; operating-system policy still controls execution.
 
-See the [Application API](../../reference/app/), [Lifecycle API](../../reference/lifecycle/), and [Navigation and routing](../navigation-and-routing/).
+Activation and lifecycle are independent.
+Moving to the foreground may occur without a new activation, and a new activation can arrive while an existing session is already active.
+
+## Platform delivery boundary
+
+The shared API begins after a platform shell has converted its native event:
+
+| Platform | Typical source | Shared value |
+| --- | --- | --- |
+| Windows | registered URL protocol or file command line | `UrlActivation` or `FileActivation` |
+| Android | launch/view/edit intent | `LaunchActivation`, `UrlActivation`, or `FileActivation` |
+| iOS and macOS | URL or document open callback | adapter-provided URL or file activation |
+| Web | initial or later browser location | URL routing normally uses `BrowserNavigationStack`; activation depends on the Web shell integration |
+
+Availability and exact registration remain platform-shell concerns.
+Do not claim a URL scheme, file association, or background mode until that shell has configured and verified it.
+
+## Related documentation
+
+- [Application API](/docs/reference/app/)
+- [Lifecycle API](/docs/reference/lifecycle/)
+- [Navigation and routing](/docs/guides/navigation-and-routing/)
+- [Tasks and async work](/docs/guides/tasks/)
+- [Files and file pickers](/docs/guides/files/)
