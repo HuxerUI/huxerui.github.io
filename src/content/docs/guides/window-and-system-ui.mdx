@@ -10,7 +10,7 @@ It sets title, initial logical size, content mode, chrome mode, preferred custom
 
 `WindowContentMode::SafeArea` keeps root content inside platform obstructions. `EdgeToEdge` gives the app the complete drawing surface; apply `SafeAreaPadding` only where content must avoid selected edges.
 
-```cpp
+```cpp fragment
 return Content().With(
     SafeAreaPadding{.top = true, .right = true, .bottom = true, .left = true},
     SystemBarsAppearance{

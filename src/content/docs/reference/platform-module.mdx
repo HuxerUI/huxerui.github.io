@@ -16,8 +16,11 @@ Immutable shared recursive value. `PlatformPayloadKind` is `Null`, `Boolean`, `I
 - `PlatformRequestId`: unsigned 64-bit request identity.
 - `PlatformError`: string code, message, and details payload.
 - `PlatformResult<Result>`: result-or-error variant.
-- A `PlatformMethodKey` defines `Request`, `Result`, `Name`, `Encode`, and `Decode`.
-- A `PlatformEventKey` is an HuxerUI event key with `Name` and `Decode` compatible with its signature.
+- `PlatformEventSink` and `PlatformResultSink`: erased event and method-completion callbacks used by platform factories.
+- A method key defines public nested `Request` and `Result` types plus static `Name`, `Encode`, and `Decode` members.
+- A platform event key derives its signature from `Event<...>` and adds static `Name` and `Decode` members compatible with that signature.
+
+The concepts that validate these shapes live in `huxerui::detail`; applications provide conforming key types rather than naming those concepts.
 
 ## Factory and instance
 
@@ -28,3 +31,35 @@ Immutable shared recursive value. `PlatformPayloadKind` is `Null`, `Boolean`, `I
 ## Registry
 
 `PlatformModules::Register(type, registration)` stores one typed registration per name. `Find<Registration>(type)` validates registration type. `Open(type, options = {})` creates a shared `PlatformModuleFactory` instance. Platform adapters construct the registry and dispatch completion/event work onto the UI thread.
+
+## Complete typed method example
+
+```cpp compile="platform-module-method"
+#include <huxerui/huxerui.h>
+
+using namespace huxerui;
+
+struct ReadBatteryLevel {
+  using Request = std::monostate;
+  using Result = double;
+  static constexpr std::string_view Name = "readBatteryLevel";
+
+  static PlatformPayload Encode(const Request&) {
+    return nullptr;
+  }
+
+  static Result Decode(const PlatformPayload& payload) {
+    return payload.AsDouble();
+  }
+};
+
+void ReadBattery(PlatformInstance& device) {
+  device.Call<ReadBatteryLevel>({}, [](PlatformResult<double> result) {
+    if (const auto* level = std::get_if<double>(&result)) {
+      static_cast<void>(*level);
+    }
+  });
+}
+```
+
+The method key owns wire conversion. Application code sees a typed result while the native implementation remains behind the registered module factory.

@@ -9,7 +9,7 @@ sidebar:
 
 ## Declare tab items
 
-```cpp
+```cpp fragment
 Tabs(
     {
         TabItem("Overview"),
@@ -30,7 +30,7 @@ Simple constructors accept string labels.
 The selected index is controlled and must identify an item.
 `OnChanged` requests a new index; use that state to choose the corresponding page content.
 
-```cpp
+```cpp fragment
 Column {
   Tabs({"Files", "Search", "History"}, selected)
       .OnChanged([selected](std::size_t index) {

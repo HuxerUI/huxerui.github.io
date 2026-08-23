@@ -12,7 +12,7 @@ Its DSL is a small set of ordinary types and conventions designed to make a decl
 
 A component is any function whose result converts to `View`.
 
-```cpp
+```cpp fragment
 View ProfileHeader(std::string name) {
   return Row {
     Image(images::avatar)
@@ -36,7 +36,7 @@ Return a built-in component directly or compose several children into a layout.
 
 Layout components accept children through braces:
 
-```cpp
+```cpp fragment
 Column {
   Text("First"),
   Text("Second"),
@@ -52,7 +52,7 @@ Children are evaluated in declaration order and retain that order in layout, pai
 
 `ForEach` returns a `Views` group that a braced container flattens into its children:
 
-```cpp
+```cpp fragment
 Column {
   ForEach(items, [](const Item& item) {
     return Text(item.title).Key(item.id);
@@ -65,7 +65,7 @@ Column {
 Required values belong in a component constructor.
 Behavior unique to one component uses a strongly typed fluent method:
 
-```cpp
+```cpp fragment
 TextField(value)
     .Label("Email")
     .Placeholder("name@example.com")
@@ -82,7 +82,7 @@ Finish configuration while building the declarative expression instead of retain
 
 `.With(...)` applies modifiers that make sense across component types:
 
-```cpp
+```cpp fragment
 Text("Status")
     .With(
         Padding(8.0F),
@@ -100,7 +100,7 @@ Read [Modifiers](/docs/dsl/modifiers/) for layout, presentation, interaction, an
 Convenience methods such as `.OnClick(...)` and `.OnChanged(...)` bind built-in typed events.
 The generic form uses an event key:
 
-```cpp
+```cpp fragment
 Button("Save")
     .On<ViewEvents::FocusChanged>([](bool focused) {
       // React to focus without string event names.
@@ -128,7 +128,7 @@ That split lets the C++ declaration stay simple while focus, scrolling, animatio
 
 Most application files use the umbrella header:
 
-```cpp
+```cpp fragment
 #include <huxerui/huxerui.h>
 
 using namespace huxerui;

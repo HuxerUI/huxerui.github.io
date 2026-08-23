@@ -78,6 +78,24 @@ Before publishing an application:
 
 Treat a platform unavailable to CI as explicitly unverified, not implicitly passing.
 
+## Update the documented HuxerUI revision
+
+The website has one framework source of truth: `huxerui-source.json` pins the repository commit and the 17 Web examples published by the site.
+API contracts, source links, extracted documentation examples, and WebAssembly builds all resolve that same commit.
+
+Before changing the pin, audit a candidate checkout without editing the website configuration:
+
+```bash
+npm run audit:revision -- /path/to/HuxerUI
+```
+
+The audit reports added or removed public headers, explicit contract drift, missing or changed configured examples, and reference pages affected by public-header changes.
+Review those pages, update the explicit contracts in `scripts/api-coverage.mjs`, then change the revision and run the complete website checks.
+A clean audit does not replace API review: signature contracts and compiled examples are the checks that expose a changed overload, enum, or usage pattern.
+
+The site intentionally remains single-version.
+Do not add a second documentation tree when advancing the pin; update the manual and its validation contract together.
+
 ## Common failures
 
 ### HUXERUI_HOME is not found
@@ -110,4 +128,3 @@ Automatic selection occurs only when one ready device is available.
 - [CMake integration](/docs/tooling/cmake/)
 - [SDK structure](/docs/tooling/sdk/)
 - [Accessibility](/docs/guides/accessibility/)
-

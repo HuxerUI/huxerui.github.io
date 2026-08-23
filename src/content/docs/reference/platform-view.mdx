@@ -9,7 +9,7 @@ Declared by `<huxerui/platform_view.h>`.
 
 ## `PlatformView`
 
-`PlatformView(std::string type, PlatformPayload properties = {})` creates a declarative platform-view node. Rvalue `.Events<PlatformEventKey...>()` declares the platform events the node can dispatch. Bind handlers with inherited `.On<Key>(handler)`.
+`PlatformView(std::string type, PlatformPayload properties = {})` creates a declarative platform-view node. Rvalue `.Events<Keys...>()` declares the conforming platform event keys the node can dispatch. Bind handlers with inherited `.On<Key>(handler)`.
 
 The type must match a platform-specific `PlatformViewFactory` registered in `RootContext::Modules()`. Recomposition supplies replacement property payloads; the adapter owns create/update/place/hide/dispose behavior.
 
@@ -17,3 +17,14 @@ The type must match a platform-specific `PlatformViewFactory` registered in `Roo
 
 Declare every platform event a view can emit with `.Events<Key...>()`, then bind it with `.On<Key>(handler)`.
 The event key owns its platform event name and payload decoder, keeping platform payload handling out of ordinary component code.
+
+## Ownership and limitations
+
+The HuxerUI node owns declarative type, properties, events, layout bounds, visibility, and mounted lifetime.
+The adapter retains the native object for the compatible mounted lifetime and invokes the registered factory's optional `dispose` callback when that lifetime ends.
+Factory callbacks execute on the platform UI thread.
+Unknown types and incompatible registrations are platform integration errors.
+
+PlatformView composition capabilities differ by backend.
+Native child views may not support arbitrary HuxerUI transforms, path clips, opacity interleaving, or z-order on every platform.
+Use `ExternalTexture` when only changing pixels are required and a normal HuxerUI component when the behavior can remain shared.

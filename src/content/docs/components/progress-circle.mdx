@@ -9,7 +9,7 @@ Construct `ProgressCircle()` for ongoing work with unknown completion, or pass a
 
 ## Choose progress mode
 
-```cpp
+```cpp fragment
 Row {
   ProgressCircle(),
   Text("Connecting"),
@@ -37,3 +37,5 @@ Reduced-motion themes suppress or simplify continuous motion.
 - Constructors: `ProgressCircle()`, `ProgressCircle(float)`, `ProgressCircle(State<float>)`.
 - Common modifiers: `Frame`, `Opacity`, `Semantics` for an application-specific label.
 - Theme style: `ProgressCircleStyle` and `ProgressCircleIndeterminateMotion`.
+
+Use [ProgressBar](../progress-bar/) when the available width should communicate progress along a linear track.

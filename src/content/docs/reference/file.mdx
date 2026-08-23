@@ -32,3 +32,29 @@ Capability for a selected or activated file. Metadata: `Name`, optional `Size`, 
 ## `FileSystem`
 
 `AppDirectories` contains optional executable directory plus required data, cache, and temporary directories. `FileSystem::Directories()` returns them; `CurrentDirectory()` resolves process working directory. Obtain `FileSystem` and `FilePicker` with `UseService<T>()`.
+
+## Complete picker example
+
+```cpp compile="file-picker"
+#include <huxerui/huxerui.h>
+
+using namespace huxerui;
+
+Task<void> OpenText(State<std::string> content) {
+  auto picker = UseService<FilePicker>();
+  auto selected = co_await picker->OpenFileAsync({
+      .name = "Text",
+      .extensions = {"txt"},
+      .content_types = {"text/plain"},
+  });
+  if (!selected) {
+    co_return;
+  }
+  auto text = co_await selected->ReadStringAsync();
+  if (text.Succeeded()) {
+    content = std::move(text).Value();
+  }
+}
+```
+
+Cancellation is represented by an empty optional. A returned `FileReference` preserves provider authority without inventing a local path.

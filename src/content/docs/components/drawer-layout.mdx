@@ -7,7 +7,7 @@ description: Coordinate application content with optional start and end drawers.
 
 ## Compose both logical edges
 
-```cpp
+```cpp fragment
 DrawerLayout(
     Content(),
     StartDrawer(Destinations()).Open(start_open).OnOpenChanged([start_open](bool value) {

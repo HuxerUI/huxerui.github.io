@@ -8,7 +8,7 @@ Launch top-level work through a scoped `TaskScope` so unmount cancels outstandin
 
 ## Define an asynchronous operation
 
-```cpp
+```cpp fragment
 Task<void> LoadProfile(State<std::string> status) {
   status = "Loading";
   co_await Delay(std::chrono::milliseconds(250));
@@ -21,7 +21,7 @@ It begins when awaited or launched by an owning scope.
 
 ## Launch from UI lifetime
 
-```cpp
+```cpp fragment
 View LoadButton(State<std::string> status) {
   auto tasks = UseTaskScope();
   return Button("Load").OnClick([tasks, status] {

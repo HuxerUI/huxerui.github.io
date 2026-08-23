@@ -12,8 +12,11 @@ huxerui setup web
 huxerui run web
 ```
 
-The browser adapter owns animation-frame scheduling, canvas presentation, DOM input and IME conversion, accessibility integration, HTTP through browser networking, file capabilities, activation, and visibility lifecycle.
+The browser adapter owns animation-frame scheduling, canvas presentation, DOM input and IME conversion, HTTP through browser networking, file capabilities, activation, and visibility lifecycle.
+The pinned revision does not yet project the shared semantic tree into an accessible DOM tree; the render canvas and hidden text-input element are marked `aria-hidden`.
 
 Use `<huxerui/web/navigation.h>` for `BrowserNavigationStack`, which synchronizes a typed `NavigationPath<Route>` with URL and browser back/forward history through an application codec. DOM-backed platform views are registered with `<huxerui/web/platform_view.h>`; browser external texture sources use `<huxerui/web/external_texture.h>`.
 
 Browser security policy governs network origins, file access, clipboard permission, autoplay, and external resources. A Web build cannot rely on native filesystem paths or unrestricted synchronous I/O.
+
+Website CI builds every listed Web example at the pinned revision, but browser permissions and assistive-technology behavior still require environment-specific testing.

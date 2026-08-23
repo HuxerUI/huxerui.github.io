@@ -17,3 +17,5 @@ The host view owns one shared runtime and adapter. Java/Kotlin lifecycle, input 
 Android defaults to safe-area content. Choose `WindowContentMode::EdgeToEdge` to draw behind system bars, then use `SafeAreaPadding` and `SystemBarsAppearance`. Software-keyboard viewport adjustment is distinct from physical safe-area insets.
 
 PlatformView factories are declared by `<huxerui/android/platform_view.h>`. External texture sources use `<huxerui/android/external_texture.h>`. JNI work must run on the UI thread and respect Java reference lifetime.
+
+Android behavior must still be validated on devices or emulators for API level, density, system-bar mode, IME resize policy, accessibility service, document provider, and network security configuration.

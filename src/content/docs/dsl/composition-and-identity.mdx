@@ -10,7 +10,7 @@ Build small functions with explicit required input, then assemble them through o
 
 ## Stateless composition
 
-```cpp
+```cpp fragment
 View StatusBadge(std::string label, Color color) {
   return Text(std::move(label), TextRole::Label)
       .With(
@@ -28,7 +28,7 @@ Its returned declarations become ordinary children of the caller.
 
 Add a scope when the component owns `UseState`, `UseStateList`, `UseEvents`, `UseTaskScope`, or scope-bound lifecycle work:
 
-```cpp
+```cpp fragment
 [[huxerui::scope]]
 View ExpandableSection(std::string title, View content) {
   auto expanded = UseState(false);
@@ -50,7 +50,7 @@ When dynamic stateful children can reorder, assign keys to their returned roots.
 Unkeyed siblings reconcile by position.
 That is correct for fixed declarations but not for a mutable collection whose entries own local state.
 
-```cpp
+```cpp fragment
 ForEach(messages, [](const Message& message) {
   return MessageRow(message).Key(message.id);
 })
@@ -63,7 +63,7 @@ It must remain stable for the life of that item and be unique among siblings.
 
 Define an environment value with a static default:
 
-```cpp
+```cpp fragment
 struct EditorSettings {
   bool show_line_numbers = true;
 
@@ -75,7 +75,7 @@ struct EditorSettings {
 
 Provide it to a subtree and read the nearest value:
 
-```cpp
+```cpp fragment
 View Editor() {
   const auto& settings = UseEnvironment<EditorSettings>();
   return Text(settings.show_line_numbers ? "Line numbers on" : "Line numbers off");
@@ -97,7 +97,7 @@ The closest provider wins, and a missing provider uses `Value::Default()`.
 `UseTheme()` reads the current `ThemeSpec`.
 `Theme`, `MaterialTheme`, and `FlatTheme` provide theme values to their subtree using the same hierarchical model.
 
-```cpp
+```cpp fragment
 View Surface() {
   const ThemeSpec& theme = UseTheme();
   return Column {
@@ -114,7 +114,7 @@ View Surface() {
 
 Use `Lifecycle` for an external subscription or resource that must restart when dependencies change and clean up when the component unmounts:
 
-```cpp
+```cpp fragment
 Lifecycle([channel] {
   auto connection = Connect(channel);
   return [connection] {

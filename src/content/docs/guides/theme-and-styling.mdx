@@ -8,7 +8,7 @@ A generated application does not force a visual family; choose a built-in theme 
 
 ## Select a visual family
 
-```cpp
+```cpp fragment
 View App() {
   return MaterialTheme(Content);
 }
@@ -21,7 +21,7 @@ They may resolve different geometry, interaction indication, menu separators, di
 
 ## Customize theme tokens
 
-```cpp
+```cpp fragment
 View BrandedApp() {
   ThemeSpec spec = MaterialLightThemeSpec();
   spec.colors.primary = Color::Rgb(92, 61, 180);

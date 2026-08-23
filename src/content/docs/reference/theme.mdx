@@ -20,7 +20,7 @@ Declared by `<huxerui/theme.h>`.
 
 ## Component styles
 
-All style structures are equality-comparable and provide `Default()`:
+The component-level style structures are equality-comparable and provide `Default()`; `TextFieldVariantStyle` is an embedded value configured through `TextFieldStyle`:
 
 - `ButtonStyle`: background/label/disabled colors, padding, minimum geometry, radius, indication.
 - `IconButtonStyle`: foreground, icon and interactive geometry, radius, indication.
@@ -46,3 +46,32 @@ Navigation styles (`TopAppBarStyle`, `NavigationBarStyle`, `NavigationPaneStyle`
 - `FlatTheme`, `FlatDarkTheme`, `MaterialTheme`, and `MaterialDarkTheme` provide convenient factory wrappers; light-family overloads also accept a custom `ThemeSpec`.
 
 `HUXERUI_THEME(ThemeProvider, expression)` is a macro wrapper for expression-style code; component functions and normal provider calls are preferred in new DSL examples.
+
+## Complete theme and indication example
+
+```cpp compile="theme-indication"
+#include <huxerui/huxerui.h>
+
+using namespace huxerui;
+
+View DestructiveAction() {
+  Indication feedback {
+    .hover = IndicationLayer {
+      .fill = VisualFill(Color::Rgb(255, 255, 255, 0.10F)),
+      .placement = IndicationPlacement::AboveContent,
+    },
+    .press = IndicationLayer {
+      .fill = VisualFill(Color::Rgb(255, 255, 255, 0.18F)),
+      .placement = IndicationPlacement::AboveContent,
+    },
+    .ripple = RippleEffect {.color = Color::Rgb(255, 255, 255, 0.24F)},
+  };
+  return Button("Delete").OnClick([] {}).With(std::move(feedback));
+}
+
+View ThemedPanel() {
+  return MaterialTheme(DestructiveAction);
+}
+```
+
+The theme supplies the normal component style; the explicit `Indication` replaces interaction feedback only for this node.

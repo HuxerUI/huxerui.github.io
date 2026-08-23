@@ -12,3 +12,12 @@ Declared by `<huxerui/external_texture.h>`.
 Default construction creates an empty handle. `IntrinsicSize()` returns the current logical source size; `HasValue()` reports a connected state; equality compares shared source identity. Platform-specific source types are the only producers.
 
 The handle is accepted by `Image`, `ImageFill` is intentionally limited to static image/vector sources, and `PaintContext` has explicit external-texture drawing operations.
+
+## Ownership and platform availability
+
+`ExternalTexture` is a copyable consumer handle; a platform-specific `ExternalTextureSource` owns publication and produces that handle.
+Publishing a new frame invalidates paint without requiring state recomposition.
+Frame bytes or native texture objects remain subject to the source header's threading and release rules.
+
+Use `ImageAsset` for immutable encoded images, `ExternalTexture` for changing pixel producers, and `PlatformView` when the embedded native object must receive native interaction or accessibility.
+Source creation is platform-specific and requires an explicit platform header.

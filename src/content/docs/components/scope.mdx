@@ -10,7 +10,7 @@ Most application code should use `[[huxerui::scope]]`, which generates this boun
 
 ## Prefer generated scope syntax
 
-```cpp
+```cpp fragment
 [[huxerui::scope]]
 View Counter() {
   auto count = UseState(0);
@@ -27,13 +27,13 @@ View Counter() {
 
 Explicit construction is useful when a factory is already available as a value:
 
-```cpp
+```cpp fragment
 Scope(content_factory)
 ```
 
 The variadic constructor binds a compatible factory and copyable arguments without requiring an application-authored forwarding lambda:
 
-```cpp
+```cpp fragment
 Scope(ProfilePage, user_id)
 ```
 
@@ -49,3 +49,5 @@ Do not add scopes to every helper function; stateless composition should stay an
 - `Scope(std::function<View()> factory)`.
 - `Scope(Factory&& factory, Arguments&&... arguments)` for a compatible view factory.
 - Preferred declaration syntax: `[[huxerui::scope]] View Component(...)`.
+
+Read [Composition and identity](/docs/dsl/composition-and-identity/) before introducing explicit scope boundaries or keys.

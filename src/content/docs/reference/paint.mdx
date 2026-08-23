@@ -44,3 +44,21 @@ Each command is immutable platform-neutral data with equality. Command fields co
 - `FrameCommit`: render frame, immutable semantic frame, and optional absolute next-frame deadline.
 
 The scene/frame types are the platform renderer boundary. Their non-owning pointers remain valid only until the next runtime frame construction or destruction.
+
+## Complete Canvas example
+
+```cpp compile="canvas-paint"
+#include <huxerui/huxerui.h>
+
+using namespace huxerui;
+
+View StatusCanvas() {
+  return Canvas([](PaintContext& paint, Size size) {
+    const Point center {size.width / 2.0F, size.height / 2.0F};
+    paint.DrawCircle(center, 36.0F, Color::Rgb(92, 61, 180));
+    paint.DrawArc(center, 28.0F, -1.57F, 4.2F, Color::Rgb(255, 255, 255), 6.0F);
+  }).With(Frame {.width = 160.0F, .height = 160.0F});
+}
+```
+
+The painter receives local size and emits platform-neutral commands. It does not own a platform canvas or world-coordinate transform.

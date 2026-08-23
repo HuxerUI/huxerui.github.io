@@ -22,3 +22,26 @@ Copyable weak cancellation handle. `Cancel()` is safe after completion or prior 
 ## `Delay`
 
 `Delay(std::chrono::duration<double>) -> Task<void>` schedules resumption through the owning UI task system. Standard chrono duration literals are re-exported in `huxerui`.
+
+## Complete scoped-task example
+
+```cpp compile="scoped-task"
+#include <huxerui/huxerui.h>
+
+using namespace huxerui;
+
+Task<void> Refresh(State<std::string> status) {
+  status = "Loading";
+  co_await Delay(std::chrono::milliseconds(100));
+  status = "Ready";
+}
+
+View RefreshButton(State<std::string> status) {
+  auto tasks = UseTaskScope();
+  return Button("Refresh").OnClick([tasks, status] {
+    tasks.Launch(Refresh(status));
+  });
+}
+```
+
+`TaskScope` owns launched work; destroying its component scope cancels outstanding executions before captured state can outlive that scope.

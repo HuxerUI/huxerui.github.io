@@ -29,7 +29,7 @@ The normal visual is the component's base style.
 An `IndicationLayer` can add an optional `VisualFill`, border, corner radii, placement, and enter/exit animation.
 The fill can be a color, linear gradient, radial gradient, or image fill.
 
-```cpp
+```cpp fragment
 Indication action_feedback {
   .hover = IndicationLayer {
     .fill = VisualFill(Color::Rgb(255, 255, 255, 0.10F)),
@@ -73,7 +73,7 @@ A pointer may focus a text field without requesting a keyboard focus ring, while
 
 `FocusRing` provides color, width, and offset for theme-owned focus treatment:
 
-```cpp
+```cpp fragment
 ThemeSpec spec = MaterialLightThemeSpec();
 spec.interactions.focus_ring = FocusRing {
   .color = Color::Rgb(38, 99, 218),

@@ -8,7 +8,7 @@ A root hook registers platform-specific factories in `RootContext::Modules`; sha
 
 ## Define a typed method
 
-```cpp
+```cpp fragment
 struct GetBatteryLevel {
   using Request = std::monostate;
   using Result = double;

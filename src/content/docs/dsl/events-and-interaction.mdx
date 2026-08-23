@@ -10,7 +10,7 @@ Handlers are bound declaratively and replaced when the node recomposes.
 
 ## Convenience events
 
-```cpp
+```cpp fragment
 Button("Save").OnClick([] {
   SaveDocument();
 })
@@ -18,7 +18,7 @@ Button("Save").OnClick([] {
 
 Controls add type-safe conveniences for their primary output:
 
-```cpp
+```cpp fragment
 Checkbox("Autosave", autosave)
     .OnChanged([autosave](bool checked) {
       autosave = checked;
@@ -49,7 +49,7 @@ The convenience methods delegate to the same typed event keys used by `.On<Key>(
 
 Bind a less common event explicitly:
 
-```cpp
+```cpp fragment
 View content = Canvas(DrawScene)
     .On<ViewEvents::PointerMove>([](const PointerEvent& event) {
       UpdatePointer(event.position);
@@ -71,7 +71,7 @@ Navigation and platform integration additionally use phased `BackEvent` values i
 
 Apply `Enabled(false)` to remove semantic activation and disabled controls from normal interaction:
 
-```cpp
+```cpp fragment
 Button("Delete")
     .OnClick(DeleteSelection)
     .With(Enabled(has_selection))
@@ -83,13 +83,13 @@ Themes resolve disabled visuals from the same interaction state.
 
 Define a key by inheriting `Event<Arguments...>`:
 
-```cpp
+```cpp fragment
 struct SearchRequested : Event<std::string> {};
 ```
 
 A scoped component obtains an emitter and emits through the key:
 
-```cpp
+```cpp fragment
 [[huxerui::scope]]
 View SearchBox() {
   auto value = UseState(TextEditingValue{});
@@ -108,7 +108,7 @@ View SearchBox() {
 
 The caller binds the custom key exactly like a built-in event:
 
-```cpp
+```cpp fragment
 SearchBox().On<SearchRequested>([](std::string query) {
   BeginSearch(std::move(query));
 })

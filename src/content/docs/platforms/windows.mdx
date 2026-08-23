@@ -17,3 +17,6 @@ The adapter owns Win32 window lifecycle, pointer/keyboard/IME conversion, UI-thr
 Custom desktop chrome uses `WindowChromeMode::Custom`, [WindowTitleBar](../../components/window-title-bar/), and `UseWindow()`. The framework renders caption controls while preserving native window commands and hit testing.
 
 Register HWND-backed views with `<huxerui/windows/platform_view.h>`. Windows uses a single HuxerUI render surface with platform-view placement slices, so native HWND content cannot provide arbitrary rotation, path clipping, or transparent interleaving with HuxerUI paint. External texture sources in `<huxerui/windows/external_texture.h>` are the better fit for pixel-only integration.
+
+The backend exposes the shared semantic tree through Windows UI Automation.
+Validate custom chrome, DPI transitions, IME placement, HWND slicing, and assistive technology on the Windows versions your application supports.

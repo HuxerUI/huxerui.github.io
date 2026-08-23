@@ -30,3 +30,13 @@ Declared by `<huxerui/window.h>`.
 ## Title bar and commands
 
 `WindowTitleBar` is a variadic/collection `Layout` that applies drag-region and centered cross-axis behavior while reserving standard controls. `UseWindow() -> WindowHandle`; handle methods are `Minimize`, `Maximize`, `Restore`, `ToggleMaximize`, and `Close`.
+
+## Platform contract
+
+`WindowOptions` is read when the platform shell creates its window.
+`WindowMetrics` is adapter-owned observable geometry expressed in logical units.
+`SafeAreaPadding` consumes only selected insets not already consumed by an ancestor, so nested safe-area containers do not double-pad content.
+
+`WindowContentMode::SafeArea` asks the root to stay within platform insets; `EdgeToEdge` allows drawing behind system UI.
+`WindowChromeMode::Custom` requires application title-bar content and is meaningful on desktop backends that support custom chrome.
+Window commands are requests: embedded hosts and platforms without the corresponding operation may ignore them.

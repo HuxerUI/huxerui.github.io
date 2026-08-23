@@ -8,13 +8,16 @@
   },
   "scripts": {
     "dev": "node scripts/prepare-site.mjs && astro dev",
-    "check": "node scripts/prepare-site.mjs && node scripts/check-doc-coverage.mjs && astro check",
-    "build": "node scripts/prepare-site.mjs && node scripts/check-doc-coverage.mjs && astro check && astro build",
+    "check": "node scripts/prepare-site.mjs && node scripts/check-doc-coverage.mjs && node scripts/extract-code-examples.mjs && astro check",
+    "build": "node scripts/prepare-site.mjs && node scripts/check-doc-coverage.mjs && node scripts/extract-code-examples.mjs && astro check && astro build",
     "preview": "astro preview",
     "collect:releases": "node scripts/collect-release-data.mjs",
     "stage:examples": "node scripts/stage-web-examples.mjs",
-    "check:links": "node scripts/check-links.mjs",
-    "check:docs": "node scripts/check-doc-coverage.mjs"
+    "check:links": "node scripts/check-links.mjs && node scripts/check-site-quality.mjs",
+    "check:external-links": "node scripts/check-external-links.mjs",
+    "check:docs": "node scripts/check-doc-coverage.mjs",
+    "check:examples": "node scripts/extract-code-examples.mjs",
+    "audit:revision": "node scripts/audit-source-update.mjs"
   },
   "dependencies": {
     "@astrojs/sitemap": "3.7.3",

@@ -31,3 +31,13 @@ Declared by `<huxerui/semantics.h>`.
 ## `SemanticBuilder`
 
 Extension-facing builder methods are `SetOwner`, `AddChild(local_id, local_bounds, semantics)`, `AddAction`, and `AddCustomAction`. Runtime transforms local extension nodes into the final frame.
+
+## Application and adapter boundary
+
+Application code supplies a `Semantics{...}` value through `.With(...)` when visual structure alone cannot express a label, role, state, or relationship.
+Built-in controls already provide their normal roles, values, state, and actions.
+Do not duplicate a visible child label unless the platform accessibility name genuinely needs a different value.
+
+`SemanticBuilder` is for a custom `NodeExtension`; `SemanticNode` and `SemanticFrame` are resolved platform-adapter records.
+Actions return to Runtime on the UI thread through `PerformSemanticAction`.
+Platform exposure depends on the backend; the shared semantic tree existing does not by itself prove that a platform accessibility bridge is implemented.

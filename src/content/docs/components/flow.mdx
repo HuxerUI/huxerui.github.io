@@ -9,7 +9,7 @@ sidebar:
 
 ## Wrap content-dependent items
 
-```cpp
+```cpp fragment
 Flow {
   ForEach(tags, [](const Tag& tag) {
     return Chip(tag.name, tag.selected).Key(tag.id);

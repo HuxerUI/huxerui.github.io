@@ -38,3 +38,12 @@ Public `top`, `right`, `bottom`, and `left`. `All` and `Symmetric(horizontal, ve
 ## `Constraints`
 
 Public min/max width and height. Methods: `Constrain`, `ConstrainWidth`, `ConstrainHeight`, `HasBoundedWidth`, `HasBoundedHeight`, `Loose`, `LooseWidth`, `LooseHeight`, `TightWidth`, `TightHeight`, and `Deflate`.
+
+## Units and validity
+
+Shared geometry uses logical units. Platform adapters convert device pixels, screen coordinates, and DPI at their boundaries.
+Negative or inverted values are not normalized implicitly; constructors and methods document the few operations that clamp or return an empty intersection.
+`Transform2D::Inverse()` returns an empty optional for a singular transform.
+
+Use `EdgeInsets` for resolved geometry and the `Padding` modifier for a declarative view property.
+Use `CornerRadii` when corners may differ and `CornerRadius(float)` only for the uniform modifier shorthand.

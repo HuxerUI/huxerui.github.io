@@ -7,7 +7,7 @@ description: Configure content that enters from the logical start edge of Drawer
 
 ## Control the start edge
 
-```cpp
+```cpp fragment
 StartDrawer(NavigationPane(items, selected, true))
     .Open(start_open)
     .OnOpenChanged([start_open](bool open) {

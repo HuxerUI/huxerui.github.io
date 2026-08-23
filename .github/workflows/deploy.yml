@@ -20,7 +20,7 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v5
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
           node-version: 22
           cache: npm
@@ -29,7 +29,7 @@ jobs:
         run: >-
           node --input-type=module --eval
           "import('./scripts/resolve-huxerui-source.mjs').then(async ({ resolveHuxerUISource }) => resolveHuxerUISource())"
-      - uses: mymindstorm/setup-emsdk@v14
+      - uses: mymindstorm/setup-emsdk@v16
         with:
           version: 4.0.19
       - name: Prepare HuxerUI host tools
@@ -38,12 +38,15 @@ jobs:
           .cache/huxerui/tools/prebuilt/linux/x86_64/hcg
           .cache/huxerui/tools/prebuilt/linux/x86_64/hrc
       - name: Compile documentation snippets
+        run: npm run check:examples
+      - name: Configure documentation contracts
         run: >-
           cmake
           -S tests/snippets
           -B .cache/docs-snippets
           -G Ninja
           -DHUXERUI_SOURCE_DIR=${{ github.workspace }}/.cache/huxerui
+          -DHUXERUI_DOC_EXAMPLES_DIR=${{ github.workspace }}/.cache/docs-examples
       - run: cmake --build .cache/docs-snippets --parallel
       - name: Configure Web examples
         run: >-
@@ -58,26 +61,7 @@ jobs:
           -DHUXERUI_BUILD_TESTS=OFF
           -DHUXERUI_BUILD_EXAMPLES=ON
       - name: Build Web examples
-        run: >-
-          cmake --build .cache/huxerui-web-build --parallel
-          --target
-          example_counter
-          example_ui_gallery
-          example_dynamic_list
-          example_scroll_view
-          example_virtual_list
-          example_virtual_grid
-          example_task
-          example_http
-          example_files
-          example_lifecycle
-          example_application
-          example_canvas
-          example_tabs
-          example_navigation
-          example_theme
-          example_image
-          example_presentation
+        run: cmake --build .cache/huxerui-web-build --parallel --target $(node scripts/list-web-example-targets.mjs)
       - name: Stage independent Web applications
         env:
           HUXERUI_WEB_BUILD_DIR: ${{ github.workspace }}/.cache/huxerui-web-build
@@ -88,8 +72,10 @@ jobs:
         run: npm run build
       - name: Check generated links
         run: npm run check:links
-      - uses: actions/configure-pages@v5
-      - uses: actions/upload-pages-artifact@v3
+      - name: Check external links
+        run: npm run check:external-links
+      - uses: actions/configure-pages@v6
+      - uses: actions/upload-pages-artifact@v5
         with:
           path: dist
 
@@ -102,4 +88,4 @@ jobs:
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5

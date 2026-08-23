@@ -7,7 +7,7 @@ HuxerUI separates page presentation from route identity. Use factory navigation 
 
 ## Factory navigation
 
-```cpp
+```cpp fragment
 View Home() {
   auto navigation = UseNavigation();
   return Button("Open profile").OnClick([navigation] {
@@ -29,7 +29,7 @@ Use factory navigation for transient local flows whose parameters do not need se
 
 ## Typed routes
 
-```cpp
+```cpp fragment
 struct Route {
   enum class Kind { Article, Settings } kind;
   int id = 0;
@@ -55,7 +55,7 @@ Prefer a small value type that carries stable route parameters, not retained UI 
 The path is the authoritative history.
 Replacing it from application state supports deep links, session restoration, external activation, and tests without issuing a sequence of imperative pushes.
 
-```cpp
+```cpp fragment
 navigation.SetPath(NavigationPath<Route> {
   Route{Route::Kind::Article, 42},
   Route{Route::Kind::Settings},
@@ -72,7 +72,7 @@ This makes a local flow or an article's internal pages independent of the applic
 
 Use `UseRootNavigation()` when an action intentionally targets the outermost stack:
 
-```cpp
+```cpp fragment
 View ArticleNotes(int article_id) {
   auto local = UseNavigation();
   auto root = UseRootNavigation<Route>();
@@ -103,7 +103,7 @@ On platforms with predictive Back, the stack can preview the pop and commit or c
 On Web, include `<huxerui/web/navigation.h>` and use `BrowserNavigationStack`.
 A codec maps the complete `NavigationPath<Route>` to and from the browser location:
 
-```cpp
+```cpp fragment
 struct RouteCodec {
   std::optional<NavigationPath<Route>> Decode(std::string_view location) const;
   std::string Encode(const NavigationPath<Route>& path) const;

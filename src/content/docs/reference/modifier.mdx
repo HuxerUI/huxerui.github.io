@@ -9,7 +9,8 @@ Declared by `<huxerui/modifier.h>` and `<huxerui/indication.h>`.
 
 ## Modifier model
 
-`ViewModifier` accepts property modifiers with a `Descriptor()` or retained `NodeExtension` values. `ModifierDescriptor` identifies the modifier and its application/reconciliation behavior; `ModifierSpec` pairs a descriptor with immutable data. `View::With` applies modifiers left to right.
+`ViewModifier` accepts built-in property modifiers and retained modifier values whose nested extension derives from `NodeExtension`. `View::With` applies modifiers left to right.
+Descriptor and erased storage types live in `huxerui::detail`; custom retained behavior uses the typed modifier and `NodeExtension` contract instead of depending on that storage.
 
 ## Built-in property modifiers
 
@@ -38,3 +39,13 @@ Retained per-node behavior. Override only needed hooks for update, mount/unmount
 - `FocusRing`: color, width, and offset.
 
 `VisualFill` comes from the paint API and supports colors, gradients, and images.
+
+## Reconciliation and paint order
+
+Property modifiers apply from left to right to one view declaration and do not create wrapper nodes.
+Retained modifiers reconcile by descriptor and declaration position; a compatible `NodeExtension` receives updated declarative data while preserving retained state.
+Moving or conditionally inserting retained modifiers can therefore replace an extension just as changing an unkeyed child position can replace a child.
+
+`Background` paints behind node content, `Foreground` changes the content foreground color, and indication layers choose behind- or above-content placement.
+`FocusRing` is a style value used by themes and controls, not a standalone `ViewModifier`.
+`NodeExtension` is an extension API; application components normally prefer property modifiers, typed events, `Lifecycle`, and built-in indication.

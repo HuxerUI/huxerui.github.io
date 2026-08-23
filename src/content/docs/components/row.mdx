@@ -9,7 +9,7 @@ sidebar:
 
 ## Arrange horizontal content
 
-```cpp
+```cpp fragment
 Row {
   Image(app::images::avatar).With(Frame{.width = 40.0F, .height = 40.0F}),
   Column {
@@ -37,3 +37,5 @@ Use `Flow` instead when a horizontal collection must wrap rather than overflow o
 - Construction: `Row { children... }` or an explicit child vector.
 - Layout modifiers: `Spacing`, `MainAlign`, `CrossAlign`, `Padding`, `Frame`.
 - Child metadata: `Grow`.
+
+Read [Layout fundamentals](/docs/layout/) for constraints, alignment, flexible children, and the choice between `Row`, `Flow`, and scrolling.

@@ -8,7 +8,7 @@ Requests are explicit value objects and return `Task<HttpResult>`.
 
 ## Send a request
 
-```cpp
+```cpp fragment
 Task<void> LoadFeed(State<std::string> output) {
   auto http = UseService<HttpClient>();
   HttpResult result = co_await http->Send({

@@ -36,3 +36,24 @@ Factories: `FromFile`, `FromEncoded`, and `CopyEncoded`, each with optional scal
 ## Resolution
 
 `UseRawResource`, `UseImage`, and `UseVectorImage` resolve generated IDs through the current resource configuration. `PlatformResources` is the adapter interface exposing `Configuration()` and synchronous immutable package `Read(path)`.
+
+## Complete resource-consumer example
+
+```cpp compile="typed-resources"
+#include <huxerui/huxerui.h>
+
+using namespace huxerui;
+
+View InboxSummary(int unread_count) {
+  const StringResource title("app", "inbox_title");
+  const ImageResource cover("app", "inbox_cover");
+
+  return Column {
+    Text::Format(title, unread_count),
+    Button(UseString(title, unread_count)),
+    Image(cover).Fit(ImageFit::Cover),
+  }.With(Spacing(12.0F));
+}
+```
+
+`Text::Format` resolves text owned by `Text`; `UseString` resolves an immediate string for `Button`; `Image` receives its resource ID directly.

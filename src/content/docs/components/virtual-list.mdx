@@ -9,7 +9,7 @@ sidebar:
 
 ## Declare lazy items
 
-```cpp
+```cpp fragment
 VirtualList(items, [](const Item& item) {
   return ItemRow(item).Key(item.id);
 })

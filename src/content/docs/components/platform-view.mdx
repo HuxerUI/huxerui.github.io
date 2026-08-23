@@ -7,7 +7,7 @@ description: Place a PlatformModule-provided native view in HuxerUI layout.
 
 ## Declare properties and events
 
-```cpp
+```cpp fragment
 PlatformView("video_player", PlatformPayload{
     {"source", std::string("intro.mp4")},
     {"autoplay", true},
@@ -23,7 +23,7 @@ Platform views participate in HuxerUI measurement and placement but retain platf
 ## API
 
 - `PlatformView(std::string type, PlatformPayload properties = {})`.
-- `Events<PlatformEventKey...>()` declares dispatchable event types.
+- `Events<Keys...>()` declares dispatchable event types whose event signature, name, and payload decoder satisfy the platform event contract.
 - Common size, layout, semantics, and event modifiers apply where supported.
 
 See [PlatformModule](../../guides/platform-module/) for registering factories and [PlatformView guide](../../guides/platform-view/) for backend constraints.

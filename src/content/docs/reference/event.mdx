@@ -1,6 +1,6 @@
 ---
 title: Event API
-description: Typed events, input payloads, interaction state, and event hubs.
+description: Typed events, input payloads, interaction state, and scoped component emission.
 sidebar:
   order: 4
 ---
@@ -37,6 +37,17 @@ Base shape for an event key. A key supplies `using Signature = void(Arguments...
 
 ## Binding and emission
 
-`View::On<Key>(handler)` creates an `EventHandler<Key::Signature>`. `EventBindings` stores handlers by key type; `HasEventBinding<Key>` and `EmitEvent<Key>` are extension helpers.
+`View::On<Key>(handler)` binds a callable compatible with `Key::Signature` to that view declaration.
+`UseEvents()` returns a copyable `EventEmitter`; `emitter.Emit<Key>(arguments...)` sends a component-owned event through the current scope.
+`EventEmitter::IsConnected()` reports whether that scope still owns the event channel.
 
-`EventHub` is scope-local and exposes typed registration and emission. `EventEmitter` is the copyable handle returned by `UseEvents()`.
+## Binding, lifetime, and coordinates
+
+Handlers are copied into the transient `View` declaration and reconciled with its mounted node.
+They run on the Runtime UI thread and remain installed only while that node or scope is mounted.
+`OnClick` is the built-in activation event and also installs default indication; use `On<Key>` for another typed semantic event.
+
+Pointer positions and scroll deltas are expressed in logical coordinates local to the receiving node.
+Platform adapters convert native pixels, screen coordinates, click counts, key identity, and modifiers before dispatch.
+`EventEmitter` is appropriate for a reusable scoped component's own output; it is not a process-wide event bus.
+Handler erasure and dispatch storage live in `huxerui::detail` and are not extension contracts.

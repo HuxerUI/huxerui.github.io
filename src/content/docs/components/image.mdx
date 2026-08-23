@@ -7,7 +7,7 @@ sidebar:
 
 `Image` displays an `ImageResource`, decoded `ImageAsset`, `VectorAsset`, or `ExternalTexture`.
 
-```cpp
+```cpp fragment
 Image(app::images::cover)
     .Fit(ImageFit::Cover)
     .Align(HorizontalAlignment::Center, VerticalAlignment::Center)
@@ -40,7 +40,7 @@ Alignment controls where unused space or cropped content is anchored.
 Decorative images need no extra semantic label.
 Meaningful images should provide image semantics explicitly:
 
-```cpp
+```cpp fragment
 Image(app::images::status)
     .With(Semantics{
         .role = SemanticRole::Image,

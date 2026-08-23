@@ -17,3 +17,4 @@ The adapter owns `NSWindow`/`NSView` lifecycle, AppKit input and `NSTextInputCli
 `WindowChromeMode::System` retains native chrome. Custom chrome can compose application UI around platform window controls where supported; do not assume Windows caption geometry. Register NSView-backed platform views with `<huxerui/macos/platform_view.h>` and publish external textures through `<huxerui/macos/external_texture.h>`.
 
 Build and runtime validation require macOS and Xcode command-line tools.
+The website's cross-platform contract checks do not substitute for AppKit accessibility, IME, NSView composition, signing, or device-scale validation.

@@ -23,7 +23,7 @@ import { Card, CardGrid } from "@astrojs/starlight/components";
 HuxerUI interfaces are ordinary C++ functions that return `View` values.
 Braced containers describe children, typed modifiers configure reusable presentation, and typed events connect behavior without stringly typed property bags.
 
-```cpp
+```cpp fragment
 [[huxerui::scope]]
 View Counter() {
   auto count = UseState(0);

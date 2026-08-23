@@ -10,7 +10,7 @@ Pass a normalized value for determinate progress.
 
 ## Choose determinate or indeterminate progress
 
-```cpp
+```cpp fragment
 Column {
   ProgressBar(),
   ProgressBar(download_progress),
@@ -34,3 +34,5 @@ Material and Flat themes can choose different sweep or segmented motion.
 - Constructors: `ProgressBar()`, `ProgressBar(float)`, `ProgressBar(State<float>)`.
 - Common modifiers: `Frame`, `Grow`, `Opacity`, `Semantics`.
 - Theme style: `ProgressBarStyle` and `ProgressBarIndeterminateMotion`.
+
+Use [ProgressCircle](../progress-circle/) when a compact circular indicator fits the surrounding layout better.

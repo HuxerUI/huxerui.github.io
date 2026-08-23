@@ -8,7 +8,7 @@ sidebar:
 `Canvas` calls a painter with `PaintContext&` and the component's measured `Size`.
 Its local drawing rectangle is `{0, 0, size.width, size.height}`.
 
-```cpp
+```cpp fragment
 Canvas([](PaintContext& paint, Size size) {
   const Point center{size.width * 0.5F, size.height * 0.5F};
   paint.DrawCircle(center, 48.0F, Color::Rgb(92, 72, 180));
@@ -35,7 +35,7 @@ For continuous visual motion, apply retained animation modifiers such as `Rotati
 Canvas has no inferred semantic meaning.
 Add `Semantics` for charts, controls, or other meaningful drawings, and bind pointer events only when the custom content is interactive.
 
-```cpp
+```cpp fragment
 Canvas(DrawChart)
     .With(Semantics{
         .role = SemanticRole::Image,

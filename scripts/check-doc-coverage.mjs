@@ -1,7 +1,13 @@
 import { access, readFile, readdir } from "node:fs/promises";
 import path from "node:path";
 
-import { components, modules, platformHeaders } from "./api-coverage.mjs";
+import {
+  components,
+  modules,
+  platformDeclarationContracts,
+  platformHeaders,
+  publicHeaders,
+} from "./api-coverage.mjs";
 import { resolveHuxerUISource } from "./resolve-huxerui-source.mjs";
 
 const docsRoot = path.resolve("src/content/docs");
@@ -27,12 +33,29 @@ async function readHeader(relativePath) {
   }
 }
 
+async function collectFiles(directory, extension) {
+  const files = [];
+  for (const entry of await readdir(directory, { withFileTypes: true })) {
+    const target = path.join(directory, entry.name);
+    if (entry.isDirectory()) {
+      files.push(...(await collectFiles(target, extension)));
+    } else if (entry.isFile() && entry.name.endsWith(extension)) {
+      files.push(target);
+    }
+  }
+  return files;
+}
+
 function requireSymbols(owner, content, symbols) {
   for (const symbol of symbols) {
     if (!content.includes(symbol)) {
       failures.push(`${owner} does not cover ${symbol}`);
     }
   }
+}
+
+function normalizeDeclaration(value) {
+  return value.replace(/\s+/g, " ").replace(/\s*([<>{}(),;*&=])\s*/g, "$1").trim();
 }
 
 for (const component of components) {
@@ -66,6 +89,34 @@ for (const module of modules) {
   }
 }
 
+const actualPublicHeaders = (await collectFiles(publicHeaderRoot, ".h"))
+  .map((header) => path.relative(publicHeaderRoot, header).split(path.sep).join("/"))
+  .sort();
+const contractedPublicHeaders = publicHeaders.map(({ path: header }) => header).sort();
+for (const header of actualPublicHeaders.filter((header) => !contractedPublicHeaders.includes(header))) {
+  failures.push(`Public header is missing from the API contract: include/huxerui/${header}`);
+}
+for (const header of contractedPublicHeaders.filter((header) => !actualPublicHeaders.includes(header))) {
+  failures.push(`API contract references a removed public header: include/huxerui/${header}`);
+}
+
+const documentedHeaderOwners = new Map();
+for (const entry of publicHeaders) {
+  if (!entry.audience || !entry.documentation) {
+    failures.push(`Public header contract needs audience and documentation: include/huxerui/${entry.path}`);
+    continue;
+  }
+  const owner = await readDocument(entry.documentation);
+  const includeName = `<huxerui/${entry.path}>`;
+  if (!owner.includes(includeName) && !owner.includes(`\`${entry.path}\``)) {
+    failures.push(`${entry.documentation} does not identify its public header ${includeName}`);
+  }
+  if (documentedHeaderOwners.has(entry.path)) {
+    failures.push(`Public header has duplicate contract entries: include/huxerui/${entry.path}`);
+  }
+  documentedHeaderOwners.set(entry.path, entry.documentation);
+}
+
 const platformReference = await readDocument("reference/platform-specific.mdx");
 for (const header of platformHeaders) {
   try {
@@ -78,18 +129,16 @@ for (const header of platformHeaders) {
   }
 }
 
-const documents = [];
-async function collectDocuments(directory) {
-  for (const entry of await readdir(directory, { withFileTypes: true })) {
-    const target = path.join(directory, entry.name);
-    if (entry.isDirectory()) {
-      await collectDocuments(target);
-    } else if (entry.isFile() && entry.name.endsWith(".mdx")) {
-      documents.push(target);
+for (const contract of platformDeclarationContracts) {
+  const header = normalizeDeclaration(await readHeader(contract.header));
+  for (const declaration of contract.declarations) {
+    if (!header.includes(normalizeDeclaration(declaration))) {
+      failures.push(`Platform API signature changed in include/huxerui/${contract.header}: ${declaration}`);
     }
   }
 }
-await collectDocuments(docsRoot);
+
+const documents = await collectFiles(docsRoot, ".mdx");
 
 const discouraged = [
   { pattern: /\.Get\(\)/g, message: "Prefer natural State reads or operator-> in user examples" },
@@ -114,7 +163,8 @@ if (failures.length > 0) {
   process.exitCode = 1;
 } else {
   console.log(
-    `Verified ${components.length} component contracts, ${modules.length} API modules, ` +
-      `${platformHeaders.length} platform headers, and ${documents.length} documentation pages against ${frameworkRoot}.`
+    `Verified ${publicHeaders.length} public headers, ${components.length} component contracts, ` +
+      `${modules.length} API modules, ${platformHeaders.length} platform headers, and ` +
+      `${documents.length} documentation pages against ${frameworkRoot}.`
   );
 }

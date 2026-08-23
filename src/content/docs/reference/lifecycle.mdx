@@ -15,4 +15,14 @@ The previous cleanup runs before replacement.
 Final cleanup runs when the declaring scope unmounts.
 Without dependencies, the registration follows that scope's mount lifetime.
 
-Call `Lifecycle` from composition rather than constructing its template machinery directly.
+`Lifecycle` is the public entry point. Callback erasure and captured-dependency wrappers live in `huxerui::detail` and are not application API.
+
+## Setup and cleanup contract
+
+Setup and cleanup execute on the Runtime UI thread during lifecycle commit, never while a previous cleanup for that registration is still active.
+Dependencies are copied at declaration time and compared on later composition.
+A `State<T>` or `StateList<T>` dependency tracks its cell version without forcing the setup callback to read that state.
+
+Setup exceptions propagate through the frame commit.
+Cleanup is required to be callable as `void()`; it should not throw.
+Use `Lifecycle` for external subscriptions and retained resources, an event handler for user actions, and `TaskScope` for cancellable coroutine work.

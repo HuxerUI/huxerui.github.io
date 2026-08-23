@@ -58,3 +58,31 @@ Declared by `<huxerui/text.h>`, `<huxerui/text_input.h>`, `<huxerui/validation.h
 ## Clipboard
 
 `TextEditingAction` is `Cut`, `Copy`, `Paste`, or `SelectAll`. `TextSelectionMenuLabels` supplies localized labels. `PlatformClipboard` defines `ReadText` and `WriteText` for adapters.
+
+## Complete controlled TextField example
+
+```cpp compile="text-field-validation"
+#include <huxerui/huxerui.h>
+
+using namespace huxerui;
+
+[[huxerui::scope]]
+View AccountEmail() {
+  auto email = UseState(TextEditingValue::FromText(""));
+
+  return TextField(email)
+      .Label("Email")
+      .Placeholder("name@example.com")
+      .Variant(TextFieldVariant::Outlined)
+      .InputConfiguration({
+          .type = TextInputType::Email,
+          .action = TextInputAction::Done,
+      })
+      .Validation(Validate(email->text, Required(), EmailAddress()))
+      .OnChanged([email](const TextEditingValue& next) {
+        email = next;
+      });
+}
+```
+
+Writing the complete event value preserves selection, affinity, and composition. Validation reports domain state and does not rewrite the edit.

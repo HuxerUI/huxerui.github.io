@@ -8,7 +8,7 @@ Start with meaningful labels, controlled state, and the correct component.
 
 ## Prefer semantic components
 
-```cpp
+```cpp fragment
 IconButton(images::refresh, "Refresh messages")
 ```
 
@@ -19,7 +19,7 @@ Do not replace a semantic control with raw pointer handlers on a painted shape u
 
 Use the `Semantics` modifier when composition needs additional or overridden meaning:
 
-```cpp
+```cpp fragment
 Canvas(PaintChart).With(Semantics{
     .role = SemanticRole::Image,
     .label = "Revenue chart",

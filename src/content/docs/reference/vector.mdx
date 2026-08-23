@@ -24,3 +24,13 @@ Copy-on-write contour value. Mutating chain methods are `MoveTo`, `LineTo`, `Qua
 ## `VectorBuilder`
 
 Available only inside `VectorAsset::Create`. Methods: `FillPath`, `StrokePath` (width, cap, join, miter limit), `PushClip`, `PopClip`, `PushTransform`, and `PopTransform`. Clips and transforms must balance before the build callback returns.
+
+## Validation and selection
+
+`Path` uses copy-on-write storage, so copying a value is cheap until one copy mutates.
+`VectorAsset` is immutable after its build callback and can be shared by `Image`, image fills, and paint commands.
+Invalid sizes, unbalanced clips/transforms, and invalid stroke geometry are rejected when the asset is built.
+
+Use `Path` directly for size-dependent Canvas drawing and clipping.
+Use `VectorAsset` for stable reusable artwork with an intrinsic size and view box.
+Use `ImageResource` when the resource compiler owns the vector source and configuration lookup.

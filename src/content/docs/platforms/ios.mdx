@@ -17,3 +17,4 @@ UIKit delivers touch, keyboard, `UITextInput`, accessibility, activation, lifecy
 Platform views are registered through `<huxerui/ios/platform_view.h>`. External texture producers use `<huxerui/ios/external_texture.h>`. UIKit and platform texture publication must follow the main-thread and ownership rules stated by those headers.
 
 Build and device validation require macOS with Xcode; non-macOS hosts can edit shared code but cannot validate the iOS adapter.
+The website's cross-platform contract checks do not verify UIKit accessibility, keyboard behavior, UIView composition, signing, or device safe-area behavior.

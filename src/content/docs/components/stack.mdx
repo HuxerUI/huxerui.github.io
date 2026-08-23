@@ -10,7 +10,7 @@ Later children paint above earlier children.
 
 ## Overlay local content
 
-```cpp
+```cpp fragment
 Stack {
   Image(app::images::cover)
       .Fit(ImageFit::Cover)
@@ -37,3 +37,5 @@ Use presentation services and layers for dialogs, menus, popups, tooltips, and o
 - Construction: `Stack { children... }` or an explicit child vector.
 - Common modifiers: `Frame`, `Padding`, `ClipChildren`, `CornerRadius`.
 - Child modifier: `Align`.
+
+Read [Presentation](/docs/guides/presentation/) when content must live in a window layer instead of the local layout subtree.

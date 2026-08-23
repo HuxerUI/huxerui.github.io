@@ -8,7 +8,7 @@ sidebar:
 Every HuxerUI application exposes one `Application` declaration.
 Its root factory returns the first declarative `View` tree.
 
-```cpp
+```cpp compile="first-application"
 #include <huxerui/huxerui.h>
 
 using namespace huxerui;
@@ -71,7 +71,7 @@ HuxerUI calls `Counter` again, reconciles the new transient `View` values agains
 Generated projects provide the correct native or Web entry point.
 A minimal desktop entry ultimately calls:
 
-```cpp
+```cpp fragment
 int main() {
   return huxerui::RunApplication();
 }

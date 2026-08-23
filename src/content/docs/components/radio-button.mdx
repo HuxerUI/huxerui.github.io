@@ -10,7 +10,7 @@ The application owns group exclusivity by storing one selected value.
 
 ## Model one selected value
 
-```cpp
+```cpp fragment
 Column {
   RadioButton("Automatic", mode == Mode::Automatic)
       .OnChanged([mode](bool selected) {

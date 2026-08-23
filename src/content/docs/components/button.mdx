@@ -7,7 +7,7 @@ sidebar:
 
 `Button` is the standard labeled action control.
 
-```cpp
+```cpp fragment
 Button("Save changes").OnClick([] {
   SaveChanges();
 })
@@ -21,7 +21,7 @@ The label is required component input rather than an arbitrary child view.
 `.OnClick(...)` uses the shared pointer, Enter, and Space activation path.
 The current theme resolves hover, pressed, focus-visible, disabled state, and Material ripple or Flat feedback.
 
-```cpp
+```cpp fragment
 Button("Delete")
     .OnClick(DeleteSelection)
     .With(Enabled(has_selection))

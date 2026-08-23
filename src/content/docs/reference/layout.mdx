@@ -12,11 +12,13 @@ Declared by `<huxerui/layout.h>`, `<huxerui/scroll.h>`, and `<huxerui/virtual_la
 - `MainAxisAlignment`: `Start`, `Center`, `End`, `SpaceBetween`, `SpaceAround`, `SpaceEvenly`.
 - `CrossAxisAlignment`: `Start`, `Center`, `End`, `Stretch`.
 - `HorizontalAlignment`: `Start`, `Center`, `End`, `Stretch`.
-- `VerticalAlignment`: `Top`, `Center`, `Bottom`, `Stretch`.
+- `VerticalAlignment`: `Start`, `Center`, `End`, `Stretch`.
 
 ## Custom layout
 
-`LayoutContext` exposes child count, child measurement, layout values, resolved environment, and window/title-bar metrics.
+`MountedNode` is a non-owning view of a reconciled node during layout and extension callbacks. It exposes child iteration, current layout and presentation geometry, interaction and alignment values, typed `LayoutValue` lookup, and a type-indexed `Cache<T>` owned by that node. `ChildAt` throws `std::out_of_range` for an invalid index and a cache type mismatch throws `std::logic_error`; do not retain a node or child reference across reconciliation.
+
+`LayoutContext::Measure(child, constraints)` measures one child. `SafeAreaInsets()` returns the edges not consumed by ancestor safe-area padding, and `TitleBarMetrics()` returns optional frame-local native title-bar geometry.
 `LayoutResult` contains the constrained layout size and child placements.
 Applications implement the static measurement contract on `Layout<Derived>` and do not retain child or mounted-node state.
 
@@ -27,15 +29,17 @@ Applications implement the static measurement contract on `Layout<Derived>` and 
 - `ScrollAlignment`: `Start`, `Center`, `End`.
 - `ScrollMetrics`: axis, offset, maximum offset, viewport extent, and content extent.
 - `ScrollController`: `Metrics`, `Offset`, `MaxOffset`, `ViewportExtent`, `ContentExtent`, `IsConnected`, `ScrollTo`, `ScrollBy`, and `ScrollToItem`.
-- `ScrollControllerBinding`: modifier connecting a controller to one scroll node.
 - `UseScrollController(initial_offset = 0, source_location)` creates a scope-stable controller.
+
+Attach a controller through `ScrollView::Controller` or the matching virtual component method; the binding used to connect it to a mounted scroll node is internal.
 
 ## Virtual layout
 
 - `GridColumns::Fixed(count)` and `GridColumns::Adaptive(minimum_width)` create the two public column policies; `Resolve(available_width, spacing)` returns the effective count.
-- `VirtualViewport`: visible and cache extents plus scroll offset.
-- `VirtualLayoutContext`: item count, viewport, item measurement, key/state access, and environment.
+- `VirtualViewport`: logical offset and viewport size; `Bounds()` combines them into a rectangle.
+- `VirtualLayoutContext`: item count, current viewport, indexed item realization, and constrained item measurement.
 - `VirtualLayoutResult`: total content extent and placed virtual items.
-- `VirtualLayoutDescriptor`: erased lazy-measure contract used by `VirtualLayout<Derived>`.
+
+`VirtualLayout<Derived>` accepts either a range/factory pair or an item count/factory pair and invokes the derived static measurement contract. Its erased descriptor and realized-item source are internal.
 
 The built-in lazy components are [`VirtualList`](../../components/virtual-list/) and [`VirtualGrid`](../../components/virtual-grid/).

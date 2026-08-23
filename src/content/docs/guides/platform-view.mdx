@@ -8,7 +8,7 @@ The application names a registered type, passes `PlatformPayload` properties, an
 
 ## Keep values controlled
 
-```cpp
+```cpp fragment
 PlatformView("video_player", EncodePlayerProperties(source, playing))
     .Events<PlaybackChanged>()
     .On<PlaybackChanged>([playing](bool next) {

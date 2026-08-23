@@ -31,3 +31,13 @@ Declared by `<huxerui/layer.h>` and `<huxerui/presentation.h>`.
 `LayerAnchor` is obtained from popup/menu handles and attached through `.With(...)`. `AnchorSide` (`Below`, `Above`, `Right`, `Left`), `AnchorAlignment` (`Start`, `Center`, `End`), and `AnchorPlacement` describe preference. `PresentationMotion` carries initial scale, slide distance, and enter/exit specs. `VerticalPlacement` is `Top`, `Center`, or `Bottom`.
 
 Each [presentation component page](../../components/dialog/) lists exact `Show`, `Update`, and dismissal overloads.
+
+## Handle and environment contract
+
+`UseToast`, `UseDialog`, `UseBottomSheet`, `UsePopup`, and `UseMenu` return lightweight handles connected to the current Runtime.
+`Show` captures the current `Environment`, so theme and resource resolution follow the presenting subtree even though the layer is outside its layout tree.
+Custom factories and captured arguments must be copyable because presentation may rebuild them.
+
+Modal surfaces trap focus and use barrier/cancel policy; anchored surfaces retain a `LayerAnchor` tied to the mounted anchor node.
+Calling a disconnected handle or updating an unknown layer is a logic error.
+Dismiss explicitly when application state no longer owns the surface; options determine outside-click and cancel behavior.

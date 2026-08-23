@@ -40,6 +40,33 @@ Typed hierarchical value. `Set(value)` installs an `EnvironmentValue` by its C++
 
 - `ViewportClass`: `Compact`, `Medium`, `Expanded`.
 - `ViewportBreakpoints`: medium and expanded width thresholds.
+- `ViewportEnvironment`: runtime-provided logical viewport size and its resolved class.
 - `UseViewportClass()` reads the runtime-installed current width class.
 
 The runtime updates subscribed responsive scopes when window metrics cross a configured breakpoint.
+
+## Complete controlled-state example
+
+```cpp compile="controlled-state"
+#include <huxerui/huxerui.h>
+
+using namespace huxerui;
+
+[[huxerui::scope]]
+View CounterSettings() {
+  auto count = UseState(0);
+  auto enabled = UseState(true);
+
+  return Column {
+    Text::Format("Count: {}", count),
+    Button("Increment").OnClick([count] {
+      count += 1;
+    }).With(Enabled(enabled)),
+    Checkbox("Enable counter", enabled).OnChanged([enabled](bool next) {
+      enabled = next;
+    }),
+  }.With(Spacing(12.0F));
+}
+```
+
+`State` is passed by value to the control and event handlers; the application writes the next controlled value after the event.

@@ -5,7 +5,7 @@ description: Place a title, leading control, and actions in a themed application
 
 `TopAppBar` is a navigation layout with one title, an optional leading view, and zero or more trailing actions.
 
-```cpp
+```cpp fragment
 TopAppBar(
     "Inbox",
     IconButton(images::menu, "Open navigation").OnClick(OpenDrawer),
@@ -24,7 +24,7 @@ Theme definitions supply `TopAppBarStyle`, including height, padding, title typo
 
 ## Complete example
 
-```cpp
+```cpp fragment
 View InboxBar() {
   return TopAppBar(
       strings::inbox,

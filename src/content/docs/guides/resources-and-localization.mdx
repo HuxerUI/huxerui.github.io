@@ -26,7 +26,7 @@ An application package commonly exposes values such as `app::images::logo`, `app
 
 Components that own resource presentation accept the generated ID directly:
 
-```cpp
+```cpp fragment
 Column {
   Text(app::strings::welcome),
   Image(app::images::logo),
@@ -49,20 +49,20 @@ files_selected = {0} of {1} files selected
 
 Use `Text::Format` when a `Text` node owns the result:
 
-```cpp
+```cpp fragment
 Text::Format(app::strings::files_selected, selected_count, total_count)
 ```
 
 Use `UseString` when another API requires an immediately resolved `std::string`:
 
-```cpp
+```cpp fragment
 Button(UseString(app::strings::greeting, user_name))
 ```
 
 `StringVariant` is for APIs that intentionally retain text and compose it after the call returns.
 For example, a dialog opened by an event handler captures the resource identity and formats it inside the presentation layer's environment:
 
-```cpp
+```cpp fragment
 dialog.Show(
     app::strings::archive_title,
     StringVariant::Format(app::strings::archive_message, item_count),
@@ -87,7 +87,7 @@ Use `Image(vector_resource)` for normal display or `UseVectorImage(resource)` wh
 
 `UseRawResource` returns an immutable `RawAsset`:
 
-```cpp
+```cpp fragment
 RawAsset defaults = UseRawResource(app::raw::defaults);
 std::string_view json = defaults.AsStringView();
 ```

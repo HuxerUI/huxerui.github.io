@@ -10,7 +10,7 @@ Choose the narrowest mechanism that owns the behavior instead of introducing a p
 
 An ordinary function returning `View` is the default extension:
 
-```cpp
+```cpp fragment
 View LabeledValue(std::string label, std::string value) {
   return Row {
     Text(std::move(label)),

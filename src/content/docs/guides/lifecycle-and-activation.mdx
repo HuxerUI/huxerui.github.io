@@ -8,7 +8,7 @@ It runs after the scope is committed, reruns when captured dependencies change, 
 
 ## Own an external effect
 
-```cpp
+```cpp fragment
 Lifecycle([document_id] {
   auto subscription = ObserveDocument(document_id);
   return [subscription = std::move(subscription)]() mutable {

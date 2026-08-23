@@ -10,7 +10,7 @@ Reading the value during composition subscribes that scope; writing a different 
 
 ## Declare state in a scope
 
-```cpp
+```cpp fragment
 [[huxerui::scope]]
 View Counter() {
   auto count = UseState(0);
@@ -32,7 +32,7 @@ The application root already owns a scope and must not be annotated.
 
 `State<T>` converts to `const T&`, so ordinary expressions read the current value and register the same observation as `Get()`:
 
-```cpp
+```cpp fragment
 auto expanded = UseState(false);
 auto profile = UseState(Profile{});
 
@@ -48,7 +48,7 @@ Prefer the conversion or `operator->` when the surrounding C++ expression alread
 
 `Text` and many controlled components accept `State<T>` directly:
 
-```cpp
+```cpp fragment
 Text(count)
 Switch("Notifications", enabled)
 Slider(volume).Range(0.0F, 100.0F)
@@ -61,7 +61,7 @@ It does not transfer ownership or install an implicit write-back handler.
 
 Assignment and the supported C++ operators publish a new authoritative value:
 
-```cpp
+```cpp fragment
 count = 10;
 count += 2;
 ++count;
@@ -70,7 +70,7 @@ enabled = !enabled;
 
 Use `Update` for an in-place mutation that should become one observed update:
 
-```cpp
+```cpp fragment
 profile.Update([](Profile& value) {
   value.display_name = "Ada";
   value.signed_in = true;
@@ -84,7 +84,7 @@ For equality-comparable values, assigning an equal value does not notify subscri
 User-owned values remain authoritative in application state.
 A component renders the current value and emits a requested next value:
 
-```cpp
+```cpp fragment
 [[huxerui::scope]]
 View Settings() {
   auto enabled = UseState(false);
@@ -103,7 +103,7 @@ Always feed an accepted event value back into a later composition; the component
 
 `UseStateList<T>` owns a vector-like collection whose structural operations notify the declaring scope:
 
-```cpp
+```cpp fragment
 auto items = UseStateList<Item>({
     {1, "Alpha"},
     {2, "Bravo"},
@@ -121,13 +121,13 @@ Use `Update(index, function)` when one stored value needs an in-place mutation.
 
 ## Preserve state identity
 
-State identity is the current `RecomposeScope`, the `UseState` source location, and the occurrence at that location.
+State identity is the current composition scope, the `UseState` source location, and the occurrence at that location.
 Keep state calls structurally stable within a component.
 
 Unkeyed siblings reconcile by position.
 Give dynamic stateful children stable semantic keys when entries can be inserted, removed, or reordered:
 
-```cpp
+```cpp fragment
 Column {
   ForEach(items, [](const Item& item) {
     return ItemRow(item).Key(item.id);
@@ -151,7 +151,7 @@ They do not need application `State` and do not force component recomposition ev
 `State<T>` and `StateList<T>` are shared handles.
 Capture them by value in event handlers and task continuations:
 
-```cpp
+```cpp fragment
 Button("Clear").OnClick([items] {
   items.Clear();
 })

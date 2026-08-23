@@ -17,7 +17,7 @@ A parent measures each child with minimum and maximum bounds, chooses its own co
 | [`Flow`](/docs/components/flow/) | Wraps children into additional lines when space is exhausted. |
 | [`Stack`](/docs/components/stack/) | Overlays children in declaration order. |
 
-```cpp
+```cpp fragment
 Row {
   Column {
     Text("Project", TextRole::Label),
@@ -45,7 +45,7 @@ Row {
 
 `Frame` contributes exact and bounded size constraints:
 
-```cpp
+```cpp fragment
 Image(images::banner)
     .Fit(ImageFit::Cover)
     .With(Frame{
@@ -62,7 +62,7 @@ Use `EdgeInsets::All` or `Symmetric` for common padding, or initialize the `top`
 
 `ScrollView` hosts one content view and scrolls vertically by default:
 
-```cpp
+```cpp fragment
 auto scroll = UseScrollController();
 
 return ScrollView {
@@ -81,7 +81,7 @@ Set `.ScrollAxis(Axis::Horizontal)` for horizontal scrolling.
 Use `VirtualList` and `VirtualGrid` when a collection is too large to mount every item.
 Their factories materialize only the realized range plus cache extent.
 
-```cpp
+```cpp fragment
 VirtualList(items, [](const Item& item) {
   return ItemRow(item).Key(item.id);
 })

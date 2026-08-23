@@ -9,29 +9,38 @@ Platform headers are not included by `<huxerui/huxerui.h>` unless needed by the 
 
 ## Android
 
-- `<huxerui/android/platform_module.h>`: Android `PlatformModuleFactory` using JNI objects and UI-thread-safe instance callbacks.
-- `<huxerui/android/platform_view.h>`: Android `PlatformViewFactory` lifecycle and property/event bridge.
-- `<huxerui/android/external_texture.h>`: `ExternalTextureSource` for Android-produced frames.
-- `<huxerui/android/jni.h>`: JNI forward types, `DeleteLocalReference`, and move-only `LocalRef<Reference>` ownership helper.
+- `<huxerui/android/platform_module.h>`: `android::PlatformModuleFactory::create(JNIEnv*, jobject, options, events)` returns the shared module instance callbacks.
+- `<huxerui/android/platform_view.h>`: `android::PlatformViewFactory` creates, updates, and disposes one Java View through JNI; the adapter promotes a valid returned local reference for its mounted lifetime.
+- `<huxerui/android/external_texture.h>`: move-only `android::ExternalTextureSource(Size)` publishes a `Bitmap`, exposes `Texture()`, and ends publication with `Finish()`.
+- `<huxerui/android/jni.h>`: UTF-8/string and byte-array conversion plus move-only `android::LocalRef<Reference>` ownership. The reference helper deletes only its owned local reference.
+
+All JNI arguments and returned local references belong to the current callback's `JNIEnv*` and UI thread unless the platform implementation explicitly promotes them.
 
 ## iOS and macOS
 
-- `<huxerui/ios/platform_view.h>` and `<huxerui/macos/platform_view.h>`: `PlatformViewFactory` for `UIView` and `NSView` creation/update/disposal.
-- `<huxerui/ios/external_texture.h>` and `<huxerui/macos/external_texture.h>`: platform `ExternalTextureSource` types.
+- `<huxerui/ios/platform_view.h>` and `<huxerui/macos/platform_view.h>`: factory callbacks create, update, and dispose one `UIView*` or `NSView*` on the main thread.
+- `<huxerui/ios/external_texture.h>` and `<huxerui/macos/external_texture.h>`: move-only sources publish `CVPixelBufferRef` frames and expose a shared `ExternalTexture` handle.
+
+The adapter strongly retains the native view returned from `create` for its compatible mounted lifetime and invokes the factory's optional `dispose` callback before releasing that hosted instance.
 
 ## Windows
 
-- `<huxerui/windows/platform_view.h>`: HWND `PlatformViewFactory` with create/update/event/placement/lifetime callbacks.
-- `<huxerui/windows/external_texture.h>`: `ExternalTexturePixelFormat`, `ExternalTextureFrame`, and `ExternalTextureSource` for published pixel frames.
+- `<huxerui/windows/platform_view.h>`: `windows::PlatformViewFactory` creates an `HWND` child of the supplied parent, updates its payload, and disposes it on the window UI thread.
+- `<huxerui/windows/external_texture.h>`: `ExternalTexturePixelFormat` selects `Rgba8888` or `Bgra8888`. `ExternalTextureFrame` supplies pixel size, row stride, format, logical size, and byte span with straight alpha. `Publish` copies required rows before returning, so the caller may reuse the span.
 
 ## Linux
 
-`<huxerui/linux/external_texture.h>` declares `ExternalTexturePixelFormat`, `ExternalTextureFrame`, and `ExternalTextureSource` for retained pixel frames.
+`<huxerui/linux/external_texture.h>` declares `ExternalTexturePixelFormat`, `ExternalTextureFrame`, and the same copied RGBA/BGRA frame contract as Windows through `linux::ExternalTextureSource`.
+The pinned revision does not publish a Linux PlatformView factory header.
 
 ## Web
 
-- `<huxerui/web/platform_view.h>`: DOM-oriented `PlatformViewFactory`.
-- `<huxerui/web/external_texture.h>`: browser `ExternalTextureSource`.
-- `<huxerui/web/navigation.h>`: `BrowserNavigationBinding`, `BrowserNavigationCoordinator`, and `BrowserNavigationStack(root, path, resolver, codec)` for typed URL/history integration.
+- `<huxerui/web/platform_view.h>`: callbacks own an `emscripten::val` DOM object and receive immutable replacement payloads.
+- `<huxerui/web/external_texture.h>`: `web::ExternalTextureSource` publishes an `emscripten::val` video frame.
+- `<huxerui/web/navigation.h>`: `BrowserNavigationStack(root, path, resolver, codec)` synchronizes typed navigation with same-document browser history. The codec must provide `Decode(location)` and `Encode(path)`; exactly one stack may own URL synchronization in a document.
 
-Factory field contracts and source publication methods are platform-sensitive; use the matching [platform guide](../../platforms/) and header for exact ownership and threading rules.
+## Boundary classification
+
+These headers are platform-integration API, not portable component API.
+Names in `huxerui::detail`, including browser coordinator and binding machinery, are implementation contracts and are intentionally omitted from application guidance.
+Use the matching [platform guide](../../platforms/) for backend limitations and the shared [PlatformModule](../platform-module/), [PlatformView](../platform-view/), or [ExternalTexture](../external-texture/) page for consumer ownership.

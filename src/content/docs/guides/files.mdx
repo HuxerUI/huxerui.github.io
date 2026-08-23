@@ -8,7 +8,7 @@ description: Read and write files and present platform-native file pickers.
 
 ## Open a user-selected file
 
-```cpp
+```cpp fragment
 Task<void> OpenText(State<std::string> content) {
   auto picker = UseService<FilePicker>();
   auto picked = co_await picker->OpenFileAsync({
@@ -38,10 +38,11 @@ Import content into application storage when the application needs durable owner
 ## Work with application files
 
 `File` and `FileSystem` cover application-owned paths.
-`AppDirectories` identifies platform-resolved data, cache, documents, and temporary locations according to the current adapter.
+`AppDirectories` identifies platform-resolved executable (when available), data, cache, and temporary locations according to the current adapter.
 Obtain the installed services with `UseService<FileSystem>()` and `UseService<FilePicker>()`.
 
-All read and write operations are asynchronous and return `FileResult<T>`.
+`File` offers synchronous operations for code that already runs off the UI thread and `Async` counterparts for component-owned work.
+Read, stat, and listing operations return `FileResult<T>`; mutation methods report success with `bool`.
 Inspect `Succeeded()` before taking `Value()`, and use `FileErrorCode` to choose a recoverable application response.
 
 ## Filter and save

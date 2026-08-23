@@ -20,7 +20,7 @@ The default breakpoints are:
 
 Applications can replace the medium and expanded thresholds through `AppOptions::viewport_breakpoints`.
 
-```cpp
+```cpp fragment
 View Workspace() {
   switch (UseViewportClass()) {
     case ViewportClass::Compact:
@@ -41,7 +41,7 @@ When a resize crosses a breakpoint, that scope recomposes and the runtime reconc
 
 Use constraints, `Grow`, `Flow`, min/max frames, and adaptive grid columns for changes that do not require a different information architecture.
 
-```cpp
+```cpp fragment
 VirtualGrid(items, RenderCard)
     .Columns(GridColumns::Adaptive(240.0F))
     .ColumnSpacing(16.0F)
@@ -60,7 +60,7 @@ Use `ViewportClass` for structural decisions such as:
 Responsive branches may mount different component structures.
 Keep user-owned selection and navigation state above the branch so it survives a class change.
 
-```cpp
+```cpp fragment
 [[huxerui::scope]]
 View ResponsiveShell() {
   auto destination = UseState<std::size_t>(0);

@@ -41,3 +41,13 @@ Declared by `<huxerui/animation.h>`.
 - `UseSceneTransition() -> SceneTransitionHandle`; `Run` accepts a fade or circular reveal, and `RunAt` supplies the reveal origin.
 
 Navigation and presentation motion structs reuse `AnimationSpec` but are declared in their owning headers.
+
+## Contract notes
+
+| Concern | Contract |
+| --- | --- |
+| Value ownership | Curves, specs, playback, and presentation modifiers are copyable values. `MotionController` retains mutable playback state. |
+| Validation | Invalid Bézier control points, keyframe order, duration, spring parameters, or playback values throw `std::invalid_argument` at construction or start. |
+| Frame time | Call `Advance(FrameInfo)` with runtime frame time; do not advance from a detached timer. |
+| Reduced motion | Theme/runtime policy may resolve an animation to an immediate state. Application logic must not depend on intermediate frames. |
+| Selection | Use `Animated<T>` for one presentation property, `Transition` for coordinated properties, and scene transitions for a rendered before/after snapshot. |

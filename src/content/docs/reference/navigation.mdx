@@ -34,3 +34,35 @@ Declared by `<huxerui/navigation.h>`.
 `NavigationMotion` controls entering/covered offsets, scale, opacity, and push/pop specs. `NavigationStyle` contains optional motion and `Default()`.
 
 See the dedicated [navigation component pages](../../components/navigation-stack/) and [routing guide](../../guides/navigation-and-routing/).
+
+## Complete typed-route example
+
+```cpp compile="typed-navigation"
+#include <huxerui/huxerui.h>
+
+using namespace huxerui;
+
+struct ArticleRoute {
+  int id = 0;
+  bool operator==(const ArticleRoute&) const = default;
+};
+
+View Article(const ArticleRoute& route) {
+  return Text::Format("Article {}", route.id);
+}
+
+View Home() {
+  auto navigation = UseNavigation<ArticleRoute>();
+  return Button("Open article").OnClick([navigation] {
+    navigation.Push(ArticleRoute {.id = 42});
+  });
+}
+
+[[huxerui::scope]]
+View RoutedApplication() {
+  auto path = UseState(NavigationPath<ArticleRoute>{});
+  return NavigationStack(Home, path, Article);
+}
+```
+
+The path is application-owned state; the controller performs typed mutations and the resolver maps each route value to a destination `View`.

@@ -34,3 +34,15 @@ The runtime installs built-in `FileSystem`, `FilePicker`, and `HttpClient` servi
 `PlatformAdapter` is the platform implementation interface for frame scheduling, time, text layout, rendering, input services, resources, activation, lifecycle, files, HTTP, process metrics, system UI, and platform integration. Applications do not subclass it.
 
 `Runtime` owns composition, reconciliation, layout, interaction, semantics, animation, layers, and `RenderScene` generation for one adapter. Its public methods support platform hosts and focused framework extensions. `ProcessMetrics` carries cumulative CPU time, memory footprint, and processor count.
+
+## API boundary and lifetime
+
+| Surface | Intended caller | Lifetime and constraints |
+| --- | --- | --- |
+| `Application`, `AppOptions`, `UseApplication` | Application code | One immutable application declaration; handles are valid only inside its Runtime. |
+| `RootHook`, `RootContext`, `UseService<T>` | Application extensions | Hooks run before root composition. `UseService<T>()` returns the installed `std::shared_ptr<T>` or throws `std::logic_error`. |
+| `PlatformAdapter`, `Runtime`, `FrameCommit` | Repository or custom platform hosts | UI-thread adapter boundary, not an ordinary component API. One Runtime belongs to one adapter and host view. |
+| `RunApplication` | Generated native entry | Uses the application declaration supplied by the platform shell. |
+
+Empty lifecycle/activation handlers and duplicate or empty service installation are rejected with `std::invalid_argument` or `std::logic_error`.
+Application code should not instantiate `Runtime`, subclass `PlatformAdapter`, or depend on `huxerui::detail`.

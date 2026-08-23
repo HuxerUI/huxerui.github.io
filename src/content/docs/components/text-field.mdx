@@ -8,7 +8,7 @@ sidebar:
 `TextField` is controlled by a complete `TextEditingValue`, not only a string.
 The value preserves text, selection, affinity, and active IME composition.
 
-```cpp
+```cpp fragment
 [[huxerui::scope]]
 View EmailField() {
   auto email = UseState(TextEditingValue::FromText(""));

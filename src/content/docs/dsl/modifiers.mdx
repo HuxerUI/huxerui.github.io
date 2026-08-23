@@ -8,7 +8,7 @@ sidebar:
 Modifiers are typed values passed to `View::With`.
 They apply from left to right to the same node and do not insert wrapper views.
 
-```cpp
+```cpp fragment
 Text("Ready")
     .With(
         Padding(12.0F),
@@ -30,7 +30,7 @@ Text("Ready")
 | `Align` | Aligns content within available node space. |
 | `Grow` | Supplies flexible growth metadata to a compatible parent layout. |
 
-```cpp
+```cpp fragment
 Row {
   Text("Name"),
   TextField(name).With(Grow()),
@@ -62,7 +62,7 @@ Presentation transforms affect painting and pointer hit testing but not parent m
 `Focusable` opts a custom node into focus handling.
 `Indication` and `FocusRing` customize transient interaction visuals when a component or theme exposes them.
 
-```cpp
+```cpp fragment
 custom_view.With(
     Enabled(can_activate),
     Focusable(true),
@@ -78,7 +78,7 @@ custom_view.With(
 `ScrollBar` enables the default scrollbar or supplies a `ScrollBarStyle` override.
 Scroll containers also accept `ScrollPhysics` through the retained modifier API to tune user scrolling and overscroll behavior.
 
-```cpp
+```cpp fragment
 ScrollView(content).With(ScrollBar())
 ```
 
@@ -86,7 +86,7 @@ ScrollView(content).With(ScrollBar())
 
 Presentation modifiers accept `AnimateTo` values:
 
-```cpp
+```cpp fragment
 card.With(
     Opacity(AnimateTo(visible ? 1.0F : 0.0F, TweenSpec{.duration = 0.2})),
     Scale(AnimateTo(visible ? 1.0F : 0.96F, SpringSpec{}))
@@ -106,7 +106,7 @@ Read [Accessibility](/docs/guides/accessibility/) before excluding descendants o
 
 Use component-specific fluent methods for semantics that only one component understands:
 
-```cpp
+```cpp fragment
 Image(images::cover)
     .Fit(ImageFit::Cover)
     .Sampling(ImageSampling::Linear)

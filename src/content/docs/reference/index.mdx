@@ -7,44 +7,56 @@ sidebar:
 
 Include `<huxerui/huxerui.h>` for the complete cross-platform API. Link `HuxerUI::huxerui` for the shared library or `HuxerUI::huxerui_static` for static linkage. Platform-specific integration headers remain explicit includes.
 
-## Application API
+The **Application** audience is ordinary cross-platform UI code. **Extension** means custom layout, retained behavior, painting, or root-service work. **Platform integration** connects native objects or producers. **Adapter** is reserved for a platform shell implementation and should not appear in ordinary application code.
 
-| Headers | Reference |
-| --- | --- |
-| `app.h`, `root.h` | [Application and root services](./app/) |
-| `view.h` | [View and components](./view/) |
-| `state.h`, `environment.h` | [State and environment](./state-and-environment/) |
-| `event.h` | [Events](./event/) |
-| `lifecycle.h` | [Lifecycle](./lifecycle/) |
-| `task.h` | [Tasks](./task/) |
-| `modifier.h`, `indication.h` | [Modifiers and indication](./modifier/) |
-| `layout.h`, `scroll.h`, `virtual_layout.h` | [Layout, scrolling, and virtualization](./layout/) |
-| `navigation.h` | [Navigation](./navigation/) |
-| `presentation.h`, `layer.h` | [Presentation and layers](./presentation/) |
-| `theme.h` | [Theme](./theme/) |
-| `animation.h` | [Animation](./animation/) |
-| `window.h` | [Window](./window/) |
+## Application and composition
+
+| Header | Audience | Reference |
+| --- | --- | --- |
+| `huxerui.h` | Application umbrella | This index |
+| `app.h` | Application; adapter boundary is isolated on the reference page | [Application and root services](./app/) |
+| `root.h` | Extension | [Application and root services](./app/) |
+| `view.h` | Application and extension | [View and components](./view/) |
+| `state.h` | Application | [State and environment](./state-and-environment/) |
+| `environment.h` | Application and extension | [State and environment](./state-and-environment/) |
+| `event.h` | Application and extension | [Events](./event/) |
+| `lifecycle.h` | Application | [Lifecycle](./lifecycle/) |
+| `task.h` | Application | [Tasks](./task/) |
+| `modifier.h`, `indication.h` | Application and extension | [Modifiers and indication](./modifier/) |
+| `layout.h`, `virtual_layout.h` | Extension | [Layout, scrolling, and virtualization](./layout/) |
+| `scroll.h` | Application and extension | [Layout, scrolling, and virtualization](./layout/) |
+| `navigation.h` | Application | [Navigation](./navigation/) |
+| `presentation.h` | Application | [Presentation and layers](./presentation/) |
+| `layer.h` | Extension | [Presentation and layers](./presentation/) |
+| `theme.h` | Application and extension | [Theme](./theme/) |
+| `animation.h` | Application | [Animation](./animation/) |
+| `window.h` | Application; adapter boundary is isolated on the reference page | [Window](./window/) |
 
 ## Content and services
 
-| Headers | Reference |
-| --- | --- |
-| `text.h`, `text_input.h`, `validation.h`, `clipboard.h` | [Text and input](./text-and-input/) |
-| `resource.h` | [Resources](./resource/) |
-| `file.h` | [Files](./file/) |
-| `http.h` | [HTTP](./http/) |
-| `semantics.h` | [Semantics](./semantics/) |
+| Header | Audience | Reference |
+| --- | --- | --- |
+| `text.h`, `text_input.h`, `clipboard.h` | Application and adapter | [Text and input](./text-and-input/) |
+| `validation.h` | Application | [Text and input](./text-and-input/) |
+| `resource.h` | Application and adapter | [Resources](./resource/) |
+| `file.h` | Application | [Files](./file/) |
+| `http.h` | Application | [HTTP](./http/) |
+| `semantics.h` | Application and extension | [Semantics](./semantics/) |
 
 ## Graphics and integration
 
-| Headers | Reference |
-| --- | --- |
-| `color.h`, `geometry.h` | [Color and geometry](./geometry/) |
-| `paint.h`, `render_scene.h` | [Paint and render scene](./paint/) |
-| `vector.h` | [Path and vector](./vector/) |
-| `platform_module.h` | [PlatformModule](./platform-module/) |
-| `platform_view.h` | [PlatformView](./platform-view/) |
-| `external_texture.h` | [ExternalTexture](./external-texture/) |
-| `android/*`, `ios/*`, `macos/*`, `windows/*`, `linux/*`, `web/*` | [Platform-specific API](./platform-specific/) |
+| Header | Audience | Reference |
+| --- | --- | --- |
+| `color.h` | Application | [Color and geometry](./geometry/) |
+| `geometry.h` | Application and extension | [Color and geometry](./geometry/) |
+| `vector.h` | Application and extension | [Path and vector](./vector/) |
+| `paint.h` | Extension and adapter | [Paint and render scene](./paint/) |
+| `render_scene.h` | Adapter | [Paint and render scene](./paint/) |
+| `platform_module.h` | Application and platform integration | [PlatformModule](./platform-module/) |
+| `platform_view.h` | Application and platform integration | [PlatformView](./platform-view/) |
+| `external_texture.h` | Application consumer | [ExternalTexture](./external-texture/) |
+| `android/*`, `ios/*`, `macos/*`, `windows/*`, `linux/*`, `web/*` | Platform integration | [Platform-specific API](./platform-specific/) |
 
-Consumer APIs and extension boundaries are documented first. Runtime and adapter APIs used by platform implementations are isolated in [Application and root services](./app/) and [Paint and render scene](./paint/) rather than mixed into component pages.
+## Internal implementation
+
+Names in `huxerui::detail`, Runtime collaboration types not documented on these pages, and repository platform-backend classes are not application or extension API. Public adapter contracts such as `PlatformAdapter`, `RenderScene`, and text-service interfaces are documented only on their owning boundary pages rather than mixed into component guidance.

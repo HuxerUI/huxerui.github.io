@@ -14,4 +14,8 @@ huxerui run linux
 
 The SDK resolves system X11, xkbcommon, EGL, and GLES libraries and includes the pinned graphics/text dependency stack used by HuxerUI. XIM composition and X11 clipboard transfers are event-driven. The file picker uses the desktop portal when available.
 
-Linux external texture publication is declared in `<huxerui/linux/external_texture.h>`. Platform services must remain non-blocking on the X11 event loop. PlatformView coverage is backend-dependent; consult the SDK release notes before shipping an integration that requires native child windows.
+Linux external texture publication is declared in `<huxerui/linux/external_texture.h>`. Platform services must remain non-blocking on the X11 event loop.
+
+The pinned revision publishes no Linux PlatformView factory header and contains no repository-owned accessibility bridge.
+Treat both capabilities as unavailable rather than inferring them from the shared semantic tree or another desktop adapter.
+Build and runtime validation require a Linux/X11 environment with the documented system libraries.

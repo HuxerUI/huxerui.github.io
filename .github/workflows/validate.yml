@@ -14,7 +14,7 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v5
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
           node-version: 22
           cache: npm
@@ -24,12 +24,15 @@ jobs:
           node --input-type=module --eval
           "import('./scripts/resolve-huxerui-source.mjs').then(async ({ resolveHuxerUISource }) => resolveHuxerUISource())"
       - name: Compile documentation snippets
+        run: npm run check:examples
+      - name: Configure documentation contracts
         run: >-
           cmake
           -S tests/snippets
           -B .cache/docs-snippets
           -G Ninja
           -DHUXERUI_SOURCE_DIR=${{ github.workspace }}/.cache/huxerui
+          -DHUXERUI_DOC_EXAMPLES_DIR=${{ github.workspace }}/.cache/docs-examples
       - run: cmake --build .cache/docs-snippets --parallel
       - name: Check and build
         env:
@@ -37,3 +40,41 @@ jobs:
         run: npm run build
       - name: Check generated links
         run: npm run check:links
+      - name: Check external links
+        run: npm run check:external-links
+
+  web-examples:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Resolve documented HuxerUI revision
+        run: >-
+          node --input-type=module --eval
+          "import('./scripts/resolve-huxerui-source.mjs').then(async ({ resolveHuxerUISource }) => resolveHuxerUISource())"
+      - uses: mymindstorm/setup-emsdk@v16
+        with:
+          version: 4.0.19
+      - name: Prepare HuxerUI host tools
+        run: >-
+          chmod +x
+          .cache/huxerui/tools/prebuilt/linux/x86_64/hcg
+          .cache/huxerui/tools/prebuilt/linux/x86_64/hrc
+      - name: Configure Web examples
+        run: >-
+          emcmake cmake
+          -S .cache/huxerui
+          -B .cache/huxerui-web-build
+          -G Ninja
+          -DCMAKE_BUILD_TYPE=Release
+          -DHUXERUI_BUILD_SHARED=OFF
+          -DHUXERUI_BUILD_STATIC=ON
+          -DHUXERUI_BUILD_CLI=OFF
+          -DHUXERUI_BUILD_TESTS=OFF
+          -DHUXERUI_BUILD_EXAMPLES=ON
+      - name: Build every published Web example
+        run: cmake --build .cache/huxerui-web-build --parallel --target $(node scripts/list-web-example-targets.mjs)
