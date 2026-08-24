@@ -22,7 +22,7 @@ It begins when awaited or launched by an owning scope.
 ## Launch from UI lifetime
 
 ```cpp fragment
-[[huxerui::scope]]
+[[huxerui::composable]]
 View LoadButton(State<std::string> status) {
   auto tasks = UseTaskScope();
   return Button("Load").OnClick([tasks, status] {

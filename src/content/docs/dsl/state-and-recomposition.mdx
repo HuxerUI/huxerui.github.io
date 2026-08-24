@@ -11,7 +11,7 @@ Reading the value during composition subscribes that scope; writing a different 
 ## Declare state in a scope
 
 ```cpp fragment
-[[huxerui::scope]]
+[[huxerui::composable]]
 View Counter() {
   auto count = UseState(0);
 
@@ -24,7 +24,7 @@ View Counter() {
 }
 ```
 
-`[[huxerui::scope]]` is transformed at build time.
+`[[huxerui::composable]]` is transformed at build time.
 Use it when a reusable component owns local state, calls `UseEvents`, or needs an independent recomposition boundary.
 The application root already owns a scope and must not be annotated.
 
@@ -85,7 +85,7 @@ User-owned values remain authoritative in application state.
 A component renders the current value and emits a requested next value:
 
 ```cpp fragment
-[[huxerui::scope]]
+[[huxerui::composable]]
 View Settings() {
   auto enabled = UseState(false);
 

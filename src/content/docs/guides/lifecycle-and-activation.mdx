@@ -62,7 +62,7 @@ std::string DescribeActivation(const ApplicationActivation& activation) {
   );
 }
 
-[[huxerui::scope]]
+[[huxerui::composable]]
 View ActivationStatus() {
   const ApplicationHandle application = UseApplication();
   auto latest = UseState(DescribeActivation(application.StartupActivation()));

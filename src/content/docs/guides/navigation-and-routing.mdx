@@ -36,7 +36,7 @@ struct Route {
   bool operator==(const Route&) const = default;
 };
 
-[[huxerui::scope]]
+[[huxerui::composable]]
 View RoutedApp() {
   auto path = UseState(NavigationPath<Route>{});
   return NavigationStack(Home, path, [](const Route& route) -> View {

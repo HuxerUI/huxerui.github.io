@@ -22,7 +22,7 @@ Task<void> OpenText(std::shared_ptr<FilePicker> picker, State<std::string> conte
   }
 }
 
-[[huxerui::scope]]
+[[huxerui::composable]]
 View OpenTextButton(State<std::string> content) {
   auto picker = UseService<FilePicker>();
   auto tasks = UseTaskScope();

@@ -90,7 +90,7 @@ struct SearchRequested : Event<std::string> {};
 A scoped component obtains an emitter and emits through the key:
 
 ```cpp fragment
-[[huxerui::scope]]
+[[huxerui::composable]]
 View SearchBox() {
   auto value = UseState(TextEditingValue{});
   auto events = UseEvents();

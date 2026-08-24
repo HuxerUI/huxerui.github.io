@@ -37,7 +37,7 @@ Task<void> LoadStatus(std::shared_ptr<HttpClient> http, State<std::string> outpu
   output = result.HasResponse() ? std::to_string(result.Response().status_code) : result.Error().message;
 }
 
-[[huxerui::scope]]
+[[huxerui::composable]]
 View LoadStatusButton(State<std::string> output) {
   auto http = UseService<HttpClient>();
   auto tasks = UseTaskScope();

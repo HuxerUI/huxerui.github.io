@@ -4,7 +4,7 @@
 
 using namespace huxerui;
 
-[[huxerui::scope]]
+[[huxerui::composable]]
 View CounterSnippet() {
   auto count = UseState(0);
 
@@ -14,7 +14,7 @@ View CounterSnippet() {
   }.With(Spacing(12.0F));
 }
 
-[[huxerui::scope]]
+[[huxerui::composable]]
 View ControlledTextFieldSnippet() {
   auto value = UseState(TextEditingValue::FromText(""));
 
@@ -71,7 +71,7 @@ View ResolveDocumentationRoute(const DocumentationRoute& route) {
   return Text("Settings");
 }
 
-[[huxerui::scope]]
+[[huxerui::composable]]
 View RoutedNavigationSnippet() {
   auto path = UseState(NavigationPath<DocumentationRoute>{});
   return NavigationStack(NavigationRootSnippet, path, ResolveDocumentationRoute);

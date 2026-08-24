@@ -21,7 +21,7 @@ Task<void> LoadFeed(std::shared_ptr<HttpClient> http, State<std::string> output)
   }
 }
 
-[[huxerui::scope]]
+[[huxerui::composable]]
 View LoadFeedButton(State<std::string> output) {
   auto http = UseService<HttpClient>();
   auto tasks = UseTaskScope();

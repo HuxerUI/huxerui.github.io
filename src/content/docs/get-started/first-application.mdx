@@ -13,7 +13,7 @@ Its root factory returns the first declarative `View` tree.
 
 using namespace huxerui;
 
-[[huxerui::scope]]
+[[huxerui::composable]]
 View Counter() {
   auto count = UseState(0);
 
@@ -52,7 +52,7 @@ const Application application{
 ## What the declaration means
 
 `Application` stores the root factory and `AppOptions` for the platform shell.
-The root already owns a composition scope, so `App` does not need `[[huxerui::scope]]`.
+The root already owns a composition scope, so `App` does not need `[[huxerui::composable]]`.
 
 `Counter` does need an independent scope because it owns local `State`.
 The code generator rewrites the attribute into the runtime scope boundary used to preserve the state across recomposition.

@@ -21,7 +21,7 @@ View LabeledValue(std::string_view label, std::string_view value) {
 }
 ```
 
-Add `[[huxerui::scope]]` only when the reusable component owns local state, a local event hub, or an independent recomposition boundary.
+Add `[[huxerui::composable]]` only when the reusable component owns local state, a local event hub, or an independent recomposition boundary.
 Keep application-owned values controlled: accept the current value and emit a typed event that asks the owner to update it.
 
 Use an existing property modifier when reusable declarative data changes existing node behavior.
@@ -139,7 +139,7 @@ Define an event key when a composed control produces a reusable semantic result:
 ```cpp fragment
 struct RatingChanged : Event<int> {};
 
-[[huxerui::scope]]
+[[huxerui::composable]]
 View Rating(int value) {
   return Row {
     Button("Lower").OnClick([events = UseEvents(), value] { events.Emit<RatingChanged>(value - 1); }),

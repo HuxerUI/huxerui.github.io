@@ -69,7 +69,7 @@ Explicit source lists remain useful in hand-authored projects that prefer strict
 
 ## Define a HuxerUI library
 
-`huxerui_add_library` creates a static, position-independent component library, links the selected framework form, and enables `[[huxerui::scope]]` transformation:
+`huxerui_add_library` creates a static, position-independent component library, links the selected framework form, and enables `[[huxerui::composable]]` transformation:
 
 ```cmake
 huxerui_add_library(charts
@@ -140,7 +140,7 @@ Registered roots for one target may not overlap, which keeps generated identifie
 
 ## Enable scope code generation
 
-Use the lower-level codegen function for an ordinary target that contains `[[huxerui::scope]]` components:
+Use the lower-level codegen function for an ordinary target that contains `[[huxerui::composable]]` components:
 
 ```cmake
 add_library(custom_widgets STATIC src/widgets.cpp)
@@ -164,4 +164,3 @@ Avoid platform-specific copies of the shared source list, resource compiler invo
 - [Resources and localization](/docs/guides/resources-and-localization/)
 - [CLI reference](/docs/tooling/cli/)
 - [Testing and delivery](/docs/tooling/testing-and-delivery/)
-

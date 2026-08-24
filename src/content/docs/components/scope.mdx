@@ -6,12 +6,12 @@ sidebar:
 ---
 
 `Scope` stores a `View` factory as an independent recomposition boundary.
-Most application code should use `[[huxerui::scope]]`, which generates this boundary automatically while preserving natural function syntax.
+Most application code should use `[[huxerui::composable]]`, which generates this boundary automatically while preserving natural function syntax.
 
 ## Prefer generated scope syntax
 
 ```cpp fragment
-[[huxerui::scope]]
+[[huxerui::composable]]
 View Counter() {
   auto count = UseState(0);
   return Column {
@@ -48,6 +48,6 @@ Do not add scopes to every helper function; stateless composition should stay an
 
 - `Scope(std::function<View()> factory)`.
 - `Scope(Factory&& factory, Arguments&&... arguments)` for a compatible view factory.
-- Preferred declaration syntax: `[[huxerui::scope]] View Component(...)`.
+- Preferred declaration syntax: `[[huxerui::composable]] View Component(...)`.
 
 Read [Composition and identity](/docs/dsl/composition-and-identity/) before introducing explicit scope boundaries or keys.

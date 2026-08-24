@@ -58,7 +58,7 @@ View Home() {
   });
 }
 
-[[huxerui::scope]]
+[[huxerui::composable]]
 View RoutedApplication() {
   auto path = UseState(NavigationPath<ArticleRoute>{});
   return NavigationStack(Home, path, Article);

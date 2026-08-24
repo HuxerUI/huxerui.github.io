@@ -61,7 +61,7 @@ Responsive branches may mount different component structures.
 Keep user-owned selection and navigation state above the branch so it survives a class change.
 
 ```cpp fragment
-[[huxerui::scope]]
+[[huxerui::composable]]
 View ResponsiveShell() {
   auto destination = UseState<std::size_t>(0);
 

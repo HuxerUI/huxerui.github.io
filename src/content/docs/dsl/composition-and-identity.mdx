@@ -21,7 +21,7 @@ View StatusBadge(std::string_view label, Color color) {
 }
 ```
 
-A stateless function does not need `[[huxerui::scope]]`.
+A stateless function does not need `[[huxerui::composable]]`.
 Its returned declarations become ordinary children of the caller.
 
 ## Scoped composition
@@ -29,7 +29,7 @@ Its returned declarations become ordinary children of the caller.
 Add a scope when the component owns `UseState`, `UseStateList`, `UseEvents`, `UseTaskScope`, or scope-bound lifecycle work:
 
 ```cpp fragment
-[[huxerui::scope]]
+[[huxerui::composable]]
 View ExpandableSection(std::string_view title, View content) {
   auto expanded = UseState(false);
 
