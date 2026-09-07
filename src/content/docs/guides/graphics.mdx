@@ -28,15 +28,15 @@ For frame-by-frame motion, use `Transition`, `MotionController`, or another reta
 
 Paint operations append immutable platform-neutral commands. Available primitives cover rectangles, linear/radial gradients, text and text runs, raster/vector images, external textures, circles, arcs, borders, shadows, filled/stroked paths, clips, and transforms.
 
-Use `DrawText` for one text layout and `DrawTextRuns` when a caller already owns several measured runs with different styles.
-The platform renderer consumes the supplied layout geometry; custom paint code should not create a second platform-specific measurement path.
+Use `DrawText(rect, text, style, options)` for a plain or attributed paragraph whose layout belongs to the platform text engine. Use `DrawTextRun` or `DrawTextRuns` for explicitly positioned, single-line runs.
+Keep measurement and drawing styles/options identical; custom paint code should not create a second platform-specific measurement path.
 
 Use `DrawImage` or `DrawImageRect` after resolving an `ImageAsset` with `UseImage`.
 Normal UI should prefer `Image(resource)`, which owns resource resolution, fitting, tint, and semantics.
 
 Text geometry must come from HuxerUI measurement.
-`DrawText` and `DrawTextRuns` consume the supplied layout and style; renderers should not reinterpret the string with a second independent measurement pass.
-Choose runs when several measured spans share one drawing operation, such as syntax coloring or diagnostics, and ordinary `Text` when the content participates in standard layout and accessibility.
+Paragraph drawing lays out the supplied text inside its rectangle. Positioned runs instead use the supplied baseline origins; a run cannot contain a line break.
+Prefer attributed `Text` for rich paragraphs that need shaping, selection, links, and accessibility. Positioned runs are a lower-level tool when the caller already owns that geometry.
 
 ## Build paths and vectors
 

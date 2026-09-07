@@ -1,46 +1,65 @@
 ---
 title: Platform-specific API
-description: Explicit integration headers for platform views, external textures, JNI, and Web navigation.
+description: Explicit integration headers for typed factories, texture producers, JNI, browser routing, and installers.
 sidebar:
   order: 26
 ---
 
-Platform headers are not included by `<huxerui/huxerui.h>` unless needed by the selected entry. Include them explicitly.
+Include platform headers explicitly; the portable umbrella does not make a backend API available on another target. Platform integration code runs under the owning host's thread and resource rules.
 
-## Android
+## Typed view factories
 
-- `<huxerui/android/platform_module.h>`: `android::PlatformModuleFactory::create(JNIEnv*, jobject, options, events)` returns the shared module instance callbacks.
-- `<huxerui/android/platform_view.h>`: `android::PlatformViewFactory` creates, updates, and disposes one Java View through JNI; the adapter promotes a valid returned local reference for its mounted lifetime.
-- `<huxerui/android/external_texture.h>`: move-only `android::ExternalTextureSource(Size)` publishes a `Bitmap`, exposes `Texture()`, and ends publication with `Finish()`.
-- `<huxerui/android/jni.h>`: UTF-8/string and byte-array conversion plus move-only `android::LocalRef<Reference>` ownership. The reference helper deletes only its owned local reference.
+`PlatformViewFactory<Properties, Instance, Controller = void>` retains a shared `Instance`, extracts its stable platform view once, and applies subsequent properties. `create` and `view` are required. Non-void properties require `update`; a controller requires both `connect` and `disconnect`. Optional `dispose` runs after controller disconnection.
 
-All JNI arguments and returned local references belong to the current callback's `JNIEnv*` and UI thread unless the platform implementation explicitly promotes them.
+| Header | Namespace | Creation context / extracted view |
+| --- | --- | --- |
+| `<huxerui/android/platform_registry.h>` | `android` | Current `JNIEnv*`, Android Context / local reference to the retained Java View. |
+| `<huxerui/ios/platform_registry.h>` | `ios` | `UIViewController*` / `UIView*`. |
+| `<huxerui/macos/platform_registry.h>` | `macos` | AppKit host context / `NSView*`. |
+| `<huxerui/windows/platform_registry.h>` | `windows` | Parent `HWND` / child `HWND`. |
+| `<huxerui/web/platform_registry.h>` | `web` | Browser event loop / detached `HTMLElement` in `emscripten::val`. |
 
-## iOS and macOS
+Register with `RootContext::RegisterPlatformView`. Direct C++ properties/controllers keep their exact types. Do not return temporary platform views or retain borrowed callback contexts.
 
-- `<huxerui/ios/platform_view.h>` and `<huxerui/macos/platform_view.h>`: factory callbacks create, update, and dispose one `UIView*` or `NSView*` on the main thread.
-- `<huxerui/ios/external_texture.h>` and `<huxerui/macos/external_texture.h>`: move-only sources publish `CVPixelBufferRef` frames and expose a shared `ExternalTexture` handle.
+## Android bridge and JNI
 
-The adapter strongly retains the native view returned from `create` for its compatible mounted lifetime and invokes the factory's optional `dispose` callback before releasing that hosted instance.
+The Android registry header also exposes `PlatformEnv` and `GetPlatformEnv(PlatformAdapter&)` for the current UI-thread JNI environment/context, `PlatformModuleFactory<Module, Options>` for direct JNI factories, and `JavaPlatformModuleFactory` / `JavaPlatformViewFactory` for Java implementations.
 
-## Windows
+Java factories identify a public, no-argument-constructible class by `class_name`. Their structured values cross through PlatformPayload; an optional typed facade/controller wraps PlatformChannel. Keep registration in a root hook.
 
-- `<huxerui/windows/platform_view.h>`: `windows::PlatformViewFactory` creates an `HWND` child of the supplied parent, updates its payload, and disposes it on the window UI thread.
-- `<huxerui/windows/external_texture.h>`: `ExternalTexturePixelFormat` selects `Rgba8888` or `Bgra8888`. `ExternalTextureFrame` supplies pixel size, row stride, format, logical size, and byte span with straight alpha. `Publish` copies required rows before returning, so the caller may reuse the span.
+`<huxerui/android/jni.h>` supplies UTF-8 and byte-array conversion and the move-only `LocalRef<Reference>`. It deletes only its owned JNI local reference. Never retain `JNIEnv*`; use explicit global references for Java objects that must outlive a callback.
 
-## Linux
+## Web bridge and routing
 
-`<huxerui/linux/external_texture.h>` declares `ExternalTexturePixelFormat`, `ExternalTextureFrame`, and the same copied RGBA/BGRA frame contract as Windows through `linux::ExternalTextureSource`.
-The pinned revision does not publish a Linux PlatformView factory header.
+The Web registry header offers `JavaScriptPlatformModuleFactory` and `JavaScriptPlatformViewFactory`. Supply the JavaScript factory object directly from the root hook; there is no second global registration table. Modules provide create/invoke/dispose, with optional request cancellation; views also expose a detached element and property updates.
 
-## Web
+`<huxerui/web/navigation.h>` declares `BrowserNavigationStack(root, path, resolver, codec)`. The codec supplies `Decode(location)` and `Encode(path)`; one stack owns same-document URL synchronization. This does not replace browser server fallback configuration for direct navigation.
 
-- `<huxerui/web/platform_view.h>`: callbacks own an `emscripten::val` DOM object and receive immutable replacement payloads.
-- `<huxerui/web/external_texture.h>`: `web::ExternalTextureSource` publishes an `emscripten::val` video frame.
-- `<huxerui/web/navigation.h>`: `BrowserNavigationStack(root, path, resolver, codec)` synchronizes typed navigation with same-document browser history. The codec must provide `Decode(location)` and `Encode(path)`; exactly one stack may own URL synchronization in a document.
+## Texture producers
+
+All producer objects derive from `ExternalTexture`; share them through `std::shared_ptr`.
+
+| Header | Types and publication |
+| --- | --- |
+| `<huxerui/android/external_texture.h>` | `BitmapTexture::Publish(JNIEnv*, jobject)`, `GlTexture::PublishCurrent(Frame)`, and `SurfaceStreamTexture` for a platform surface stream. |
+| `<huxerui/ios/external_texture.h>` | `PixelBufferTexture::Publish(CVPixelBufferRef)` and `MetalTexture::Publish(Frame)`. |
+| `<huxerui/macos/external_texture.h>` | AppKit equivalents of `PixelBufferTexture` and `MetalTexture`. |
+| `<huxerui/windows/external_texture.h>` | `PixelFormat`, `PixelFrame`, `PixelTexture`, and `D3D11Texture`. |
+| `<huxerui/linux/external_texture.h>` | `PixelFormat`, `PixelFrame`, `PixelTexture`, `GlTexture`, and immutable `GdkTexture` publication. |
+| `<huxerui/web/external_texture.h>` | `VideoFrameTexture::Publish(const emscripten::val&)`. |
+
+Software PixelFrame publication copies straight-alpha RGBA/BGRA rows. GPU producers have format/context/synchronization constraints, not a universal “borrow any texture” contract. Read [ExternalTexture integration](/docs/guides/external-texture/) before choosing one.
+
+## Windows installer UI
+
+`<huxerui/windows/installer.h>` exposes a specialized WiX Burn application boundary, not a normal desktop application service.
+
+Install `windows::InstallInstallerSession` once in the installer's root hooks and enter through `RunInstallerApplication()` from the generated bootstrapper entry. `UseInstaller()` returns `InstallerHandle`; its status supplies product state, phase, progress, failure, and any outstanding prompt.
+
+`Install(InstallerInstallOptions)`, `Repair()`, `Uninstall()`, and `Cancel()` request engine operations. Installation options can override absolute destination and desktop shortcut choice. `ChooseDestinationAsync(initial)` returns an optional directory; cancellation is empty. `Respond(prompt_id, choice)` answers the identified prompt; stale IDs are ignored. Do not use this service from an ordinary executable.
 
 ## Boundary classification
 
-These headers are platform-integration API, not portable component API.
-Names in `huxerui::detail`, including browser coordinator and binding machinery, are implementation contracts and are intentionally omitted from application guidance.
-Use the matching [platform guide](../../platforms/) for backend limitations and the shared [PlatformModule](../platform-module/), [PlatformView](../platform-view/), or [ExternalTexture](../external-texture/) page for consumer ownership.
+Linux currently has no public PlatformView factory header; a GTK renderer does not imply that arbitrary GTK controls can be embedded through the shared component.
+
+PlatformAdapter and backend implementation machinery are not ordinary app APIs. Names in `huxerui::detail` remain internal even when templates mention them. See [platform capabilities](/docs/platforms/) for implementation status and validation limits.

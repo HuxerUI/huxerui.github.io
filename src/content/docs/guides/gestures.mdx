@@ -1,0 +1,42 @@
+---
+title: Gestures and drag-and-drop
+description: Build deliberate gesture interactions without replacing shared input routing.
+---
+
+Use a recognizer when the meaning is dragging, holding, multi-tapping, or a two-pointer transform. Raw pointer notifications are useful for observation, but should not become a second scrolling or capture system.
+
+## Respond to recognized movement
+
+```cpp compile="drag-gesture"
+#include <huxerui/huxerui.h>
+
+using namespace huxerui;
+
+[[huxerui::composable]]
+View DragReadout() {
+  auto distance = UseState(0.0F);
+  auto active = UseState(false);
+  return Text::Format("Distance: {} - dragging: {}", distance, active)
+      .With(Padding(24.0F), DragGesture{.axis = Axis::Horizontal})
+      .On<DragEvents::Started>([active](const DragEvent&) { active = true; })
+      .On<DragEvents::Changed>([distance](const DragEvent& event) { distance = event.translation.x; })
+      .On<DragEvents::Ended>([active](const DragEvent&) { active = false; })
+      .On<DragEvents::Canceled>([active](const DragEvent&) { active = false; });
+}
+```
+
+The example shows values rather than introducing a second animation controller. For a moving object, apply the gesture to stable geometry and drive presentation from the same owned value. Total translation and incremental delta are different inputs; do not add total translation on every event.
+
+## Keep touch, mouse, and keyboard alternatives
+
+Long press and multi-touch cannot be assumed on every device. Give essential commands an ordinary button, menu, or keyboard path. `MultiTapGesture` recognizes repeated physical taps without suppressing normal Click output; use it for an additional action whose first click is harmless.
+
+For pinch/rotate, `TransformGesture` emits incremental scale and rotation. Clamp your application's zoom range and honor reduced-motion policy in any follow-up animation.
+
+## Transfer domain values
+
+Attach `DragSource(record_id)` to a source and `DropTarget::Accepts<RecordId>()` to a destination. Handle `DropEvents<RecordId>::Dropped` to mutate application state; hover is not a completed transfer. A preview factory is optional and should return display content.
+
+This operation stays within HuxerUI. Receiving files from another application uses [FileDropTarget](/docs/reference/file/#external-file-drops), which returns access-bearing `FileReference` values.
+
+[Run the gesture example](/examples/gestures/) or consult the [gesture API](/docs/reference/gesture/) for thresholds, coordinates, and cancellation.

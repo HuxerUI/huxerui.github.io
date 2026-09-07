@@ -1,0 +1,48 @@
+---
+title: RefreshBox
+description: Add a controlled pull-to-refresh indicator around scrollable content.
+---
+
+`RefreshBox` coordinates pull gestures with nested scrolling. It does not fetch data or own the truth of whether a refresh is running.
+
+## Controlled example
+
+```cpp compile="refresh-box-controlled"
+#include <huxerui/huxerui.h>
+
+#include <chrono>
+
+using namespace huxerui;
+using namespace std::chrono_literals;
+
+[[huxerui::composable]]
+View RefreshableFeed() {
+  auto refreshing = UseState(false);
+  auto completed = UseState(0);
+  auto tasks = UseTaskScope();
+  return RefreshBox(
+      ScrollView(Column {
+        Text::Format("Completed refreshes: {}", completed),
+        Text("Pull down at the start of this list."),
+      }),
+      refreshing
+  ).OnRefresh([refreshing, completed, tasks] {
+    refreshing = true;
+    tasks.Launch([refreshing, completed]() -> Task<void> {
+      co_await Delay(800ms);
+      ++completed;
+      refreshing = false;
+    });
+  }).With(Frame{.height = 320.0F});
+}
+```
+
+The delay is a visible demonstration; replace it with your own request and ensure both success and failure clear the controlled flag. Work belongs to the owning `TaskScope`, not to the gesture recognizer.
+
+## API and lifetime
+
+Declared by `<huxerui/view.h>`: `RefreshBox(View content, bool refreshing)` and the State form. `.OnRefresh(void())` requests work after a qualifying pull; set `refreshing` promptly to acknowledge it. Setting the flag programmatically shows the indicator without emitting a new request.
+
+`RefreshBoxStyle` controls the theme's indicator and geometry. The child remains responsible for its scrolling content and bounded layout. Use ordinary state to retain fetched data.
+
+See [Tasks](/docs/guides/tasks/) for cancellation and [the live example](/examples/refresh_box/).

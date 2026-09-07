@@ -16,7 +16,7 @@ Declared by `<huxerui/layout.h>`, `<huxerui/scroll.h>`, and `<huxerui/virtual_la
 
 ## Custom layout
 
-`MountedNode` is a non-owning view of a reconciled node during layout and extension callbacks. It exposes child iteration, current layout and presentation geometry, interaction and alignment values, typed `LayoutValue` lookup, and a type-indexed `Cache<T>` owned by that node. `ChildAt` throws `std::out_of_range` for an invalid index and a cache type mismatch throws `std::logic_error`; do not retain a node or child reference across reconciliation.
+`ViewNode` is a non-owning view of a reconciled node during layout and extension callbacks. It exposes child iteration, current layout and presentation geometry, interaction and alignment values, typed `LayoutValue` lookup, and a type-indexed `Cache<T>` owned by that node. `ChildAt` throws `std::out_of_range` for an invalid index and a cache type mismatch throws `std::logic_error`; do not retain a node or child reference across reconciliation.
 
 `LayoutContext::Measure(child, constraints)` measures one child. `SafeAreaInsets()` returns the edges not consumed by ancestor safe-area padding, and `TitleBarMetrics()` returns optional frame-local native title-bar geometry.
 `LayoutResult` contains the constrained layout size and child placements.

@@ -24,8 +24,8 @@ export const platforms: Platform[] = [
   {
     name: "Linux",
     status: "Supported",
-    stack: "X11 · Cairo · EGL/GLES · HarfBuzz",
-    detail: "Retained Cairo rendering with damage, XIM composition, platform modules, files, and libsoup HTTP.",
+    stack: "GTK 4 · Pango · Cairo/GSK",
+    detail: "GTK window/input integration, Pango text, GSK texture composition, platform services, files, and libsoup HTTP.",
     code: "LNX",
   },
   {

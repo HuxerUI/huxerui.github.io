@@ -13,20 +13,20 @@ Declared by `<huxerui/event.h>`.
 - `InteractionEvent::Type`: `Press`, `Release`, or `Cancel`; `InteractionEvent::Source`: `Pointer` or `Keyboard`.
 - `InteractionEvent`: type, source, matching `press_id`, and optional node-local pointer position.
 - `PointerEventType`: `Down`, `Up`, `Move`, or `Cancel`; `PointerDeviceKind`: `Mouse`, `Touch`, or `Pen`.
-- `PointerEvent`: type, pointer ID, node-local position, device kind, and click count.
-- `ScrollEvent`: local delta and pointer position.
-- `Key`: `Unknown`, `Tab`, `Enter`, `Space`, `Escape`, `Backspace`, `Delete`, `ArrowLeft`, `ArrowRight`, `ArrowUp`, `ArrowDown`, `Home`, `End`, `PageUp`, `PageDown`, `A`, `C`, `V`, `X`, `Y`, `Z`, `Shift`, `Control`, `Alt`, and `Meta`.
+- `PointerEvent`: type, pointer ID, window-local position, device kind, changed/pressed buttons, and modifiers.
+- `ScrollInputEvent`: window-local wheel/trackpad position, both delta axes, and modifiers.
+- `Key`: portable key identity, including navigation keys such as `Tab`, `Enter`, and `ArrowLeft`, letters, digits, function keys, keypad keys, and left/right modifier keys.
 - `KeyEventType`: `Down` or `Up`; `KeyModifiers` carries Shift, Control, Alt, and Meta flags.
 - `KeyEvent`: type, key, text, modifiers, and repeat state.
 - `BackPhase`: `Begin`, `Update`, `Cancel`, or `Commit`; `BackEvent` carries phase and progress.
 
-## `Event<Arguments...>`
+## `Event<Result(Arguments...)>`
 
-Base shape for an event key. A key supplies `using Signature = void(Arguments...)`; its type is the identity.
+A key derives from a complete function signature, such as `Event<void(int)>` for notification or `Event<bool(const KeyEvent&)>` for a synchronous decision. Its type is the identity. Result-bearing emission returns an optional result when a handler is connected.
 
 ## Built-in event groups
 
-- `ViewEvents`: `Click`, `PointerDown`, `PointerMove`, `PointerUp`, `PointerCancel`, `FocusChanged`, `KeyDown`, `KeyUp`, and `BackRequested`.
+- `ViewEvents`: `Click`, `Pointer`, `PointerIntercept`, `Hover`, `ScrollInput`, `FocusChanged`, `KeyDown`, `KeyUp`, `KeyIntercept`, `ContextMenuRequested`, and `BackRequested`.
 - `ToggleEvents::Changed(bool)`.
 - `SliderEvents::Changed(float)`.
 - `SegmentedButtonEvents::Changed(std::size_t)`.
@@ -47,7 +47,15 @@ Handlers are copied into the transient `View` declaration and reconciled with it
 They run on the Runtime UI thread and remain installed only while that node or scope is mounted.
 `OnClick` is the built-in activation event and also installs default indication; use `On<Key>` for another typed semantic event.
 
-Pointer positions and scroll deltas are expressed in logical coordinates local to the receiving node.
-Platform adapters convert native pixels, screen coordinates, click counts, key identity, and modifiers before dispatch.
+`ViewEvents::Pointer` and `ScrollInput` positions are window-local logical coordinates; scroll deltas are logical content-offset changes. `HoverEvent` provides both node-local `position` and `window_position`. Gesture payloads document their own coordinate spaces.
+Platform adapters convert platform pixels, screen coordinates, key identity, and modifiers before dispatch.
 `EventEmitter` is appropriate for a reusable scoped component's own output; it is not a process-wide event bus.
 Handler erasure and dispatch storage live in `huxerui::detail` and are not extension contracts.
+
+## Raw input and policy
+
+`ViewEvents::Pointer` reports one complete Down/Move/Up-or-Cancel lifecycle without capturing or bubbling. `PointerIntercept` can take exclusive ownership by returning true; use a gesture modifier for ordinary recognition. `Hover` has independent enter/move/leave delivery, including disabled nodes, and does not join pointer ownership.
+
+`KeyIntercept` visits the active focus-scope path before component defaults and stops at the first true result. `KeyDown`/`KeyUp` receive otherwise unhandled keys after component handling; return true only when consuming the operation. The Key enum includes letters, digits, function keys, keypad keys, and side-specific modifiers as well as navigation keys. Do not treat `KeyEvent::text` as a replacement for IME editing.
+
+`ScrollInput` receives both wheel/trackpad axes before default nested scrolling; true consumes both axes, false keeps the default transaction. `ContextMenuRequested` receives a window-local Point suitable for `MenuHandle::ShowAt`. Use it rather than assuming a context menu always starts from a right mouse button.

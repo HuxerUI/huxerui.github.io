@@ -56,3 +56,35 @@ Wrap a subtree in [`SelectionArea`](/docs/components/selection-area/) to enable 
 - Common modifiers: `Foreground`, `FontSize`, `Padding`, `Frame`, `Semantics`.
 
 See [Text and input API](/docs/reference/text-and-input/) for fonts, layout options, metrics, runs, and measurement.
+
+## Attributed text
+
+```cpp compile="attributed-text"
+#include <huxerui/huxerui.h>
+
+#include <string>
+
+using namespace huxerui;
+
+[[huxerui::composable]]
+View LinkedSummary() {
+  auto target = UseState<std::string>("");
+  const AttributedText summary{
+    TextSpan("Build ").Style({.font_weight = FontWeight::SemiBold}),
+    TextSpan("passed. "),
+    TextSpan("Read the report").Link(Uri("https://example.com/report")),
+  };
+  return Column {
+    Text(summary).On<TextEvents::LinkActivated>([target](const TextLinkActivation& link) {
+      target = link.target.ToString();
+    }),
+    Text(target),
+  };
+}
+```
+
+The example displays the requested URI; it does not open arbitrary external links. The application owns scheme validation and routing. Spans inherit unspecified style fields from the Text base style. Use `AttributedText::FromRanges` for parser-produced ranges and `WithStyles` when only syntax highlighting changes.
+
+`.Align(TextAlign)`, `.VerticalAlign(TextVerticalAlign)`, and `.Shaping(TextShapingOptions)` configure paragraph placement/direction. Vertical alignment changes placement in extra height, not the intrinsic text height. Text range offsets are UTF-16 code units, not UTF-8 bytes.
+
+Use `.SelectionBlock(id)` with a [SelectionArea source](/docs/components/selection-area/#virtual-document-selection) when selection must reach unrealized content.

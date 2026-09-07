@@ -67,6 +67,8 @@ Define an environment value with a static default:
 struct EditorSettings {
   bool show_line_numbers = true;
 
+  bool operator==(const EditorSettings&) const = default;
+
   static EditorSettings Default() {
     return {};
   }
@@ -84,7 +86,7 @@ View Editor() {
 View AppContent() {
   return ProvideEnvironment(
       EditorSettings{.show_line_numbers = false},
-      Editor
+      Editor()
   );
 }
 ```

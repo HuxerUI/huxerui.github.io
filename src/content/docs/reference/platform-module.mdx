@@ -1,65 +1,72 @@
 ---
-title: PlatformModule API
-description: Recursive payloads, typed methods and events, factories, instances, and registration.
+title: PlatformModule and registry API
+description: Typed platform registration, optional cross-language channels, and capability-bearing payloads.
 sidebar:
   order: 23
 ---
 
-Declared by `<huxerui/platform_module.h>`.
+Declared by `<huxerui/platform_registry.h>` and `<huxerui/root.h>`; all shared declarations are in `huxerui`.
 
-## `PlatformPayload`
+A PlatformModule is a registered C++ service, not a required base class. Direct C++ integrations keep their own typed methods. Use `PlatformChannel` only when a Java or JavaScript instance needs a request/event bridge. The registry implementation in `huxerui::detail` is not an application API.
 
-Immutable shared recursive value. `PlatformPayloadKind` is `Null`, `Boolean`, `Integer`, `Double`, `String`, `Bytes`, `List`, `Object`, or `ExternalTexture`. Constructors accept each alternative; integral constructors validate signed 64-bit range. Accessors are `Kind`, `IsNull`, and `AsBoolean/Integer/Double/String/Bytes/List/Object/ExternalTexture`; a type mismatch throws.
+## Register and open a typed service
 
-## Results and keys
+| Operation | Contract |
+| --- | --- |
+| `RootContext::RegisterPlatformModule<Module>(name, factory)` | Factory takes `PlatformAdapter&` and returns exactly `Module`. |
+| `RegisterPlatformModule<Module, Options>(name, factory)` | Factory also receives `const Options&`. |
+| `RootContext::OpenPlatformModule<Module>(name[, options])` | Opens during root installation. |
+| `OpenPlatformModule<Module>(name[, options])` | Opens from committed `Lifecycle` setup, not during composition or from an arbitrary event handler. |
+| `RootContext::Provide<Service>(shared_ptr)` | Makes a root-owned service available through `UseService<Service>()`. |
 
-- `PlatformRequestId`: unsigned 64-bit request identity.
-- `PlatformError`: string code, message, and details payload.
-- `PlatformResult<Result>`: result-or-error variant.
-- `PlatformEventSink` and `PlatformResultSink`: erased event and method-completion callbacks used by platform factories.
-- A method key defines public nested `Request` and `Result` types plus static `Name`, `Encode`, and `Decode` members.
-- A platform event key derives its signature from `Event<...>` and adds static `Name` and `Decode` members compatible with that signature.
+Names are case-sensitive and shared by module and view registrations. Install before first composition; registration freezes after root hooks complete. The registered result/options types must match the requested types. Missing or incompatible registrations are errors, not implicit fallback factories.
 
-The concepts that validate these shapes live in `huxerui::detail`; applications provide conforming key types rather than naming those concepts.
+## `PlatformChannel`
 
-## Factory and instance
+A copyable handle to one shared asynchronous channel. A default-constructed channel is closed.
 
-`PlatformModuleFactory` creates an `Instance` from options and an event sink. The instance supplies method-call and disposal functions; a method call returns a cancellation cleanup.
+- `IsOpen()` reports whether it accepts work.
+- `Invoke<Result>(method, arguments, completion)` returns `PlatformRequestId`. Primitive arguments convert automatically; structured value types provide static `Encode`/`Decode` operations.
+- `Invoke<Result>(method, completion)` sends a null argument. Use `std::monostate` for a null result.
+- The raw `Invoke` overload exchanges `PlatformPayload`.
+- `On<Key>(handler)` subscribes to a named typed event; `On(name, handler)` receives raw payloads.
+- `Cancel(id)` invalidates a pending request and returns false if it already ended or is unknown.
+- `Close()` closes all copies, cancels pending work, disconnects events, and disposes the platform instance.
 
-`PlatformInstance` is move-only. `Call<Method>(request, completion)` returns a request ID; `On<Key>(handler)` registers an event handler; `Cancel(id)` and `Close()` end work.
+Invocations, completions, and events are serialized through the owning UI dispatcher. Completion is **at most once**, not guaranteed after cancellation. A malformed result becomes a `PlatformError` with code `huxerui/invalid-result`. `PlatformResult<T>` is a value-or-`PlatformError` variant; the error carries code, message, and details.
 
-## Registry
-
-`PlatformModules::Register(type, registration)` stores one typed registration per name. `Find<Registration>(type)` validates registration type. `Open(type, options = {})` creates a shared `PlatformModuleFactory` instance. Platform adapters construct the registry and dispatch completion/event work onto the UI thread.
-
-## Complete typed method example
+This complete translation unit demonstrates the bridge boundary; its caller supplies an already-open channel from its platform integration:
 
 ```cpp compile="platform-module-method"
 #include <huxerui/huxerui.h>
 
+#include <string>
+#include <variant>
+
 using namespace huxerui;
 
-struct ReadBatteryLevel {
-  using Request = std::monostate;
-  using Result = double;
-  static constexpr std::string_view Name = "readBatteryLevel";
-
-  static PlatformPayload Encode(const Request&) {
-    return nullptr;
-  }
-
-  static Result Decode(const PlatformPayload& payload) {
-    return payload.AsDouble();
-  }
-};
-
-void ReadBattery(PlatformInstance& device) {
-  device.Call<ReadBatteryLevel>({}, [](PlatformResult<double> result) {
-    if (const auto* level = std::get_if<double>(&result)) {
-      static_cast<void>(*level);
-    }
-  });
+PlatformRequestId ReadTitle(const PlatformChannel& channel, State<std::string> status) {
+  return channel.Invoke<std::string>("readTitle", std::monostate{},
+      [status](PlatformResult<std::string> result) {
+        if (const auto* error = std::get_if<PlatformError>(&result)) {
+          status = error->message;
+        } else {
+          status = std::get<std::string>(result);
+        }
+      });
 }
 ```
 
-The method key owns wire conversion. Application code sees a typed result while the native implementation remains behind the registered module factory.
+## Events and payloads
+
+`PlatformEventEmitter` sends an event from a platform implementation. A direct C++ `Emit<Key>(value)` requires the exact declared value type. PlatformView event keys derive from `Event<...>` and supply a stable `Name`; `.On<Key>()` installs the handler directly. There is no separate event declaration list.
+
+Direct PlatformView events run synchronously on the UI thread and may return an optional result; channel notifications are asynchronous void events. Do not rely on a disconnected emitter delivering output.
+
+`PlatformPayload` is an immutable shared value. `PlatformPayloadKind` has `Null`, `Boolean`, `Integer`, `Double`, `String`, `Bytes`, `List`, `Object`, `ExternalTexture`, and `FileReference` alternatives. Constructors validate values; `Kind()`, `IsNull()`, and the corresponding `As...` accessor inspect them. A mismatched accessor throws.
+
+`PlatformPayloadEnvelope` retains serialized `bytes` **and** the `external_textures` and `file_references` capability tables. Preserve the complete envelope when encoding/decoding a bridge message. Copying just the bytes loses capabilities; a file reference is not interchangeable with a path string.
+
+Keep payload serialization at a cross-language boundary. Do not wrap direct C++ service options or controlled view properties in payloads merely to use the registry.
+
+See [PlatformModule guide](/docs/guides/platform-module/), [PlatformView API](/docs/reference/platform-view/), and [platform-specific interfaces](/docs/reference/platform-specific/).

@@ -71,3 +71,9 @@ Secure values are not exposed as plain semantic text.
 - Theme style: `TextFieldStyle` and `TextFieldVariantStyle`.
 
 See [Text and input API](/docs/reference/text-and-input/) for editing ranges, commands, sessions, and platform boundaries.
+
+## An action inside the field
+
+`.TrailingIcon(icon)` is decorative. To create an accessible action, use `.TrailingIcon(icon, semantic_label)` with `.OnTrailingIconClick(handler)`. The action has its own interaction and semantic target; do not overlay a second unrelated button on top of the editor.
+
+`.Align(TextAlign)` and `.VerticalAlign(TextVerticalAlign)` control paragraph placement. `.MaxLength` counts grapheme clusters, not bytes. Use [ComboBox](/docs/components/combo-box/) for editable suggestion selection instead of assembling a competing popup/input state machine.

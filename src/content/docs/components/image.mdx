@@ -55,3 +55,5 @@ Image(app::images::status)
 - Common modifiers: `Frame`, `CornerRadius`, `ClipChildren`, `Opacity`, `Semantics`.
 
 See [Resources and localization](/docs/guides/resources-and-localization/) and [ExternalTexture](/docs/components/external-texture/).
+
+The constructor accepts `ImageVariant`: ImageResource, ImageAsset, or VectorAsset. Pass a resource directly so the component owns context-sensitive resolution. Live content instead uses `std::shared_ptr<ExternalTexture>`.

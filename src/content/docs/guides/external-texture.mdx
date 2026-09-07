@@ -1,50 +1,56 @@
 ---
 title: ExternalTexture
-description: Publish externally produced frames into HuxerUI image composition.
+description: Publish live CPU or GPU frames without rebuilding the application tree.
 ---
 
-The shared `ExternalTexture` handle is platform-neutral; each backend exposes an `ExternalTextureSource` in its platform-specific header.
-A source publishes frame data or a native texture according to that backend's ownership rules, then provides an `ExternalTexture` consumed by `Image` or paint commands.
+An external texture is one shared producer identity. Platform-specific classes derive from `ExternalTexture`; pass their `std::shared_ptr` directly to `Image`. There is no separate source-to-handle conversion.
 
-## Choose a pixel integration
+## Choose a producer
 
-Choose an external texture for video, cameras, decoders, and GPU producers when the integration is pixel-oriented. Choose `PlatformView` when native interaction, accessibility, or platform view semantics must remain intact.
+| Platform | Producer choices |
+| --- | --- |
+| Windows | `windows::PixelTexture` for copied CPU rows; `windows::D3D11Texture` for immutable shared GPU snapshots. |
+| Android | `android::BitmapTexture`, `android::GlTexture`, or `android::SurfaceStreamTexture`. |
+| iOS / macOS | `PixelBufferTexture` for Core Video frames; `MetalTexture` for GPU snapshots in the platform namespace. |
+| Linux | `linux::PixelTexture`, `linux::GlTexture`, or `linux::GdkTexture`. |
+| Web | `web::VideoFrameTexture` for a browser VideoFrame. |
 
-`Image(texture)` participates in normal HuxerUI fitting, clipping, opacity, transforms, and semantics.
-The producer supplies pixels; HuxerUI continues to own layout, hit testing, and composition.
+Include the matching platform header explicitly. These producer types are not interchangeable across renderer backends.
 
-## Own source lifetime
+## A software frame on Windows
 
-Keep the source alive while frames are in use, publish only supported formats, and follow the adapter's threading rules. Intrinsic pixel dimensions and scale determine logical size. HuxerUI schedules repaint when the source publishes a new frame without requiring application-state recomposition.
+This integration fragment receives an existing RGBA byte span:
 
-Releasing the source ends publication, while copied `ExternalTexture` handles continue to identify the same shared state until all owners release it.
-Do not rebuild application state for every frame.
+```cpp fragment
+auto texture = std::make_shared<windows::PixelTexture>(Size{320.0F, 180.0F});
+texture->Publish({
+    .pixel_width = 640,
+    .pixel_height = 360,
+    .bytes_per_row = 640 * 4,
+    .format = windows::PixelFormat::Rgba8888,
+    .pixels = pixels,
+});
+View preview = Image(texture).Fit(ImageFit::Contain);
+```
 
-The source and consumer have different ownership.
-The platform-specific source owns writable publication state and synchronization; copied `ExternalTexture` values are read-only identities suitable for UI state, component arguments, and platform payloads.
-Destroying one consumer does not stop a producer that still has other owners.
+`PixelTexture::Publish` copies required rows before returning, so this producer may reuse the source bytes. The input is straight-alpha untagged sRGB; the renderer receives its owned representation. Do not generalize this CPU-copy rule to all platform objects.
 
-Publish only when the platform source reports that its publication contract is ready, and never mutate a buffer while the backend may still read it.
-The platform header defines whether publication copies bytes, retains an object, or transfers a native resource.
-Follow that rule rather than assuming all backends upload synchronously.
+## GPU ownership matters
 
-## Follow backend formats
+Windows D3D11 and Apple Metal publication create stable snapshots; serialize producer access as required by the concrete header. D3D11 needs a supported single-sampled BGRA source and matching graphics adapter, and is unavailable in Windows 7 compatibility builds.
 
-Each platform header documents the accepted CPU frame or native texture representation, synchronization, and ownership transfer.
-The shared API deliberately does not expose one platform's GPU handles to another backend.
+Android/Linux `GlTexture::PublishCurrent` runs with the producer context current and publishes a stable copied snapshot. Linux `GdkTexture` instead retains an already immutable GDK texture: the application must not mutate its backing content afterward. Web publication follows the browser event-loop and VideoFrame lifetime contract.
 
-Intrinsic pixel size and scale determine logical size; `Image` fitting then maps that logical content into layout bounds.
-Use a stable intrinsic size for a video or camera stream unless a format change genuinely changes layout intent.
-Frequent intrinsic-size changes can invalidate layout as well as paint.
+Keep device/context loss, fences, and platform handles out of shared UI code. A module can expose a typed producer while owning the platform-specific work.
 
-Frame publication invalidates paint without recomposing application state.
-Use ordinary state for playback controls, loading/error status, and accessibility labels, not for each frame number.
+## Separate layout from frames
 
-## Validate a producer
+Intrinsic size is set once in logical DIPs. The published pixel dimensions may change without changing that layout intent. Replace the texture identity if logical size really changes.
 
-Verify first-frame behavior, resize/format change, hidden and clipped consumers, producer shutdown, source replacement, device/context loss where applicable, and publication from the documented thread.
-Native GPU and media resources require device testing; a successful shared-header build does not validate synchronization or lifetime on another backend.
+Publication schedules repaint without recomposition or paint-sequence rerecording. `IsActive()` helps avoid unnecessary production, but it is not an unmount callback. Stop work explicitly in your service/lifecycle cleanup, then call `Finish()`; the last published frame remains available to consumers.
 
-Use a `PlatformModule` when native code must control the producer or publish events in addition to frames.
+## Verify on the actual backend
 
-See [ExternalTexture component](../../components/external-texture/) and the relevant platform API reference.
+Test first publication, empty producer, changing frame resolution, hidden consumers, replacement, unmount, shutdown, context/device loss, and publication from the documented thread. A shared-header compile is not GPU or device validation.
+
+Use [PlatformView](/docs/guides/platform-view/) instead when the embedded object must own platform-control interaction. See the [platform-specific reference](/docs/reference/platform-specific/) for includes.

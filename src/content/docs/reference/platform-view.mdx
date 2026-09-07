@@ -1,30 +1,28 @@
 ---
 title: PlatformView API
-description: Shared declaration for platform-owned views and typed events.
+description: Typed properties, events, controllers, and platform-owned view lifetime.
 sidebar:
   order: 24
 ---
 
-Declared by `<huxerui/platform_view.h>`.
+`PlatformView` is declared by `<huxerui/view.h>`; registry and bridge values are in `<huxerui/platform_registry.h>`.
 
-## `PlatformView`
+## Construction and updates
 
-`PlatformView(std::string type, PlatformPayload properties = {})` creates a declarative platform-view node. Rvalue `.Events<Keys...>()` declares the conforming platform event keys the node can dispatch. Bind handlers with inherited `.On<Key>(handler)`.
+`PlatformView(std::string name)` uses a registration without properties. `PlatformView(name, properties)` stores the actual C++ properties type, which must be move-constructible and equality-comparable. Keep it a small declarative value; compatible recomposition updates the existing platform instance instead of recreating it.
 
-The type must match a platform-specific `PlatformViewFactory` registered in `RootContext::Modules()`. Recomposition supplies replacement property payloads; the adapter owns create/update/place/hide/dispose behavior.
+Register through `RootContext::RegisterPlatformView<Properties>(name, factory)`, or its `<Properties, Controller>` overload. Include the host-specific `platform_registry.h` for its `PlatformViewFactory`. Registration names and types must match exactly.
 
-## Typed events
+## Events and controller
 
-Declare every platform event a view can emit with `.Events<Key...>()`, then bind it with `.On<Key>(handler)`.
-The event key owns its platform event name and payload decoder, keeping platform payload handling out of ordinary component code.
+`.On<Key>(handler)` binds a named platform event directly. The key derives from `Event<...>` and defines `Name`. Direct C++ events use their typed values; only cross-language payload values need encoding/decoding. A result-bearing event can return a synchronous decision to the platform implementation.
 
-## Ownership and limitations
+`.Controller(controller)` supplies an equality-comparable, move-constructible typed controller to a registration that declares that controller type. Connection and disconnection follow the mounted instance; this is not a singleton service or a second source of controlled properties.
 
-The HuxerUI node owns declarative type, properties, events, layout bounds, visibility, and mounted lifetime.
-The adapter retains the native object for the compatible mounted lifetime and invokes the registered factory's optional `dispose` callback when that lifetime ends.
-Factory callbacks execute on the platform UI thread.
-Unknown types and incompatible registrations are platform integration errors.
+## Factory lifetime
 
-PlatformView composition capabilities differ by backend.
-Native child views may not support arbitrary HuxerUI transforms, path clips, opacity interleaving, or z-order on every platform.
-Use `ExternalTexture` when only changing pixels are required and a normal HuxerUI component when the behavior can remain shared.
+A typed factory owns create, view extraction, update, and disposal callbacks, with optional controller connect/disconnect operations. Callbacks run on the platform UI thread. The factory's retained instance keeps the platform view and its state alive until unmount; do not keep raw HuxerUI nodes in that instance.
+
+Unknown names, incompatible properties/controllers, and malformed bridge values are integration errors. Validate these paths alongside compatible updates and unmount/remount.
+
+HuxerUI owns layout and declarative lifetime, but platform controls retain backend-specific compositing and input limits. See [the guide](/docs/guides/platform-view/) before relying on transforms, clipping, opacity, or overlap.

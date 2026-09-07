@@ -1,0 +1,41 @@
+---
+title: Select
+description: Choose one item from a controlled, non-editable dropdown.
+---
+
+`Select`, declared in `<huxerui/view.h>`, is a non-editable choice field. Use [ComboBox](/docs/components/combo-box/) when the user should also type.
+
+## Keep selection controlled
+
+```cpp compile="select-controlled"
+#include <huxerui/huxerui.h>
+
+#include <cstddef>
+#include <string>
+#include <vector>
+
+using namespace huxerui;
+
+[[huxerui::composable]]
+View SortField() {
+  auto selected = UseState<std::size_t>(0);
+  return Select(std::vector<std::string>{"Name", "Date", "Size"}, selected,
+      [](const std::string& label) { return Text(label).Key(label); })
+      .Label("Sort by")
+      .OnChanged([selected](std::size_t index) { selected = index; });
+}
+```
+
+The selected index and item range may be plain values or `State` values. `OnChanged(std::size_t)` proposes a new index; ignoring it leaves the controlled selection unchanged. Keep the index valid when changing the source. The item factory defines content used by the control, not a second independently interactive button.
+
+## API and styling
+
+- `Select(items, selected_index, content_factory)` accepts an input range or a state-held range.
+- `.Label(StringVariant)` supplies the field's label.
+- `.Validation(ValidationResult)` reports application-owned validation.
+- `.OnChanged(handler)` writes accepted choices back to the owner.
+- `SelectStyle` is resolved by the theme.
+
+Give dynamic rows stable sibling keys. Selection remains positional, so preserve the selected item's meaning when sorting or replacing the range.
+
+The field shares keyboard, popup dismissal, focus, and accessibility behavior with the framework. Use [Menu](/docs/components/menu/) for commands rather than a persistent selected value.

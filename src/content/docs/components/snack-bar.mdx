@@ -1,0 +1,39 @@
+---
+title: SnackBar
+description: Show transient feedback with an optional action and request-safe dismissal.
+---
+
+`UseSnackBar()` returns a window-scoped `SnackBarHandle` and captures the current Environment. Use it for feedback with an optional recovery action; use [Toast](/docs/components/toast/) for lightweight messages and [Dialog](/docs/components/dialog/) for a decision that must interrupt the workflow.
+
+## Offer an action
+
+```cpp compile="snack-bar-action"
+#include <huxerui/huxerui.h>
+
+using namespace huxerui;
+
+[[huxerui::composable]]
+View ArchiveAction() {
+  auto archived = UseState(false);
+  auto snack_bar = UseSnackBar();
+  return Button("Archive").OnClick([archived, snack_bar] {
+    archived = true;
+    snack_bar.Show("Item archived", "Undo", [archived] { archived = false; });
+  });
+}
+```
+
+The action dismisses its request before invoking the callback. Showing a newer message replaces the current one atomically; callbacks or timers belonging to an older request cannot dismiss the replacement.
+
+## API and timing
+
+Declared by `<huxerui/presentation.h>`.
+
+- `Show(message, options = {})` returns a `LayerId`.
+- `Show(message, action_label, on_action, options = {})` adds one action.
+- `Dismiss(id)` dismisses only the matching current request and returns false for stale or disconnected IDs.
+- `SnackBarOptions::duration` defaults to four seconds; `std::nullopt` keeps it visible indefinitely.
+- The timer pauses while the surface/action is hovered, while the action is focused or pressed, and while the application is inactive.
+- `SnackBarStyle` belongs to the current theme.
+
+Labels accept `StringVariant`, including string resources. Keep essential application state outside the presentation; an action is not guaranteed to be invoked before dismissal.

@@ -5,7 +5,7 @@ sidebar:
   order: 7
 ---
 
-Declared by `<huxerui/app.h>` and `<huxerui/root.h>`.
+Declared by `<huxerui/app.h>` and `<huxerui/root.h>`. The host implementation interface is isolated in `<huxerui/platform_adapter.h>`.
 
 ## Application declaration
 
@@ -16,7 +16,7 @@ Declared by `<huxerui/app.h>` and `<huxerui/root.h>`.
 
 ## Activation and lifecycle
 
-- `LaunchActivation`, `UrlActivation{url}`, and `FileActivation{files}` form `ApplicationActivation`.
+- `LaunchActivation`, `UrlActivation{Uri url}`, and `FileActivation{files}` form `ApplicationActivation`.
 - `ApplicationLifecycleState`: `Active`, `Inactive`, `Background`.
 - `UseApplication() -> ApplicationHandle`.
 - `StartupActivation()` returns the runtime's initial activation.
@@ -25,9 +25,9 @@ Declared by `<huxerui/app.h>` and `<huxerui/root.h>`.
 
 ## Root services
 
-`RootHook` receives `RootContext&`. `RootContext::Provide(shared_ptr<Service>)` installs exactly one service per type; `Layers()` exposes `LayerController` and `Modules()` exposes `PlatformModules`. `UseService<Service>()` resolves an installed root service.
+`RootHook` receives `RootContext&`. `RootContext::Provide(shared_ptr<Service>)` installs exactly one service per type; `Layers()` exposes `LayerController`; `RegisterPlatformModule` and `RegisterPlatformView` install typed platform factories. `UseService<Service>()` resolves an installed root service.
 
-The runtime installs built-in `FileSystem`, `FilePicker`, and `HttpClient` services when their platform capabilities are available.
+The runtime installs built-in `FileSystem`, `FilePicker`, `Clipboard`, and `HttpClient` services when their platform capabilities are available.
 
 ## Adapter boundary
 
@@ -46,3 +46,41 @@ The runtime installs built-in `FileSystem`, `FilePicker`, and `HttpClient` servi
 
 Empty lifecycle/activation handlers and duplicate or empty service installation are rejected with `std::invalid_argument` or `std::logic_error`.
 Application code should not instantiate `Runtime`, subclass `PlatformAdapter`, or depend on `huxerui::detail`.
+
+## Permission requests
+
+`Permission` currently covers `Camera` and `Microphone`. `ApplicationHandle::CheckPermissionAsync` reads current authorization; `RequestPermissionAsync` requests it from a user-driven workflow. Both return `Task<PermissionStatus>`.
+
+Statuses are `NotDetermined`, `Granted`, `Denied`, `PermanentlyDenied`, `Restricted`, and `Unavailable`. Do not equate Denied with “can ask again”: some hosts cannot reliably distinguish that. Platform manifests/usage descriptions remain mandatory; the API cannot add them at runtime.
+
+```cpp compile="application-permission"
+#include <huxerui/huxerui.h>
+
+using namespace huxerui;
+
+[[huxerui::composable]]
+View EnableCamera() {
+  auto application = UseApplication();
+  auto tasks = UseTaskScope();
+  auto status = UseState(PermissionStatus::NotDetermined);
+  const PermissionStatus authorization = status;
+  return Column {
+    Text(authorization == PermissionStatus::Granted ? "Camera allowed" : "Camera not enabled"),
+    Button("Enable camera").OnClick([application, tasks, status] {
+      tasks.Launch([application, status]() -> Task<void> {
+        status = co_await application.RequestPermissionAsync(Permission::Camera);
+      });
+    }),
+  };
+}
+```
+
+Request only when the user starts the feature. `OpenPermissionSettingsAsync(permission)` returns whether the settings launch was accepted, **not** whether permission became granted; check again on return. Unsupported hosts or missing app declarations can report Unavailable.
+
+## System tray and quit
+
+`ApplicationHandle::SystemTray()` returns a composition-owned `SystemTrayHandle`. `IsAvailable()` is observable; `Show(icon, SystemTrayOptions)` supplies a tooltip and platform menu. The image must resolve to an ImageAsset. There is at most one active tray presentation per Runtime.
+
+Use `Lifecycle` to show/hide and `OnActivate(handler, dependencies...)` for primary activation. Hiding only affects the owning handle's presentation. Keep commands in ordinary application policy; closing a window is not necessarily the same operation as `ApplicationHandle::Quit()`.
+
+A tray is a platform capability, not a portable substitute for mobile background execution. See [window and system UI](/docs/guides/window-and-system-ui/) for a lifecycle example.

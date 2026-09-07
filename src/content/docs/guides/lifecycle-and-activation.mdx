@@ -53,7 +53,7 @@ std::string DescribeActivation(const ApplicationActivation& activation) {
         if constexpr (std::is_same_v<Value, LaunchActivation>) {
           return std::string{"Ordinary launch"};
         } else if constexpr (std::is_same_v<Value, UrlActivation>) {
-          return "URL: " + value.url;
+          return "URL: " + value.url.ToString();
         } else {
           return value.files.empty() ? std::string{"No files"} : "File: " + value.files.front().Name();
         }
@@ -87,7 +87,7 @@ const Application application{App};
 `ApplicationActivation` is a variant of:
 
 - `LaunchActivation` for an ordinary start.
-- `UrlActivation` with the platform-delivered URL string.
+- `UrlActivation` with the platform-delivered `Uri`; use `ToString()` for display or serialization.
 - `FileActivation` with one or more capability-bearing `FileReference` values.
 
 Treat the variant as an input to application policy.
@@ -150,6 +150,14 @@ The shared API begins after a platform shell has converted its native event:
 
 Availability and exact registration remain platform-shell concerns.
 Do not claim a URL scheme, file association, or background mode until that shell has configured and verified it.
+
+## Ask for permissions at the point of use
+
+Resolve `ApplicationHandle` and `TaskScope` during composition, then call `RequestPermissionAsync(Permission::Camera)` or `Permission::Microphone` from the feature's user action. Keep platform declarations in Android manifests and Apple usage descriptions.
+
+Distinguish denial, permanent denial, restriction, and unavailability; do not repeatedly prompt on every recomposition or return to the foreground. Opening settings is only a launch request, so recheck authorization when the user returns.
+
+See the [permission example](/docs/reference/app/#permission-requests). Web can expose query results where browser policy allows, but the shared request API does not fabricate capture access through a hidden media request.
 
 ## Related documentation
 

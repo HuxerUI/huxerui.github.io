@@ -49,14 +49,14 @@ class WrapLayout final : public Layout<WrapLayout> {
 public:
   using Layout::Layout;
 
-  static LayoutResult Measure(LayoutContext& context, MountedNode& node, Constraints constraints) {
+  static LayoutResult Measure(LayoutContext& context, ViewNode& node, Constraints constraints) {
     LayoutResult result;
     float x = 0.0F;
     float y = 0.0F;
     float line_height = 0.0F;
     float measured_width = 0.0F;
 
-    for (MountedNode& child : node.Children()) {
+    for (ViewNode& child : node.Children()) {
       const Size size = context.Measure(child, constraints.Loose());
       if (x > 0.0F && x + size.width > constraints.max_width) {
         measured_width = std::max(measured_width, x - node.Spacing());
@@ -107,10 +107,10 @@ struct ActivityPulse;
 
 class ActivityPulseExtension final : public NodeExtension {
 public:
-  ActivityPulseExtension(MountedNode&, const ActivityPulse& pulse);
-  void Update(MountedNode&, const ActivityPulse& pulse);
-  FrameResult OnFrame(MountedNode&, const FrameInfo& frame) override;
-  void PaintAboveContent(const MountedNode&, PaintContext& context) const override;
+  ActivityPulseExtension(ViewNode&, const ActivityPulse& pulse);
+  void Update(ViewNode&, const ActivityPulse& pulse);
+  FrameResult OnFrame(ViewNode&, const FrameInfo& frame) override;
+  void PaintAboveContent(const ViewNode&, PaintContext& context) const override;
 
 private:
   Color color_;
@@ -129,15 +129,52 @@ Construction starts retained state, while `Update` applies new declarative confi
 `OnFrame` returns whether another frame is needed; when retained state changes visible output, call protected `InvalidatePaint(...)` before returning.
 Paint through `PaintBehindContent` or `PaintAboveContent` instead of mutating the component tree.
 
-Do not retain a raw `MountedNode*`, request frames through a platform callback, or add a concrete-extension branch to Runtime.
+Do not retain a raw `ViewNode*`, request frames through a platform callback, or add a concrete-extension branch to Runtime.
 Implement only the `NodeExtension` capabilities the behavior owns, and invalidate semantics separately when semantic output changes.
+
+Here is a complete paint-only retained modifier. Ordinary application borders should use `Border`; this deliberately small example illustrates extension lifetime without another scheduler or node wrapper:
+
+```cpp compile="retained-extension"
+#include <huxerui/huxerui.h>
+
+using namespace huxerui;
+
+struct DiagnosticOutline {
+  class Extension;
+  Color color = Color::Rgb(190, 40, 40);
+  bool operator==(const DiagnosticOutline&) const = default;
+};
+
+class DiagnosticOutline::Extension final : public NodeExtension {
+public:
+  Extension(ViewNode& node, const DiagnosticOutline& value) { Update(node, value); }
+
+  void Update(ViewNode&, const DiagnosticOutline& value) {
+    color_ = value.color;
+    InvalidatePaint();
+  }
+
+  void PaintAboveContent(const ViewNode& node, PaintContext& paint) const override {
+    paint.DrawBorder(node.Bounds(), color_, StrokeStyle{.width = 1.0F});
+  }
+
+private:
+  Color color_;
+};
+
+View OutlinedContent() {
+  return Text("Measured content").With(Padding(12.0F), DiagnosticOutline{});
+}
+```
+
+`ViewNode::Bounds()` is node-local geometry including resolved padding; `ContentBounds()` excludes that padding, not borders. `PresentationBounds()` is a window-space axis-aligned box, not the visible clipped region. Use the matching space for paint and hit testing; borrow ViewNode only for the callback.
 
 ## Emit semantic output with typed events
 
 Define an event key when a composed control produces a reusable semantic result:
 
 ```cpp fragment
-struct RatingChanged : Event<int> {};
+struct RatingChanged : Event<void(int)> {};
 
 [[huxerui::composable]]
 View Rating(int value) {

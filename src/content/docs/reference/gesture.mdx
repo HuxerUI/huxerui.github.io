@@ -1,0 +1,35 @@
+---
+title: Gesture API
+description: Shared recognizers and typed in-process drag-and-drop.
+---
+
+Declared by `<huxerui/gesture.h>`. Attach recognizers with `.With(...)` and receive typed events with `.On<Key>(...)`. They cooperate with scrolling and pointer ownership rather than requiring application-specific raw-pointer state machines.
+
+## Recognition contracts
+
+| Modifier | Configuration | Output |
+| --- | --- | --- |
+| `MultiTapGesture` | `count >= 2`, optional `maximum_interval` and `maximum_movement` | `MultiTapEvents::Recognized(const MultiTapEvent&)` |
+| `LongPressGesture` | Optional `minimum_duration` and `maximum_movement` | `LongPressEvents::Started/Ended/Canceled` |
+| `DragGesture` | Optional `axis`, `minimum_distance`, and `minimum_press_duration` | `DragEvents::Started/Changed/Ended/Canceled` |
+| `TransformGesture` | Two or more compatible pointers | `TransformEvents::Started/Changed/Ended/Canceled` |
+
+Unset thresholds use platform-provided `GestureSettings`. Invalid thresholds are rejected. Multi-tap recognition does not replace ordinary Click handling; do not attach destructive single-click and double-click actions assuming the first click is deferred.
+
+`DragEvent` contains local origin/position, window position, incremental `delta`, total `translation`, and velocity in logical pixels per second. A delayed drag starts its origin when the press duration accepts it.
+
+`TransformEvent` reports incremental pan, multiplicative scale (identity 1), and clockwise rotation in radians (identity 0). Pointer-set changes can rebase the gesture; apply increments rather than interpreting every update as an absolute transform.
+
+## Typed drag-and-drop
+
+`DragSource(payload[, preview_factory], gesture = {})` retains an owned typed payload and optionally presents a preview. `DropTarget::Accepts<T>([predicate])` accepts the exact payload type. Its predicate is a quick decision, not a place to perform I/O.
+
+`DropEvents<T>` has `Entered`, `Moved`, `Exited`, and `Dropped`, receiving the payload and target-relative `DropEvent`. `DragSourceEvents::Ended` carries `DragDropResult::dropped`; normal completion does not necessarily mean a target accepted the drop.
+
+These are in-process UI transfers, not an operating-system file exchange. Use `FileDropTarget` from `<huxerui/file_drop.h>` for external files, and provide an equivalent accessible button/picker workflow.
+
+## Lifetime and alternatives
+
+Handlers run on the Runtime UI thread. Handle Canceled as well as Ended; cancellation can occur when another recognizer takes ownership or a node becomes unavailable. Do not retain borrowed event references.
+
+Use `OnClick` for semantic activation and built-in controls for ordinary input. Use `ViewEvents::Pointer` only for raw observation; it does not grant gesture ownership. See [the gesture guide](/docs/guides/gestures/) for an example.

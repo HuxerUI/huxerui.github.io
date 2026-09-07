@@ -49,3 +49,50 @@ View LoadStatusButton(State<std::string> output) {
 
 Resolve `HttpClient` and `TaskScope` during composition, then capture them in the event.
 HTTP status codes are responses; transport, timeout, and unsupported-service failures use `HttpError`.
+
+## Streaming and progress
+
+`Send(request, progress = {})` buffers the full response. `SendStream(request, progress = {})` returns `Task<HttpStreamResult>` after final headers, before body completion. Both progress callbacks and task continuations run on the owning UI thread; do not wrap HTTP in `RunWorker` or post its continuation again.
+
+`HttpProgress` carries `kind` (Upload or Download), `transferred_bytes`, and optional `total_bytes`. A missing total is unknown, not zero; avoid inventing a percentage for compressed or otherwise ambiguous content.
+
+`HttpResponseStream` is move-only and owns the operation. `Url()`, `StatusCode()`, and `Headers()` inspect final response metadata. `Read()` produces `HttpStreamReadResult`: exactly one of `HasData()`, `IsComplete()`, and `HasError()` is true. Only one read may be pending. Reading after EOF/error/cancellation or using a moved-from stream is a logic error; destroying an unfinished stream cancels it.
+
+```cpp compile="http-stream"
+#include <huxerui/huxerui.h>
+
+#include <cstddef>
+#include <memory>
+#include <string>
+
+using namespace huxerui;
+
+Task<void> CountResponse(std::shared_ptr<HttpClient> http, State<std::string> status) {
+  auto opened = co_await http->SendStream({.url = "https://example.com/data"});
+  if (!opened.HasResponse()) {
+    status = opened.Error().message;
+    co_return;
+  }
+  auto& stream = opened.Response();
+  if (stream.StatusCode() < 200 || stream.StatusCode() >= 300) {
+    status = "Unexpected HTTP status";
+    co_return;
+  }
+  std::size_t received = 0;
+  while (true) {
+    auto read = co_await stream.Read();
+    if (read.HasData()) {
+      received += read.Data().size();
+      status = std::to_string(received) + " bytes";
+    } else if (read.HasError()) {
+      status = read.Error().message;
+      co_return;
+    } else {
+      status = "Complete: " + std::to_string(received) + " bytes";
+      co_return;
+    }
+  }
+}
+```
+
+Launch this task from an event through `TaskScope`. Keeping `opened` alive keeps its referenced stream alive, so no ownership transfer is needed. Chunks are 1 byte through 64 KiB and do not preserve UTF-8, JSON, or record boundaries. Decode incrementally or collect bytes under an application size limit. Browser requests remain subject to CORS and server policy.

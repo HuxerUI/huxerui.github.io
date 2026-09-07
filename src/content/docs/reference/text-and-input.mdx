@@ -57,7 +57,7 @@ Declared by `<huxerui/text.h>`, `<huxerui/text_input.h>`, `<huxerui/validation.h
 
 ## Clipboard
 
-`TextEditingAction` is `Cut`, `Copy`, `Paste`, or `SelectAll`. `TextSelectionMenuLabels` supplies localized labels. `PlatformClipboard` defines `ReadText` and `WriteText` for adapters.
+`TextEditingAction` is `Cut`, `Copy`, `Paste`, or `SelectAll`. `TextSelectionMenuLabels` supplies localized labels. `Clipboard` is obtained with `UseService<Clipboard>()`. On the UI thread, check `IsAvailable()`, use `ReadText()` for an optional string, and `WriteText(text)` for a success flag. Invalid UTF-8 is rejected. An unavailable or disconnected service fails safely. The Web service is unavailable; browser-owned TextField clipboard operations are a separate path.
 
 ## Complete controlled TextField example
 
@@ -86,3 +86,19 @@ View AccountEmail() {
 ```
 
 Writing the complete event value preserves selection, affinity, and composition. Validation reports domain state and does not rewrite the edit.
+
+## Attributed text and links
+
+`TextSpan(text).Style(TextSpanStyle).Link(Uri)` builds character runs. `AttributedText` accepts text, an initializer list of spans, or a span range. It owns shared immutable text/styles/links; copying it is suitable for State and component arguments.
+
+`AttributedText::FromRanges(text, styles, links = {})` accepts UTF-16 ranges. Each style/link list must be ordered and non-overlapping within itself; endpoints must not split surrogate pairs. Style and link ranges are independent and may cross one another. `WithStyles(...)` replaces styles while preserving the shared body and links. `PlainText()`, `Length()`, `StyleRanges()`, `LinkRanges()`, and `TextInRange()` inspect content.
+
+`TextSpanStyle` partially overrides font, size, weight, slant, foreground, background, and decoration. An unset field inherits; `TextDecoration::None` explicitly clears decoration. It is not a complete `TextStyle` replacement.
+
+`TextEvents::LinkActivated` provides a `TextLinkActivation`. Links do not open themselves: decide whether to navigate internally, invoke application policy, or open an allowed external target. See [Text](/docs/components/text/#attributed-text) for a complete example.
+
+## Selection across virtual content
+
+`TextSelectionSource` is an immutable logical snapshot with `Count()`, `IdAt()`, `IndexOf()`, and `BlockAt()`. Each `TextSelectionBlock` contains attributed text and a separator (newline by default). IDs are `TextBlockId`, stable across reorder rather than derived from current positions.
+
+Attach a source with `SelectionArea::Source(snapshot)` and identify each rendered Text using `SelectionBlock(id)`. This lets copying traverse offscreen logical blocks. A rendered Text must match its entire source block. Source methods must return synchronously and without I/O; publish a new snapshot when content changes.

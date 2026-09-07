@@ -1,0 +1,39 @@
+---
+title: TimePicker
+description: Select a minute-aligned time of day with locale-aware presentation.
+---
+
+`TimePicker` in `<huxerui/view.h>` edits `std::chrono::minutes` since midnight. The valid interval is zero inclusive to 24 hours exclusive; this is not an instant, duration editor, or timezone-aware datetime.
+
+## Controlled example
+
+```cpp compile="time-picker-controlled"
+#include <huxerui/huxerui.h>
+
+#include <chrono>
+
+using namespace huxerui;
+using namespace std::chrono_literals;
+
+[[huxerui::composable]]
+View MeetingTime() {
+  auto time = UseState(std::chrono::minutes{9h});
+  return TimePicker(time)
+      .Label("Meeting time")
+      .Step(15min)
+      .OnChanged([time](std::chrono::minutes next) { time = next; });
+}
+```
+
+## API and validity
+
+- Construct from `std::chrono::minutes` or `State<std::chrono::minutes>`.
+- `.Step(minutes)` must be positive, at most 60, and divide 60 evenly. The controlled minute value must align with it.
+- `.DisabledTimes(predicate)` suppresses unavailable user choices without silently rewriting application state.
+- `.Label(StringVariant)` and `.Validation(ValidationResult)` provide labeling and feedback.
+- `.OnChanged(handler)` proposes the next minute value.
+- `TimePickerStyle` resolves through the theme.
+
+Locale chooses hour-cycle and text direction. Keep scheduling rules and date/timezone conversion in application code; the picker does not infer them from display text.
+
+See [DatePicker](/docs/components/date-picker/) for the corresponding calendar value.

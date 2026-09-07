@@ -51,13 +51,13 @@ Bind a less common event explicitly:
 
 ```cpp fragment
 View content = Canvas(DrawScene)
-    .On<ViewEvents::PointerMove>([](const PointerEvent& event) {
+    .On<ViewEvents::Pointer>([](const PointerEvent& event) {
       UpdatePointer(event.position);
     });
 ```
 
-Pointer positions are local to the receiving node.
-`PointerEvent` also reports its type, pointer identifier, device kind, and click count.
+`ViewEvents::Pointer` positions are window-local logical coordinates; gesture payloads expose their documented node-local positions instead.
+`PointerEvent` also reports its type, pointer identifier, device kind, buttons, and modifiers; use `MultiTapGesture` for repeated taps.
 
 ## Keyboard and Back
 
@@ -81,10 +81,10 @@ Themes resolve disabled visuals from the same interaction state.
 
 ## Custom component events
 
-Define a key by inheriting `Event<Arguments...>`:
+Define a key by inheriting `Event<Result(Arguments...)>`:
 
 ```cpp fragment
-struct SearchRequested : Event<std::string> {};
+struct SearchRequested : Event<void(std::string)> {};
 ```
 
 A scoped component obtains an emitter and emits through the key:
@@ -122,4 +122,4 @@ SearchBox().On<SearchRequested>([](std::string query) {
 Hover, focus, focus-visible, pressed, and enabled are runtime interaction facts.
 Themes translate them into `Indication`, focus rings, control colors, and animation without requiring a separate state variable for each event.
 
-Use raw pointer or key events for genuinely custom gestures, not to reimplement the standard activation path of a built-in control.
+Use [gesture modifiers](/docs/guides/gestures/) for recognition, raw pointer events for observation, and result-bearing key events for explicit keyboard policy. Do not reimplement built-in activation.

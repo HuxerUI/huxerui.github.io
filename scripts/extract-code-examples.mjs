@@ -16,7 +16,6 @@ const reviewedMoves = new Map([
     "guides/lifecycle-and-activation.mdx:std::move(subscription)",
     "transfers the subscription into the cleanup that owns it",
   ],
-  ["guides/theme-and-styling.mdx:std::move(spec)", "transfers a completed ThemeSpec into the theme provider"],
 ]);
 const observedMoves = new Map();
 

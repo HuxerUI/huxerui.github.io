@@ -1,0 +1,39 @@
+---
+title: Pager
+description: Swipe between retained pages with controlled selection.
+---
+
+`Pager` retains page state and animates between pages. The selected index belongs to the application, so tabs, buttons, and gestures can share one value.
+
+```cpp compile="pager-controlled"
+#include <huxerui/huxerui.h>
+
+#include <cstddef>
+
+using namespace huxerui;
+
+[[huxerui::composable]]
+View Walkthrough() {
+  auto selected = UseState<std::size_t>(0);
+  return Pager({Text("Welcome"), Text("Create a project"), Text("Start building")}, selected)
+      .OnChanged([selected](std::size_t next) { selected = next; })
+      .With(Frame{.height = 240.0F});
+}
+```
+
+## Selection and gestures
+
+`Pager(pages, selected)` accepts an initializer list or vector and a plain or State-held index. Supply a nonempty page list and a valid index.
+
+A completed drag proposes an adjacent page through `OnChanged(std::size_t)`; accept it by writing back. Programmatic index changes animate but do not emit another change event. This prevents tab-to-pager feedback loops.
+
+## Configuration
+
+- `.ScrollAxis(Axis::Horizontal | Axis::Vertical)` chooses orientation.
+- `.Reverse(bool)` reverses the physical direction.
+- `.DragEnabled(bool)` allows programmatic-only switching.
+- Reduced-motion policy is respected by the shared transition behavior.
+
+Give the pager useful bounded space, especially inside scrolling layouts. Retained offscreen pages preserve local state and are not automatically torn down.
+
+Use [IndexedPages](/docs/components/indexed-pages/) for instant non-swipe switching. Use [Tabs](/docs/components/tabs/) as a visible selector, sharing the same controlled index. [Run the Pager example](/examples/pager/).

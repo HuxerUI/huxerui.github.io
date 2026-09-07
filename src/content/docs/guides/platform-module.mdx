@@ -1,81 +1,83 @@
 ---
 title: PlatformModule
-description: Define typed method, event, and PlatformView bridges to platform code.
+description: Register typed services and choose a cross-language channel only when the integration needs one.
 ---
 
-`PlatformModule` is the application-facing boundary for a native capability that cannot be implemented in shared C++.
-A root hook registers platform-specific factories in `RootContext::Modules`; shared code opens an instance by type.
+A PlatformModule gives a platform SDK capability a typed C++ interface. It does not have to inherit a framework class or route every call through string messages.
 
-## Define a typed method
+## A root-owned service
 
-```cpp fragment
-struct GetBatteryLevel {
-  using Request = std::monostate;
-  using Result = double;
-  static constexpr std::string_view Name = "getBatteryLevel";
-  static PlatformPayload Encode(const Request&);
-  static Result Decode(const PlatformPayload&);
+Define the shared interface, implement it in platform-selected source files, and register a factory in a root hook. The complete declaration below leaves `CreateDeviceInfo` to the platform implementation rather than pretending to return a real platform value:
+
+```cpp compile="typed-platform-service"
+#include <huxerui/huxerui.h>
+
+#include <memory>
+#include <string>
+
+using namespace huxerui;
+
+struct DeviceInfo {
+  virtual ~DeviceInfo() = default;
+  virtual std::string Model() const = 0;
 };
 
-auto instance = modules.Open("device");
-instance.Call<GetBatteryLevel>({}, [](PlatformResult<double> result) {
-  // Handle a value or PlatformError.
-});
-```
+std::shared_ptr<DeviceInfo> CreateDeviceInfo(PlatformAdapter& adapter);
 
-The method key owns wire encoding and decoding, so application call sites exchange typed values rather than inspecting payload objects.
+void InstallDeviceInfo(RootContext& root) {
+  root.RegisterPlatformModule<std::shared_ptr<DeviceInfo>>("app/device-info", CreateDeviceInfo);
+  root.Provide<DeviceInfo>(root.OpenPlatformModule<std::shared_ptr<DeviceInfo>>("app/device-info"));
+}
 
-## Use payloads only at the boundary
+View App() {
+  auto device = UseService<DeviceInfo>();
+  return Text(device->Model());
+}
 
-`PlatformPayload` is an immutable recursive value supporting null, boolean, signed integer, double, string, bytes, list, object, and `ExternalTexture`. Typed method keys encode requests and decode results. Typed event keys reuse HuxerUI's event signatures and decode platform payloads.
-
-Keep `PlatformPayload` inside module declarations, platform factories, and PlatformView property or event adapters.
-Do not pass it through ordinary application state when a domain type can describe the value more clearly.
-
-## Own requests and instances
-
-Each call returns a `PlatformRequestId`; cancellation and instance closure are explicit. Factories return cleanup functions so adapters can release native work. Completion and event delivery are marshalled to the UI thread by the platform boundary.
-
-Closing an instance prevents new calls and ends its event connection.
-Cancel an individual request when the result is no longer useful, and close the instance when the owning feature is disposed.
-
-Method completion is exactly one typed result at the shared boundary.
-Return `PlatformError` for unavailable APIs, invalid arguments, denied permission, native failure, or a result that cannot be encoded.
-Keep error codes stable enough for application policy and keep platform diagnostics in the message/details rather than changing the shared result type per backend.
-
-Events are for repeated native output after instance creation.
-Use a method completion for one request, a typed event for an ongoing stream, and ordinary controlled component events for UI values already owned by HuxerUI.
-
-## Register platform implementations
-
-Use an `AppOptions::root_hooks` entry to register factories before the application root composes.
-Each platform supplies its implementation under the same module and method names; unsupported platforms should report an explicit `PlatformError` or omit the module rather than silently changing behavior.
-
-Registration is platform setup, not component composition:
-
-```cpp fragment
 AppOptions Options() {
   AppOptions options;
-  options.root_hooks.push_back([](RootContext& root) {
-    RegisterDeviceModule(root.Modules());
-  });
+  options.root_hooks.push_back(InstallDeviceInfo);
   return options;
 }
+
+const Application application{App, Options()};
 ```
 
-`RegisterDeviceModule` belongs in the platform source selected by the application build.
-It registers one `PlatformModuleFactory` under the shared type name and owns native request cleanup and instance disposal.
-The shared component opens that type and uses typed keys; it does not include the platform implementation header.
+The service is shared for this Runtime/window, not a process-wide singleton. Keep platform handles in the implementation, respect its UI-thread and resource-lifetime rules, and report unavailable capabilities explicitly.
 
-Keep one source of truth for each value conversion.
-The method/event key owns shared encode/decode, while the platform factory owns conversion between `PlatformPayload` and its native SDK types.
-Do not duplicate ad-hoc object-key parsing at every call site.
+## Component-owned instances
 
-## Choose the narrowest extension
+Use the free `OpenPlatformModule<Module>()` only inside committed `Lifecycle` setup when an instance should follow a component's mount/dependency lifetime. Return a cleanup that closes or releases it. Opening during composition is rejected: composition may be retried and is not a safe place to create platform side effects.
 
-Use a module for genuine native services and PlatformViews.
-Use ordinary C++ for shared behavior, a root service for a shared per-window capability, `ExternalTexture` for pixel producers, and `PlatformView` for an embedded native view.
+Factories may accept an explicit options type through `RegisterPlatformModule<Module, Options>`. The open call must use the same registered types and case-sensitive name. Prefer an integration library's `Install...` and `Use...` helpers so applications do not repeat registration names.
 
-Before shipping a module, test missing registration, invalid payload/result, cancellation before completion, completion after cancellation, close with active work, repeated events, and UI-thread delivery.
+## When a channel helps
 
-See the [PlatformModule API](../../reference/platform-module/) and [PlatformView](../platform-view/).
+Java or JavaScript objects may need asynchronous named methods and events. Wrap `PlatformChannel` in the same typed service interface rather than exposing payload parsing throughout application code.
+
+```cpp fragment
+channel.Invoke<double>("batteryLevel", std::monostate{},
+    [level](PlatformResult<double> result) {
+      if (const auto* value = std::get_if<double>(&result)) {
+        level = *value;
+      }
+    });
+```
+
+The result type is explicit; primitive wire conversion is built in. Structured request/result types own static `Encode` and `Decode` operations. An event key supplies its `Event<...>` signature and stable `Name`; its structured value type owns conversion.
+
+Keep the returned request identity if you need to cancel. Closing a channel affects its copies, invalidates pending work, detaches events, and disposes the platform instance. Completion is delivered at most once on the owning UI thread. Do not wait synchronously for it or assume that cancelled work still calls your completion.
+
+## Capabilities are not byte strings
+
+`PlatformPayload` can carry `std::shared_ptr<ExternalTexture>` and `FileReference` alongside ordinary values. Forward the complete encoded envelope, including its capability tables. Do not reduce a document-provider reference to a filesystem path or a live texture to an integer handle.
+
+## Choose the boundary
+
+- Use ordinary C++ for shared algorithms.
+- Use a root service for coordinated per-window ownership.
+- Register a PlatformModule for a platform implementation of that service.
+- Use [PlatformView](/docs/guides/platform-view/) for an actual platform control.
+- Use [ExternalTexture](/docs/guides/external-texture/) for changing pixels without platform-control input.
+
+Test missing registration, exact options types, teardown during work, cancellation, late events, and thread delivery. See the [registry and channel reference](/docs/reference/platform-module/) for individual contracts.

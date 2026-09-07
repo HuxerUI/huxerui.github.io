@@ -11,15 +11,15 @@ Declared by `<huxerui/paint.h>` and `<huxerui/render_scene.h>`.
 
 - `ImageFit`: `None`, `Contain`, `Cover`, `Fill`, or `ScaleDown`.
 - `GradientStop`, `LinearGradient`, and `RadialGradient`.
-- `ImageFillSource`: `ImageResource`, `ImageAsset`, or `VectorAsset`.
+- `ImageVariant`: `ImageResource`, `ImageAsset`, or `VectorAsset`.
 - `ImageFill`: source, fit, alignment, sampling, tint, and opacity.
-- `VisualFill`: value wrapper for `Color`, `LinearGradient`, `RadialGradient`, or `ImageFill`; construct from any alternative and inspect with `Get()`.
+- `Brush`: immutable color, linear-gradient, or radial-gradient source paint. `VisualFill` combines Brush and ImageFill, also accepting colors, gradients, ImageResource, ImageAsset, and VectorAsset directly.
 
 ## Paint commands
 
 `PaintCommand` is a variant of:
 
-- `DrawRectCommand`, `DrawLinearGradientCommand`, `DrawRadialGradientCommand`.
+- `DrawRectCommand` carrying a Brush, and `DrawLineCommand` carrying stroke geometry.
 - `DrawTextCommand`, `TextRun`, `DrawTextRunsCommand`.
 - `DrawImageCommand`, `DrawExternalTextureCommand`.
 - `DrawCircleCommand`, `DrawArcCommand`, `DrawBorderCommand`, `DrawShadowCommand`.
@@ -56,7 +56,7 @@ View StatusCanvas() {
   return Canvas([](PaintContext& paint, Size size) {
     const Point center {size.width / 2.0F, size.height / 2.0F};
     paint.DrawCircle(center, 36.0F, Color::Rgb(92, 61, 180));
-    paint.DrawArc(center, 28.0F, -1.57F, 4.2F, Color::Rgb(255, 255, 255), 6.0F);
+    paint.DrawArc(center, 28.0F, -1.57F, 4.2F, Color::Rgb(255, 255, 255), StrokeStyle{.width = 6.0F});
   }).With(Frame {.width = 160.0F, .height = 160.0F});
 }
 ```

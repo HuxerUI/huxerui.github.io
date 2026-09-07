@@ -3,14 +3,12 @@ title: PlatformView
 description: Integrate native controls while preserving HuxerUI layout and typed events.
 ---
 
-`PlatformView` is the shared UI-side contract for an interactive view supplied by `PlatformModule`.
-The application names a registered type, passes `PlatformPayload` properties, and declares typed event keys.
+`PlatformView` embeds a registered platform control. The application supplies typed, equality-comparable properties and binds typed events; a root hook installs the matching platform-specific factory.
 
 ## Keep values controlled
 
 ```cpp fragment
-PlatformView("video_player", EncodePlayerProperties(source, playing))
-    .Events<PlaybackChanged>()
+PlatformView("video_player", PlayerProperties{source, playing})
     .On<PlaybackChanged>([playing](bool next) {
       playing = next;
     })
@@ -21,12 +19,18 @@ The runtime measures and positions a platform-view slot. The adapter creates, up
 Properties describe the complete accepted native state for the current composition.
 Events request application changes through typed HuxerUI event keys.
 
+## Register one typed factory
+
+Use `RootContext::RegisterPlatformView<Properties>(name, factory)` before first composition. Include the host-specific `platform_registry.h`; its `PlatformViewFactory<Properties, Instance>` owns the retained implementation state, extracts its stable view, applies updates, and disposes resources. An optional third Controller type adds mounted connect/disconnect operations.
+
+Direct C++ properties stay typed. Only Java/JavaScript bridge factories require payload encoding. A platform event key defines its full function signature and stable `Name`; `.On<Key>()` binds it without a separate event list.
+
 ## Follow mounted lifetime
 
 The registered factory creates one native object for one compatible mounted node.
 Recomposition updates properties; temporary hiding does not imply disposal; unmount releases the platform object and its event connection.
 
-Do not cache a platform handle in a transient `View` or use a resolver callback outside the registered module boundary.
+Do not cache a platform handle in a transient `View` or use a resolver callback outside the typed registration boundary.
 
 Mount and update are separate contracts.
 The factory should create the platform object once for a compatible mounted node, while every property update must be able to bring that object to the complete declared state.

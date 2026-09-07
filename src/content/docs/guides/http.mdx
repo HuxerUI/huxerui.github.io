@@ -80,3 +80,13 @@ Browser CORS and cookie rules, Apple transport security, Android network securit
 The same C++ request can therefore be accepted on one platform and rejected by another configuration; surface `HttpError` rather than bypassing that policy.
 
 See the [HTTP API](../../reference/http/) for exact request and result methods and [Tasks](../tasks/) for cancellation ownership.
+
+## Choose buffered or streaming delivery
+
+Use `Send` for bounded JSON or small assets. Use `SendStream` when processing a large response incrementally; inspect final status/headers first, then await one `Read()` at a time. Keep the stream alive until EOF, or let destruction cancel an unfinished response.
+
+Failures before headers appear in `HttpStreamResult`; failures during the body appear in `HttpStreamReadResult`. An HTTP 404 remains a response, not a transport error. Chunks are binary fragments and can split characters or records.
+
+The optional progress callback reports transferred bytes and a total only when meaningful. Display an indeterminate state when the total is unknown. Awaited HTTP and its progress already return to the UI thread; adding `RunWorker` or `TaskScope::Post` is unnecessary.
+
+See the [complete stream reader](/docs/reference/http/#streaming-and-progress) for ownership and end-of-stream handling.

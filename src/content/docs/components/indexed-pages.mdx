@@ -1,0 +1,36 @@
+---
+title: IndexedPages
+description: Retain independent page state while presenting one controlled page.
+---
+
+`IndexedPages` keeps every page mounted but measures and presents only the selected one. Use it when a tab or destination switch should retain each page's local state without swipe gestures or page-transition motion.
+
+## Controlled example
+
+```cpp compile="indexed-pages"
+#include <huxerui/huxerui.h>
+
+#include <cstddef>
+
+using namespace huxerui;
+
+[[huxerui::composable]]
+View Workspace() {
+  auto selected = UseState<std::size_t>(0);
+  return Column {
+    Row {
+      Button("Overview").OnClick([selected] { selected = 0; }),
+      Button("Activity").OnClick([selected] { selected = 1; }),
+    },
+    IndexedPages({Text("Overview"), Text("Activity")}, selected),
+  };
+}
+```
+
+## Contract
+
+Declared by `<huxerui/view.h>`. Constructors accept an initializer list or vector of Views plus a selected index or `State<std::size_t>`. The page list must be nonempty and the index valid.
+
+Offscreen retention is not disposal: lifecycle-owned work can remain active. Stop expensive work based on your application's selected-page state when necessary. Preserve stable page identity when pages reorder.
+
+The owner changes the index; there is no user-driven change event. Use [Pager](/docs/components/pager/) for swiping and transition motion, and [NavigationStack](/docs/components/navigation-stack/) for push/pop history.

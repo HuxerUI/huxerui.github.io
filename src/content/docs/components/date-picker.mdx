@@ -1,0 +1,38 @@
+---
+title: DatePicker
+description: Select a calendar date with controlled state, inclusive limits, and application-owned exclusions.
+---
+
+`DatePicker` in `<huxerui/view.h>` edits `std::chrono::year_month_day`. It represents a calendar date, not a timestamp or timezone conversion.
+
+```cpp compile="date-picker-controlled"
+#include <huxerui/huxerui.h>
+
+#include <chrono>
+
+using namespace huxerui;
+
+[[huxerui::composable]]
+View DeliveryDate() {
+  using namespace std::chrono;
+  auto date = UseState(year{2026} / September / 7);
+  return DatePicker(date)
+      .Label("Delivery date")
+      .Range(year{2026} / January / 1, year{2026} / December / 31)
+      .OnChanged([date](year_month_day next) { date = next; });
+}
+```
+
+## Constraints and events
+
+Construct with a date or `State<year_month_day>`. The date must be valid and within the configured inclusive interval. `.Range(minimum, maximum)`, `.Minimum(date)`, and `.Maximum(date)` configure that interval; invalid dates or contradictory bounds are caller errors.
+
+`.DisabledDates(predicate)` rejects particular user choices, for example holidays. It does not automatically rewrite an already-controlled value; the application decides how to handle previously accepted dates that later become unavailable.
+
+`.OnChanged(handler)` proposes a date. Write it back to keep the field and popup in agreement. Use `.Validation(result)` for domain feedback independently of date availability.
+
+## Locale and theme
+
+`.Label(StringVariant)` accepts literal or resource text. Locale controls date presentation; `DatePickerStyle` controls the field and calendar surface. Do not encode an application's display format as a different underlying date type.
+
+Use [TimePicker](/docs/components/time-picker/) for time-of-day, and combine both controlled values explicitly when a scheduling workflow needs them.

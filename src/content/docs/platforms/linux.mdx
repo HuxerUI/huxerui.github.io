@@ -1,21 +1,31 @@
 ---
 title: Linux
-description: Build HuxerUI desktop applications on the X11 backend.
+description: Build GTK 4 desktop applications with distribution-owned platform dependencies.
 sidebar:
   order: 6
 ---
 
-Linux uses CMake with an X11 host, Cairo retained bitmap rendering, EGL/OpenGL ES presentation, HarfBuzz text shaping, and xkbcommon input.
+Linux uses GTK 4.14 or later for windows, event dispatch, IME, clipboard, and GSK presentation. Pango owns text layout; Cairo nodes replay ordinary paint while GDK texture nodes compose ExternalTexture frames in the same snapshot. GTK selects its display backend; the shared application does not implement X11 or Wayland protocols.
 
 ```bash
 huxerui setup linux
 huxerui run linux
 ```
 
-The SDK resolves system X11, xkbcommon, EGL, and GLES libraries and includes the pinned graphics/text dependency stack used by HuxerUI. XIM composition and X11 clipboard transfers are event-driven. The file picker uses the desktop portal when available.
+## Dependencies and services
 
-Linux external texture publication is declared in `<huxerui/linux/external_texture.h>`. Platform services must remain non-blocking on the X11 event loop.
+GTK 4, libepoxy, GIO, and libsoup 3 resolve through pkg-config and remain distribution-owned dependencies. Use the SDK and system dependency versions required by the selected release rather than carrying a second vendored desktop stack.
 
-The pinned revision publishes no Linux PlatformView factory header and contains no repository-owned accessibility bridge.
-Treat both capabilities as unavailable rather than inferring them from the shared semantic tree or another desktop adapter.
-Build and runtime validation require a Linux/X11 environment with the documented system libraries.
+Keep UI work on the GTK main context. GtkIMContext handles composition and surrounding text; the platform boundary converts scale and input geometry. File pickers use the platform/portal integration available to the desktop. HTTP uses libsoup.
+
+## Graphics and integration
+
+`<huxerui/linux/external_texture.h>` provides PixelTexture, GlTexture, and GdkTexture. GlTexture snapshots a mutable producer texture; GdkTexture requires immutable backing content. Consult the [texture guide](/docs/guides/external-texture/) for ownership.
+
+System tray presentation depends on the desktop's status-item host. Query availability and keep a visible-window fallback. External file drops use FileReference and share the [file reception API](/docs/reference/file/#external-file-drops).
+
+The pinned revision has no public Linux PlatformView factory or repository-owned semantic accessibility bridge. GTK ownership alone does not supply those shared-component contracts.
+
+## Verification boundary
+
+Linux application runtime behavior requires the matching GTK desktop environment. The website's Web and public-header checks do not certify Linux IME, display-server integration, graphics drivers, tray behavior, or assistive technology.

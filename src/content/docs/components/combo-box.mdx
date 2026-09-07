@@ -1,0 +1,48 @@
+---
+title: ComboBox
+description: Edit a controlled text value while choosing from application-provided suggestions.
+---
+
+`ComboBox` combines a single-line editor with suggestions. It owns transient popup/highlight state; your application owns the complete `TextEditingValue` and the suggestion list.
+
+## Separate typing from selection
+
+```cpp compile="combo-box-controlled"
+#include <huxerui/huxerui.h>
+
+#include <cstddef>
+#include <string>
+#include <vector>
+
+using namespace huxerui;
+
+[[huxerui::composable]]
+View CityField() {
+  auto value = UseState(TextEditingValue::FromText(""));
+  const std::vector<std::string> cities{"Berlin", "Kyoto", "Lisbon"};
+  return ComboBox(value, cities)
+      .Label("City")
+      .OnChanged([value](const TextEditingValue& next) { value = next; })
+      .OnSelected([value](std::size_t, const TextEditingValue& next) { value = next; });
+}
+```
+
+Typing emits `OnChanged`. Accepting a suggestion emits `OnSelected(index, next_value)` **without also emitting** `OnChanged`; handle both paths. Preserve the proposed selection and composition instead of reconstructing text-only values.
+
+Supply the suggestions appropriate to the current query. The example deliberately offers a fixed short list; filtering, remote search, cancellation, and result ordering belong to the application.
+
+## Project domain items
+
+`ComboBox(value, suggestions, text_factory, content_factory)` separates the accepted string from row presentation. The text factory returns the item's editable text; the content factory returns its row `View`. Give changing rows stable keys and keep row content free of competing interactive controls.
+
+## API
+
+Declared by `<huxerui/view.h>`. Value and source support controlled State forms.
+
+- Field configuration: `Label`, `Placeholder`, `LeadingIcon`, `TrailingIcon`, `Variant`, `Align`, `MaxLength`, `Validation`, and `InputConfiguration`.
+- `EmptyContent(factory)` supplies content when there are no suggestions.
+- `OnSubmitted(void())` handles submission when it is not accepting an active suggestion.
+- `OnExpandedChanged(bool)` observes popup changes; it is not a controlled visibility property.
+- `ComboBoxStyle` owns theme appearance.
+
+This is a single-line, non-secure editor. IME composition takes precedence over suggestion acceptance; do not intercept Enter blindly. For multiline or secure input use [TextField](/docs/components/text-field/); for a non-editable value use [Select](/docs/components/select/).

@@ -1,0 +1,33 @@
+---
+title: Data values
+description: Byte buffers and immutable validated URI values shared by application services.
+---
+
+Declared by `<huxerui/data.h>` in namespace `huxerui`.
+
+## Bytes
+
+`Bytes` is `std::vector<std::byte>`, an owning binary buffer. It is used by file reads, HTTP bodies, and platform payloads. It has no implied character encoding. Decode text with the service's text API or an explicit decoder; a network chunk need not end on a UTF-8 character boundary.
+
+## Uri
+
+`Uri` is an immutable shared, validated URI value. Its explicit string constructor rejects malformed input with `std::invalid_argument`; `Uri::Parse(text)` returns `std::optional<Uri>` when failure is expected.
+
+```cpp compile="uri-value"
+#include <huxerui/data.h>
+
+#include <string>
+#include <string_view>
+
+std::string RouteSummary(std::string_view input) {
+  auto uri = huxerui::Uri::Parse(input);
+  if (!uri) {
+    return "Invalid URI";
+  }
+  return std::string(uri->Scheme()) + ": " + std::string(uri->Path());
+}
+```
+
+`ToString()` returns the complete stored string. `Scheme()`, `Authority()`, `Path()`, `Query()`, and `Fragment()` return borrowed string views tied to the value's storage. Do not retain these views after the last owning value is gone or mistake a URI component for a decoded local filename.
+
+Use `Uri` for [activation URLs](/docs/guides/lifecycle-and-activation/) and text links. Keep [FileReference](/docs/reference/file/) when the value also carries provider access or a grant; its URI alone does not reproduce that capability.

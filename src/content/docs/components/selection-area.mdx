@@ -36,3 +36,54 @@ Add application-specific semantics to the content only when its visible text doe
 - Common modifiers: `Padding`, `Frame`, `Semantics`.
 
 See [Text](/docs/components/text/) and [Accessibility](/docs/guides/accessibility/).
+
+## Virtual document selection
+
+A normal SelectionArea discovers mounted Text nodes. For a virtual document, supply a `std::shared_ptr<const TextSelectionSource>` so copying also sees offscreen blocks.
+
+```cpp compile="virtual-text-selection"
+#include <huxerui/huxerui.h>
+
+#include <cstddef>
+#include <memory>
+#include <optional>
+#include <stdexcept>
+
+using namespace huxerui;
+
+class ArticleSnapshot final : public TextSelectionSource {
+public:
+  std::size_t Count() const noexcept override { return 100; }
+
+  TextBlockId IdAt(std::size_t index) const override {
+    if (index >= Count()) {
+      throw std::out_of_range("Article block index");
+    }
+    return index + 1;
+  }
+
+  std::optional<std::size_t> IndexOf(TextBlockId id) const override {
+    return id >= 1 && id <= Count() ? std::optional<std::size_t>(id - 1) : std::nullopt;
+  }
+
+  TextSelectionBlock BlockAt(std::size_t index) const override {
+    return {AttributedText("Paragraph " + std::to_string(IdAt(index))), "\n"};
+  }
+};
+
+View Article() {
+  auto snapshot = std::make_shared<const ArticleSnapshot>();
+  return SelectionArea(
+      VirtualList(snapshot->Count(), [snapshot](std::size_t index) {
+        return Text(snapshot->BlockAt(index).text)
+            .SelectionBlock(snapshot->IdAt(index))
+            .Key(snapshot->IdAt(index));
+      }).ItemExtent(32.0F)
+  ).Source(snapshot)
+    .With(Frame{.height = 320.0F});
+}
+```
+
+The fixed document's IDs never reorder. Real mutable documents need semantic block IDs preserved across insertions and moves, not current indices. The source is an immutable, synchronous snapshot; publish a replacement when its text changes. Do not read files or start network work from its methods.
+
+Each rendered Text must represent the full block returned by the source. A reconciliation Key and a TextBlockId have different jobs even when the same stable ID is convenient for both. [Streaming text](/examples/streaming_text/) demonstrates a larger virtual document.

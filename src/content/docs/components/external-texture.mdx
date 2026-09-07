@@ -1,33 +1,35 @@
 ---
 title: ExternalTexture
-description: Display frames produced by a platform texture source.
+description: Present live platform-produced frames inside ordinary Image layout.
 ---
 
-`ExternalTexture` is an immutable handle to a platform-owned texture stream. Display it with the `Image` component:
+Use an external texture for video, camera previews, or GPU output when HuxerUI should own layout, input, and composition.
 
-## Display a published frame
+## Share one producer identity
 
-```cpp fragment
-Image(texture)
-    .Fit(ImageFit::Contain)
-    .With(Frame{.width = 320.0F, .height = 180.0F})
+```cpp compile="external-texture-consumer"
+#include <huxerui/huxerui.h>
+
+#include <memory>
+
+using namespace huxerui;
+
+View Preview(const std::shared_ptr<ExternalTexture>& texture) {
+  if (!texture) {
+    return Text("No preview");
+  }
+  return Image(texture)
+      .Fit(ImageFit::Cover)
+      .With(Frame{.height = 180.0F});
+}
 ```
 
-The handle reports `IntrinsicSize()` and `HasValue()`. Platform-specific `ExternalTextureSource` types publish frames and produce the shared handle; source lifetime and thread rules are documented by each platform header.
+The integration constructs a supported platform texture; consumers share the pointer. Publishing frames does not need per-frame State updates.
 
-## Keep layout and pixels separate
+## Lifetime and alternatives
 
-External textures are suitable for video, camera, GPU, and other externally updated content. They are distinct from `ImageAsset`: the platform source owns the changing frame while HuxerUI owns layout and compositing commands.
+`IntrinsicSize()` describes immutable logical geometry; frame pixels may have a different resolution. `Revision()` detects publications, and `IsActive()` is a hint that a Runtime is displaying the texture. The producer still owns start, pause, and finish policy.
 
-Texture pixels do not provide an accessible description.
-Apply `Semantics{.role = SemanticRole::Image, .label = ...}` to the rendering `Image` when the content conveys information, or mark decorative output hidden.
+Use a static [Image](/docs/components/image/) for encoded resources, or [PlatformView](/docs/components/platform-view/) when the platform object must retain its own interaction and accessibility.
 
-## API
-
-- Default-constructible `ExternalTexture` represents no source.
-- `IntrinsicSize() -> Size`.
-- `HasValue() -> bool`.
-- Equality compares handle identity.
-- `Image(ExternalTexture)` renders the current frame.
-
-See [ExternalTexture integration](../../guides/external-texture/) and [Image](../image/).
+See [producer integration](/docs/guides/external-texture/) and the [API reference](/docs/reference/external-texture/).

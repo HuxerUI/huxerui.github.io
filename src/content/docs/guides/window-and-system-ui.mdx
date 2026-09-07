@@ -72,3 +72,40 @@ Scrollable text-editing surfaces should let HuxerUI bring the active caret into 
 Validate focused fields near every edge, keyboard dismissal, orientation/resize, and transitions between hardware and software keyboards on the target device.
 
 See the [Window API](../../reference/window/) and the relevant [platform guide](../../platforms/).
+
+## Close policy and system tray
+
+`WindowHandle::Show()`, `Hide()`, and `Activate()` control window visibility separately from application lifetime. `OnCloseRequest` and `OnMinimizeRequest` install lifecycle-bound decision handlers: true consumes the request, false lets the platform continue. Do not implement “minimize to tray” unless a usable tray presentation is available.
+
+```cpp compile="system-tray"
+#include <huxerui/huxerui.h>
+
+using namespace huxerui;
+
+[[huxerui::composable]]
+View TrayShell(ImageResource icon) {
+  auto application = UseApplication();
+  auto window = UseWindow();
+  auto tray = application.SystemTray();
+  tray.OnActivate([window] { window.Activate(); });
+  window.OnCloseRequest([window, tray] {
+    if (!tray.IsAvailable()) {
+      return false;
+    }
+    window.Hide();
+    return true;
+  });
+  Lifecycle([application, tray, icon] {
+    tray.Show(icon, {
+        .tooltip = "Document workspace",
+        .menu = {MenuItem("Quit", [application] { application.Quit(); })},
+    });
+    return [tray] { tray.Hide(); };
+  }, icon);
+  return Text("Workspace");
+}
+```
+
+Pass a packaged raster image resource; tray icons must resolve to ImageAsset. The example uses an explicit Quit command, so hiding the last window does not make the application impossible to exit. One Runtime owns one active tray presentation and one committed activation handler.
+
+Tray availability depends on the host, especially Linux desktop status-item support. Mobile and browser applications need a normal in-app entry point instead. `WindowOptions::minimum_size` requests a desktop minimum client size; it does not clamp actual WindowMetrics or pretend a mobile viewport is larger.

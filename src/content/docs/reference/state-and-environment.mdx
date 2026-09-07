@@ -30,17 +30,17 @@ Observable vector-like state for dynamic collections. It exposes validity, size/
 
 ## `Environment`
 
-Typed hierarchical value. `Set(value)` installs an `EnvironmentValue` by its C++ type and returns the environment for chaining. An environment value must be copyable and provide `static Default()`. Parent lookup is established by `ProvideEnvironment`.
+Typed hierarchical value. `Set(value)` installs an `EnvironmentValue` by its C++ type and returns the environment for chaining. An environment value must be copyable, equality-comparable, and provide `static Default()`. Parent lookup is established by `ProvideEnvironment`.
 
 ## `UseEnvironment<T>` and `ProvideEnvironment`
 
-`UseEnvironment<T>()` reads the nearest required value during composition. `ProvideEnvironment(environment, factory, args...)` or `ProvideEnvironment(value, factory, args...)` creates a subtree boundary.
+`UseEnvironment<T>()` reads the nearest required value during composition. `ProvideEnvironment(environment, content)` or `ProvideEnvironment(value, content)` creates a subtree boundary.
 
 ## Viewport environment
 
 - `ViewportClass`: `Compact`, `Medium`, `Expanded`.
 - `ViewportBreakpoints`: medium and expanded width thresholds.
-- `ViewportEnvironment`: runtime-provided logical viewport size and its resolved class.
+- The runtime width-class storage is internal; applications read `UseViewportClass()` and use `WindowMetrics` when exact viewport geometry is needed.
 - `UseViewportClass()` reads the runtime-installed current width class.
 
 The runtime updates subscribed responsive scopes when window metrics cross a configured breakpoint.

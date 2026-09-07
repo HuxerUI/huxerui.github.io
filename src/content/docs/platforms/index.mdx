@@ -21,20 +21,22 @@ Platform adapters own lifecycle, scheduling, native input, text services, file a
 | Capability | Windows | macOS | Linux | Web | Android | iOS |
 | --- | --- | --- | --- | --- | --- | --- |
 | Render scene and text | Supported | Supported | Supported | Supported | Supported | Supported |
-| Pointer, keyboard, and text input | Supported | Supported | Supported through X11/XIM | Supported through DOM input | Supported through View/JNI | Supported through UIKit/`UITextInput` |
+| Pointer, keyboard, and text input | Supported | Supported | Supported through GTK/GtkIMContext | Supported through DOM input | Supported through View/JNI | Supported through UIKit/`UITextInput` |
 | Accessibility bridge | Supported through UI Automation | Supported through AppKit accessibility | Not exposed | Not exposed; canvas is hidden from the DOM accessibility tree | Supported through an accessibility node provider | Supported through UIKit accessibility |
 | Application files | Supported | Supported | Supported | Limited to browser storage/capability rules | Supported | Supported |
 | File picker | Supported | Supported | Limited to an available desktop portal | Limited to browser picker capabilities | Supported | Supported |
 | HTTP | Supported | Supported | Supported | Limited by browser origin/CORS policy | Supported | Supported |
 | PlatformView | Limited HWND child composition | Platform API for `NSView` | Not exposed | Platform API for DOM objects | Platform API for Android Views | Platform API for `UIView` |
-| PlatformModule | Shared C++ registry | Shared C++ registry | Shared C++ registry | Shared C++ registry | Shared registry plus JNI factory API | Shared C++ registry |
-| ExternalTexture | Platform API for copied RGBA/BGRA frames | Platform API for `CVPixelBufferRef` | Platform API for copied RGBA/BGRA frames | Platform API for browser video frames | Platform API for Android Bitmap frames | Platform API for `CVPixelBufferRef` |
-| Window and system UI | System/custom desktop chrome | AppKit window integration | X11 window integration | Browser viewport only | Safe area, edge-to-edge, and system bars | Safe area, edge-to-edge, and system bars |
+| PlatformModule | Typed C++ registration | Shared C++ registry | Shared C++ registry | Shared C++ registry | Typed registration plus Java/JNI factories | Shared C++ registry |
+| ExternalTexture | PixelTexture / D3D11Texture | PixelBufferTexture / MetalTexture | PixelTexture / GlTexture / GdkTexture | VideoFrameTexture | BitmapTexture / GlTexture / SurfaceStreamTexture | PixelBufferTexture / MetalTexture |
+| Window and system UI | System/custom desktop chrome | AppKit window integration | GTK window integration | Browser viewport only | Safe area, edge-to-edge, and system bars | Safe area, edge-to-edge, and system bars |
+| System tray | Supported | Supported | Limited by desktop host | Not exposed | Not exposed | Not exposed |
+| Camera/microphone permission | Limited by OS capability and app identity | Supported with app declarations | Unavailable shared permission transport | Query-only where available; requests unavailable | Supported with manifest declarations | Supported with usage descriptions |
 | Typed URL/history routing | Application-defined navigation only | Application-defined navigation only | Application-defined navigation only | Supported by `BrowserNavigationStack` | Application-defined navigation only | Application-defined navigation only |
 | Activation and lifecycle | Supported | Supported | Supported | Supported through location/visibility events | Supported | Supported |
 
 The matrix reports code present in the pinned revision, not a release certification statement.
-This website validates the shared public contracts and all listed Web examples; native device, X11, and Apple runtime behavior still requires the matching host toolchain and target environment.
+This website validates the shared public contracts and all listed Web examples; native device, GTK desktop, and Apple runtime behavior still requires the matching host toolchain and target environment.
 
 ## Choose a platform guide
 
@@ -42,7 +44,7 @@ This website validates the shared public contracts and all listed Web examples; 
 | --- | --- | --- |
 | [Windows](./windows/) | CMake and MSVC executable | Win32 windowing, HWND PlatformView limits, UI Automation, external frames |
 | [macOS](./macos/) | CMake/Xcode executable | AppKit, `NSTextInputClient`, accessibility, NSView integration |
-| [Linux](./linux/) | CMake X11 executable | Cairo/EGL presentation, XIM, desktop portal, current missing bridges |
+| [Linux](./linux/) | CMake GTK 4 executable | Pango, Cairo/GSK, GtkIMContext, desktop services, current missing bridges |
 | [Web](./web/) | Emscripten static application | Browser policy, URL history, DOM views, current accessibility limit |
 | [Android](./android/) | Gradle library and app modules | Java/JNI host, accessibility, system UI, Android Views |
 | [iOS](./ios/) | CMake/Xcode application shell | UIKit, `UITextInput`, accessibility, safe areas, UIView integration |

@@ -1,23 +1,28 @@
 ---
 title: ExternalTexture API
-description: Shared handle for externally produced frames.
+description: Shared texture identity, publication revisions, and immutable logical size.
 sidebar:
   order: 25
 ---
 
 Declared by `<huxerui/external_texture.h>`.
 
-## `ExternalTexture`
+## Shared ownership
 
-Default construction creates an empty handle. `IntrinsicSize()` returns the current logical source size; `HasValue()` reports a connected state; equality compares shared source identity. Platform-specific source types are the only producers.
+`ExternalTexture` is an abstract, non-copyable object. Construct a supported platform subclass and share it as `std::shared_ptr<ExternalTexture>`. A null pointer represents absence; there is no default value handle or `HasValue()` method.
 
-The handle is accepted by `Image`, `ImageFill` is intentionally limited to static image/vector sources, and `PaintContext` has explicit external-texture drawing operations.
+`Image(texture)` and the corresponding `PaintContext::DrawImage/DrawImageRect` overloads consume that shared pointer. Static `ImageFill` sources remain image/vector assets, not live textures.
 
-## Ownership and platform availability
+## Observation
 
-`ExternalTexture` is a copyable consumer handle; a platform-specific `ExternalTextureSource` owns publication and produces that handle.
-Publishing a new frame invalidates paint without requiring state recomposition.
-Frame bytes or native texture objects remain subject to the source header's threading and release rules.
+- `IntrinsicSize()`: immutable finite, positive logical size in DIPs, independent of the published frame's pixel dimensions.
+- `Revision()`: monotonically increasing publication revision, not a GPU handle or a frame timestamp.
+- `IsActive()`: whether a committed RenderScene currently displays this identity. It is a production hint, not ownership or guaranteed visibility.
 
-Use `ImageAsset` for immutable encoded images, `ExternalTexture` for changing pixel producers, and `PlatformView` when the embedded native object must receive native interaction or accessibility.
-Source creation is platform-specific and requires an explicit platform header.
+A new frame schedules repaint without recomposing the View or rerecording its PaintSequence. Change ordinary State for playback/error controls, not for every frame.
+
+## Producers
+
+Platform subclasses own mailbox format, synchronization, and publication. Their `Finish()` stops further publication while retaining the last frame. Publication after finish is invalid. Choose a new texture identity when logical size changes.
+
+Subclassing the shared class does not automatically teach a renderer a new GPU format; the renderer must explicitly support the concrete mailbox type. Prefer the [provided platform types](/docs/reference/platform-specific/) and follow their thread and ownership contracts.

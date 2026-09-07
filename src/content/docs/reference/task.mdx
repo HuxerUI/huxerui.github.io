@@ -46,3 +46,31 @@ View RefreshButton(State<std::string> status) {
 ```
 
 `TaskScope` owns launched work; destroying its component scope cancels outstanding executions before captured state can outlive that scope.
+
+## CPU work and external callbacks
+
+`RunWorker(function, arguments...)` creates a lazy task with owned, decayed arguments. It runs on a bounded worker pool and resumes the awaiting HuxerUI task on its UI thread. Never read/write State, compose Views, or access UI-affine platform objects inside the worker.
+
+```cpp compile="worker-task"
+#include <huxerui/huxerui.h>
+
+#include <algorithm>
+#include <string>
+
+using namespace huxerui;
+
+Task<void> Normalize(std::string input, State<std::string> output) {
+  output = co_await RunWorker([](std::string value) {
+    value.erase(std::remove(value.begin(), value.end(), '\r'), value.end());
+    return value;
+  }, input);
+}
+```
+
+Launch from a user action or committed Lifecycle, never during composition. For large inputs, choose an ownership transfer deliberately instead of copying buffers repeatedly.
+
+`TaskScope::Post(callback)` is for an external thread's callback entering the UI task scope. Queued work is discarded if the scope closes. Awaited Delay, HTTP, Files, and RunWorker already restore UI execution and need no extra Post.
+
+`WorkerSequence::Run(function, arguments...)` serializes calls sharing the sequence. Its function receives `std::stop_token` first. It guarantees order, not a dedicated thread; active cancellation is cooperative and the next call waits for the previous call and its capture cleanup to finish. A worker must inspect its token to stop lengthy processing.
+
+Cancelling pending work can prevent execution; it cannot forcibly interrupt arbitrary active C++. Thread-worker facilities may be unavailable in a Web build without worker support; report that capability instead of blocking the browser thread.

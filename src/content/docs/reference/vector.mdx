@@ -9,7 +9,7 @@ Declared by `<huxerui/vector.h>`.
 
 ## `Path`
 
-Copy-on-write contour value. Mutating chain methods are `MoveTo`, `LineTo`, `QuadraticTo`, `CubicTo`, and `Close`; `Reset` clears it. `RoundedRect(rect, radii)` creates a path. Queries are `IsEmpty`, `Bounds`, and equality.
+Copy-on-write contour value. Mutating chain methods are `MoveTo`, `LineTo`, `QuadraticTo`, `CubicTo`, `ArcTo`, and `Close`; `Reset` clears it. `RoundedRect(rect, radii)` creates a path. Queries are `IsEmpty`, `Bounds`, and equality.
 
 ## Path options
 
@@ -23,7 +23,7 @@ Copy-on-write contour value. Mutating chain methods are `MoveTo`, `LineTo`, `Qua
 
 ## `VectorBuilder`
 
-Available only inside `VectorAsset::Create`. Methods: `FillPath`, `StrokePath` (width, cap, join, miter limit), `PushClip`, `PopClip`, `PushTransform`, and `PopTransform`. Clips and transforms must balance before the build callback returns.
+Available only inside `VectorAsset::Create`. Methods: `FillPath`, `StrokePath` (Brush and StrokeStyle), `PushClip`, `PopClip`, `PushTransform`, and `PopTransform`. Clips and transforms must balance before the build callback returns.
 
 ## Validation and selection
 
@@ -34,3 +34,11 @@ Invalid sizes, unbalanced clips/transforms, and invalid stroke geometry are reje
 Use `Path` directly for size-dependent Canvas drawing and clipping.
 Use `VectorAsset` for stable reusable artwork with an intrinsic size and view box.
 Use `ImageResource` when the resource compiler owns the vector source and configuration lookup.
+
+## Arcs, hit tests, and stroke style
+
+`Path::ArcTo(radii, x_axis_rotation, ArcSize, ArcDirection, end)` uses endpoint-based elliptical geometry; rotation is in radians. Zero radii reduce to a line, equal endpoints produce no segment, and undersized radii are scaled to reach the endpoint. Use two arcs to describe a full ellipse. `Contains(point, fill_rule)` tests filled geometry, not its stroke or an automatically installed View hit region.
+
+`StrokeStyle` groups width, cap, join, miter limit, dash pattern, and dash offset. Values must be finite; width/dash lengths are nonnegative and miter limit is at least one. An all-zero pattern is solid; offsets wrap into the dash cycle.
+
+`FillPath(path, brush[, brush_bounds], rule)` and `StrokePath(path, brush[, brush_bounds], style)` accept a Brush. Explicit brush bounds map gradient sampling without clipping the geometry. Include `<huxerui/paint.h>` when constructing Brush or gradients.

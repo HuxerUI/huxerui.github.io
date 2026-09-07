@@ -1,0 +1,64 @@
+---
+title: TreeView
+description: Present a controlled hierarchy with fixed-height virtual rows.
+---
+
+`TreeView<Node>` separates application data, row content, and the meaning of an item. The framework owns scrolling and interaction; your application owns expansion and selection.
+
+## A small controlled hierarchy
+
+```cpp compile="tree-view-controlled"
+#include <huxerui/huxerui.h>
+
+#include <string>
+#include <vector>
+
+using namespace huxerui;
+
+[[huxerui::composable]]
+View ProjectTree() {
+  auto expanded = UseState(false);
+  auto selected = UseState<std::string>("");
+  return TreeView<std::string>(
+      {"src"},
+      [](const std::string& name) { return Text(name).Key(name); },
+      [expanded, selected](const std::string& name) {
+        return TreeItemInfo{
+            .label = name,
+            .expandable = name == "src",
+            .expanded = name == "src" && expanded,
+            .selected = selected->compare(name) == 0,
+        };
+      }
+  ).Children([](const std::string& name) {
+    return name == "src" ? std::vector<std::string>{"main.cpp", "app.cpp"} : std::vector<std::string>{};
+  }).OnExpandedChanged([expanded](const std::string&, bool next) {
+    expanded = next;
+  }).OnSelectionChanged([selected](const std::string& name, bool next) {
+    selected = next ? name : "";
+  }).Label("Project files")
+    .ItemExtent(40.0F)
+    .With(Frame{.height = 240.0F});
+}
+```
+
+## Data contract
+
+The constructor takes roots, a `View(const Node&)` factory, and a `TreeItemInfo(const Node&)` provider. Each item needs a nonempty accessible `label`. `enabled` controls its actions and expanded descendants. An `expanded` item must also be `expandable`.
+
+`selected = std::nullopt` makes an item nonselectable; false/true opt into controlled selection. At most one item in the expanded snapshot may be selected. Selecting a different item emits one true proposal for that item, not a second event clearing the previous one.
+
+`.Children(provider)` returns a synchronous vector only for expanded, expandable items. The hierarchy must be finite. Begin asynchronous loading from an expansion handler or lifecycle and publish a later snapshot; do not block inside the provider.
+
+## Rows and navigation
+
+Put stable sibling keys on the returned row root. Factories run for the expanded logical snapshot, while realized row Scope bodies run as scrolling brings them into view. Give the tree bounded vertical constraints.
+
+- `OnExpandedChanged(Node, bool)` and `OnSelectionChanged(Node, bool)` request controlled changes.
+- `OnActivated(Node)` is an independent command such as opening a document.
+- `ItemExtent` is positive and fixed; `CacheExtent` is nonnegative.
+- `Controller` accepts a `ScrollController`.
+- `DisclosureIcon` accepts a right-facing image, rotated for expanded items.
+- `Style(TreeViewStyle)` overrides the theme's tree appearance.
+
+Declared by `<huxerui/view.h>`. Use [VirtualList](/docs/components/virtual-list/) for flat data. [Run the TreeView example](/examples/tree_view/).

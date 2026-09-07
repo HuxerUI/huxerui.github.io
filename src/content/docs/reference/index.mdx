@@ -39,7 +39,7 @@ The **Application** audience is ordinary cross-platform UI code. **Extension** m
 | `text.h`, `text_input.h`, `clipboard.h` | Application and adapter | [Text and input](./text-and-input/) |
 | `validation.h` | Application | [Text and input](./text-and-input/) |
 | `resource.h` | Application and adapter | [Resources](./resource/) |
-| `file.h` | Application | [Files](./file/) |
+| `file.h`, `file_drop.h` | Application | [Files](./file/) |
 | `http.h` | Application | [HTTP](./http/) |
 | `semantics.h` | Application and extension | [Semantics](./semantics/) |
 
@@ -52,10 +52,17 @@ The **Application** audience is ordinary cross-platform UI code. **Extension** m
 | `vector.h` | Application and extension | [Path and vector](./vector/) |
 | `paint.h` | Extension and adapter | [Paint and render scene](./paint/) |
 | `render_scene.h` | Adapter | [Paint and render scene](./paint/) |
-| `platform_module.h` | Application and platform integration | [PlatformModule](./platform-module/) |
-| `platform_view.h` | Application and platform integration | [PlatformView](./platform-view/) |
+| `platform_registry.h` | Application and platform integration | [PlatformModule](./platform-module/) |
 | `external_texture.h` | Application consumer | [ExternalTexture](./external-texture/) |
 | `android/*`, `ios/*`, `macos/*`, `windows/*`, `linux/*`, `web/*` | Platform integration | [Platform-specific API](./platform-specific/) |
+
+## Additional shared contracts
+
+| Header | Audience | Reference |
+| --- | --- | --- |
+| `data.h` | Application | [Bytes and Uri](./data/) |
+| `gesture.h` | Application and extension | [Gestures](./gesture/) |
+| `platform_adapter.h` | Adapter | [Platform boundary](./app/#adapter-boundary) |
 
 ## Internal implementation
 

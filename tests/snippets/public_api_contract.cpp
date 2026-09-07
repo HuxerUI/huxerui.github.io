@@ -3,23 +3,22 @@
 #if defined(__ANDROID__)
 #include <huxerui/android/external_texture.h>
 #include <huxerui/android/jni.h>
-#include <huxerui/android/platform_module.h>
-#include <huxerui/android/platform_view.h>
+#include <huxerui/android/platform_registry.h>
 #elif defined(__EMSCRIPTEN__)
 #include <huxerui/web/external_texture.h>
 #include <huxerui/web/navigation.h>
-#include <huxerui/web/platform_view.h>
+#include <huxerui/web/platform_registry.h>
 #elif defined(_WIN32)
 #include <huxerui/windows/external_texture.h>
-#include <huxerui/windows/platform_view.h>
+#include <huxerui/windows/platform_registry.h>
 #elif defined(__APPLE__)
 #include <TargetConditionals.h>
 #if TARGET_OS_IPHONE
 #include <huxerui/ios/external_texture.h>
-#include <huxerui/ios/platform_view.h>
+#include <huxerui/ios/platform_registry.h>
 #else
 #include <huxerui/macos/external_texture.h>
-#include <huxerui/macos/platform_view.h>
+#include <huxerui/macos/platform_registry.h>
 #endif
 #elif defined(__linux__)
 #include <huxerui/linux/external_texture.h>
@@ -77,7 +76,7 @@ static_assert(PubliclyConstructible<Checkbox, StringVariant, const State<bool>&>
 static_assert(PubliclyConstructible<Slider, const State<float>&>);
 static_assert(PubliclyConstructible<Image, ImageResource>);
 static_assert(PubliclyConstructible<Image, VectorAsset>);
-static_assert(PubliclyConstructible<Image, ExternalTexture>);
+static_assert(PubliclyConstructible<Image, std::shared_ptr<ExternalTexture>>);
 static_assert(PubliclyConstructible<Canvas, CanvasPainter>);
 static_assert(PubliclyConstructible<ScrollView, View>);
 static_assert(PubliclyConstructible<SelectionArea, View>);
@@ -175,9 +174,9 @@ static_assert(WindowChromeMode::System != WindowChromeMode::Custom);
 
 static_assert(PubliclyConstructible<PlatformPayload, std::nullptr_t>);
 static_assert(PubliclyConstructible<PlatformView, std::string, PlatformPayload>);
-static_assert(std::move_constructible<PlatformInstance>);
-static_assert(!std::copy_constructible<PlatformInstance>);
-static_assert(requires(PlatformInstance& instance, PlatformRequestId request) {
+static_assert(std::copy_constructible<PlatformChannel>);
+static_assert(!std::copy_constructible<ExternalTexture>);
+static_assert(requires(PlatformChannel& instance, PlatformRequestId request) {
   { instance.Cancel(request) } -> std::same_as<bool>;
   instance.Close();
 });

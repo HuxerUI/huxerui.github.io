@@ -87,3 +87,13 @@ Map errors deliberately:
 | `Io` | Preserve the user's current state and offer retry or another destination |
 
 See the [File API](../../reference/file/) for exact overloads and result types, and [Lifecycle and activation](../lifecycle-and-activation/) for files delivered when another application opens content with HuxerUI.
+
+## Work with a selected directory
+
+Check `CanOpenDirectories(writable)`, then await `OpenDirectoryAsync(writable)`. A directory is still a FileReference, not automatically a File path. Use its `ListChildrenAsync`, `CreateDirectoryAsync`, and `CopyFileFromAsync` methods to preserve provider access.
+
+`CopyDirectoryContentsToAsync` recursively copies into a File or FileReference destination. It is not atomic: cancellation/failure can leave partial output. Confirm overwrite intent in the UI and report the returned error instead of claiming rollback.
+
+Use `AsFile()` only when a path-based integration really needs a local path. Retain the original FileReference for the duration of grant-dependent path access. Provider names are display metadata, not trusted path fragments.
+
+For OS drag reception, use [FileDropTarget](/docs/reference/file/#external-file-drops) and the same FileReference processing code as your picker/activation handlers. Keep a picker button available for users who cannot drag.

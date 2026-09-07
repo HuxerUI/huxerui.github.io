@@ -10,11 +10,11 @@ A generated application does not force a visual family; choose a built-in theme 
 
 ```cpp fragment
 View App() {
-  return MaterialTheme(Content);
+  return MaterialTheme {Content()};
 }
 ```
 
-Built-in entry points include `MaterialTheme`, `MaterialDarkTheme`, `FlatTheme`, and `FlatDarkTheme`. Each accepts a view factory and copyable arguments; overloads accepting `ThemeSpec` let applications replace tokens while retaining the component recipes for that family.
+Built-in entry points include `MaterialTheme`, `MaterialDarkTheme`, `FlatTheme`, and `FlatDarkTheme`. Each accepts declarative View content; light-family overloads accepting `ThemeSpec` let applications replace tokens while retaining the component recipes for that family. The composable transform defers child composition so descendants see the provider. Enable code generation for these declarations.
 
 Material and Flat are complete theme definitions rather than color presets.
 They may resolve different geometry, interaction indication, menu separators, dialog placement, presentation motion, and typography from the same component intent.
@@ -25,11 +25,11 @@ They may resolve different geometry, interaction indication, menu separators, di
 View BrandedApp() {
   ThemeSpec spec = MaterialLightThemeSpec();
   spec.colors.primary = Color::Rgb(92, 61, 180);
-  return MaterialTheme(std::move(spec), Content);
+  return MaterialTheme(spec, Content());
 }
 ```
 
-`ThemeSpec` groups color, typography, shape, spacing, elevation, motion, and interaction schemes. `ThemeDefinition` additionally owns component and presentation style resolvers. Use `UseTheme()` to read the resolved `ThemeSpec`; use `Theme(definition, factory, ...)` for a custom definition.
+`ThemeSpec` groups color, typography, shape, spacing, elevation, motion, and interaction schemes. `ThemeDefinition` additionally owns component and presentation style resolvers. Use `UseTheme()` to read the resolved `ThemeSpec`; use `Theme(definition, content)` for a custom definition.
 
 Start from `MaterialLightThemeSpec`, `MaterialDarkThemeSpec`, `FlatLightThemeSpec`, or `FlatDarkThemeSpec` when a branded theme should retain the corresponding component recipes.
 Use a complete `ThemeDefinition` when the application needs its own style-resolution policy.

@@ -76,3 +76,11 @@ Update controlled state with the result so a later composition declares the new 
 
 Do not detach raw coroutines that retain component state.
 See the [Task API](../../reference/task/) and the asynchronous [HTTP](../http/) and [Files](../files/) services.
+
+## Move CPU processing to a worker
+
+Await `RunWorker(function, arguments...)` for non-UI synchronous computation. It owns its callable/arguments and returns to the awaiting UI task after completion. Do not access State or platform UI from the worker; copy the input snapshot before launching and apply the result after awaiting.
+
+Use `WorkerSequence` only when related operations must run serially, such as a decoder or ordered file transformation. It gives ordering rather than permanent thread affinity. Its leading stop token makes active cancellation cooperative.
+
+`TaskScope::Post` is reserved for callbacks from external threads. HTTP, Files, Delay, and RunWorker continuations already execute in the correct task context. See the [worker example](/docs/reference/task/#cpu-work-and-external-callbacks).
