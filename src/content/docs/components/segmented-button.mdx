@@ -45,3 +45,23 @@ The component exposes a grouped selection model and selected item semantics.
 - Theme style: `SegmentedButtonStyle`.
 
 Use [`Tabs`](/docs/components/tabs/) when selection changes visible page content and participates in tab semantics.
+
+## Choose a value model
+
+This is single-index selection, not a set of independently checked chips. Keep the item order stable while the user interacts, and translate the requested index into a domain enum in application code if necessary. Reordering the items does not automatically remap the controlled index. Read enum-backed State into the enum before comparing it; index-backed State can be passed directly.
+
+The constructor consumes item declarations by value. Labels use `StringVariant`, icons use `ImageVariant`, and there is no arbitrary child factory for a segment. Use [Select](/docs/components/select/) for custom row content or [Chip](/docs/components/chip/) for independent selected values.
+
+## `SegmentedButtonStyle` fields
+
+| Fields | Use |
+| --- | --- |
+| `background`, `selected_background` | Normal and selected segment fills. |
+| `label_style`, `selected_label` | Typography and selected foreground. |
+| `border`, `selected_border` | Normal and selected outlines. |
+| `padding`, `minimum_segment_width`, `minimum_height` | Content padding and minimum segment geometry. |
+| `icon_size`, `icon_spacing` | Optional icon dimensions and label gap. |
+| `corner_radii` | The segmented surface's outer corners. |
+| `indication`, `selected_indication` | Interaction visuals for each selection state. |
+
+Material supplies a 40-DIP minimum height; the Flat baseline is more compact. Theme changes affect appearance, not the requirement to handle `OnChanged`.

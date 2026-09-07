@@ -39,3 +39,11 @@ Use `Flow` instead when a horizontal collection must wrap rather than overflow o
 - Child metadata: `Grow`.
 
 Read [Layout fundamentals](/docs/layout/) for constraints, alignment, flexible children, and the choice between `Row`, `Flow`, and scrolling.
+
+## Width allocation
+
+Declared in `huxerui`, `<huxerui/view.h>`, Row accepts a child vector or braced View/Views content. It has no theme style or change event. `MainAxisAlignment` supplies Start, Center, End, SpaceBetween, SpaceAround, and SpaceEvenly; `CrossAxisAlignment` supplies Start, Center, End, and Stretch.
+
+Grow applies to the direct child of Row. In the example, it belongs on the whole text Column so the avatar and action keep their intrinsic sizes. Multiple growing children divide remaining bounded width according to their positive factors. A nested label does not change the width allocation of its outer container merely by carrying Grow.
+
+For unbreakable content wider than the viewport, choose explicit clipping, a horizontal ScrollView, or wrapping with Flow. Row is a one-line layout, not an automatic responsive navigation policy. Use stable keys when changing the order of stateful children.

@@ -102,3 +102,25 @@ Writing the complete event value preserves selection, affinity, and composition.
 `TextSelectionSource` is an immutable logical snapshot with `Count()`, `IdAt()`, `IndexOf()`, and `BlockAt()`. Each `TextSelectionBlock` contains attributed text and a separator (newline by default). IDs are `TextBlockId`, stable across reorder rather than derived from current positions.
 
 Attach a source with `SelectionArea::Source(snapshot)` and identify each rendered Text using `SelectionBlock(id)`. This lets copying traverse offscreen logical blocks. A rendered Text must match its entire source block. Source methods must return synchronously and without I/O; publish a new snapshot when content changes.
+
+## Build selection values correctly
+
+`TextSelection{anchor, active, affinity}` preserves selection direction. `Range()` orders the endpoints into a half-open TextRange; it does not validate them against text or preserve which end is active. `IsCollapsed()` only compares endpoints. Endpoints must be in bounds in UTF-16 units and cannot split a surrogate pair.
+
+`TextEditingValue::FromText` validates UTF-8, places a downstream caret at the UTF-16 end, and clears composition. That is appropriate for loading/resetting a document, not for accepting a user's normal edit. Copy the complete OnChanged proposal for ordinary typing so selection direction and provisional IME composition survive.
+
+`composition = std::nullopt` means no composition. A collapsed composition range is still an active composition; do not test its length to decide whether IME work exists. Input session IDs and synchronization revisions belong to the input client/adapter, not application TextEditingValue.
+
+## Validation timing and rule composition
+
+`ValidationResult::None()` means no validation presentation, `Valid()` means checked and valid, `Invalid(message)` supplies an error, and `Pending(message = {})` reports unfinished validation. `IsInvalid()` tests only the Invalid status. Validate starts at Valid and stops at the first rule returning anything other than Valid, including None or Pending.
+
+The built-in Required and EmailAddress rules are synchronous. For remote validation, publish an application-owned Pending result, launch a scoped request, and replace it only if the result still corresponds to the current input. Cancel obsolete tasks or track request identity. Do not make the rule itself block or launch a request on every render.
+
+Decide whether to show errors immediately, after editing, or after submission in application state. For example, choose between None and Validate based on a submitted flag. Validation does not reject keyboard input, change selection, or rewrite text; use the editor's length/line policies for input mechanics.
+
+## App API versus adapter API
+
+Applications normally use TextField, TextEditingValue, input hints, and ValidationResult. A custom input extension implements TextInputClient only when it truly owns an editor; a platform backend implements PlatformTextInput to connect IME operations. These interfaces are not necessary for changing a field's keyboard type or adding an action.
+
+At that boundary, keep the captured nonzero session ID and current revision with every delayed edit. A stale session must not target the next focused field. Commands use the declared TextInputCoordinateSpace and TextInputUnit, validate the batch against the current value, and preserve the distinction between text UTF-8 bytes, UTF-16 offsets, Unicode scalars, and grapheme limits. See [the TextField component](/docs/components/text-field/) for the application-facing configuration surface.

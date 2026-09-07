@@ -87,3 +87,11 @@ View Article() {
 The fixed document's IDs never reorder. Real mutable documents need semantic block IDs preserved across insertions and moves, not current indices. The source is an immutable, synchronous snapshot; publish a replacement when its text changes. Do not read files or start network work from its methods.
 
 Each rendered Text must represent the full block returned by the source. A reconciliation Key and a TextBlockId have different jobs even when the same stable ID is convenient for both. [Streaming text](/examples/streaming_text/) demonstrates a larger virtual document.
+
+## Source contract and failure modes
+
+`Source(std::shared_ptr<const TextSelectionSource>)` retains an immutable snapshot. `Source(nullptr)` restores mounted-text discovery. The source's `Count`, `IdAt`, `IndexOf`, and `BlockAt` must describe the same ordered document: stable IDs identify blocks, IndexOf maps them back, and BlockAt supplies attributed text plus the separator used when copying between blocks.
+
+Do not let a source read a mutable document that changes beneath these queries. Replace the shared snapshot and render corresponding Text values together. A displayed substring with the full block's ID creates inconsistent selection geometry; either render the full block or model it as a different logical block.
+
+SelectionArea does not make Canvas-drawn strings or platform text controls part of this document automatically. TextField keeps its own editing selection, and a platform control follows its platform provider. Use explicit semantic descriptions for non-Text visual content rather than assuming a surrounding selection area supplies them.

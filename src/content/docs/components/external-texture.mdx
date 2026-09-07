@@ -33,3 +33,11 @@ The integration constructs a supported platform texture; consumers share the poi
 Use a static [Image](/docs/components/image/) for encoded resources, or [PlatformView](/docs/components/platform-view/) when the platform object must retain its own interaction and accessibility.
 
 See [producer integration](/docs/guides/external-texture/) and the [API reference](/docs/reference/external-texture/).
+
+## Separate consumer and producer lifetime
+
+Image holds shared texture ownership while mounted, but it does not own the media device or worker that produces frames. Start/stop that producer in its owning Lifecycle or platform service, publish through the backend's supported texture API, and keep platform resource release on the thread required by that API. An `IsActive()` observation is useful for throttling; it is not a guarantee that the producer can forget its own shutdown path.
+
+Intrinsic geometry belongs to the texture identity. A differently sized frame buffer is not an implicit layout update; create the appropriate logical texture identity when the layout contract changes. `Revision()` identifies new publications, not application State versions. Let publication invalidate rendering instead of writing a timestamp to State on every frame.
+
+This path supplies pixels, not a platform control's focus, keyboard, or semantic tree. Overlay ordinary HuxerUI controls and provide a meaningful semantic description on the consumer when necessary. Platform resource types and synchronization examples are in the [ExternalTexture reference](/docs/reference/external-texture/); do not cast one backend's texture wrapper to another.

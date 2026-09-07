@@ -42,3 +42,19 @@ VirtualGrid publishes grid, row and column counts, and realized cell coordinates
 - Column model: `GridColumns::Fixed` or `GridColumns::Adaptive`.
 
 Use [`Flow`](/docs/components/flow/) for a small wrapping collection that should mount every child.
+
+## Every sizing operation
+
+| Method | Contract |
+| --- | --- |
+| `Columns(GridColumns)` | `Fixed(count)` requires a positive count; `Adaptive(minimum_width)` requires positive width. |
+| `RowExtent(float)` | Positive fixed row height. |
+| `EstimatedRowExtent(float)` | Positive initial estimate when measured row heights vary. |
+| `RowSpacing(float)`, `ColumnSpacing(float)` | Nonnegative logical-pixel gaps. |
+| `CacheExtent(float)` | Nonnegative offscreen realization distance. |
+| `ItemSpans(vector<size_t>)` | Positive spans corresponding to logical items; each clamps to the resolved column count. |
+| `Controller(ScrollController)` | Stable metrics and item-targeted scrolling. |
+
+`GridColumns::Resolve(available_width, spacing)` returns the resolved count for a proposed width; ordinary applications can let the grid perform this calculation. Adaptive columns respond to the grid's actual constrained width, so the same declaration works inside a drawer or a main content area.
+
+VirtualGrid scrolls vertically; it does not expose ScrollAxis. Supply a bounded height. A row is measured as a row, so a tall cell affects its neighboring cells' vertical placement. Use a fixed RowExtent only when that rule matches every cell. Application data and persistent selection should live outside evictable cell scopes, as with VirtualList.

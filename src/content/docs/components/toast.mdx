@@ -30,3 +30,15 @@ The captured environment determines theme and localized resources. `ToastStyle` 
 - `ToastStyle` and `VerticalPlacement` define theme presentation.
 
 See [Presentation](../../guides/presentation/) for layer lifetime and theming.
+
+## Request identity and limits
+
+Each `Show` creates an independent toast; it does not replace the previous message. Save the returned `LayerId` only if an event needs to dismiss that specific toast early. `Dismiss(id)` returns false for a stale identifier. Duration must be finite and nonnegative; zero is an immediate-expiry request, not persistent feedback.
+
+The handle captures the Environment when `UseToast()` runs. Capture the handle by value in an event and call it on the UI thread. Do not invoke Show directly during composition, where recomposition could emit duplicate notifications.
+
+## `ToastStyle` fields
+
+`background`, `text_style`, `padding`, `shadow`, and `corner_radii` describe the message surface. `minimum_height` and `maximum_width` bound its geometry; `viewport_padding` leaves space at safe edges. `placement` is Top, Center, or Bottom. `motion` is optional `PresentationMotion`, with `std::nullopt` disabling transitions.
+
+Use [SnackBar](/docs/components/snack-bar/) for an action or replacement-style feedback. Do not put essential errors only in an expiring toast; retain them near the affected form or operation as well.

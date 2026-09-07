@@ -47,3 +47,27 @@ The slider exposes role, current range, optional step, enabled state, and focus 
 - Theme style: `SliderStyle`.
 
 Use [`ProgressBar`](/docs/components/progress-bar/) when the value is display-only.
+
+## Validation and exact proposal behavior
+
+The constructors in `<huxerui/view.h>` require a finite value. `Range` requires finite endpoints with `minimum < maximum`; `Step` requires a finite number greater than zero. Invalid input throws `std::invalid_argument`. Use the parameterless range defaults only for normalized values; a 0–100 slider should declare its range on every composition.
+
+Requests clamp to the interval. With a step, interior values round to increments measured from the minimum; the endpoints remain reachable even when the step does not divide the interval evenly. This constrains interaction proposals rather than rewriting application-owned State.
+
+Left/Down decrease and Right/Up increase by the step, or by one percent of the range without a step. Home and End request the endpoints. Accessibility range adjustment uses the same normalization. Add a semantic label such as “Volume”; the numeric value alone does not identify the setting.
+
+## `SliderStyle` fields
+
+| Fields | Effect |
+| --- | --- |
+| `width`, `height`, `track_height` | Preferred control and track size. |
+| `inactive_track`, `active_track`, `thumb` | Main enabled colors. |
+| `stop_indicator`, `active_tick`, `inactive_tick` | Endpoint and step-mark colors. |
+| `disabled_inactive_track`, `disabled_active_track`, `disabled_thumb`, `disabled_stop_indicator`, `disabled_active_tick`, `disabled_inactive_tick` | Matching disabled colors. |
+| `thumb_width`, `thumb_height`, `hovered_thumb_width`, `hovered_thumb_height`, `pressed_thumb_width`, `pressed_thumb_height` | Handle geometry for each interaction state. |
+| `thumb_track_gap`, `track_inside_corner_radius` | Track separation beside the handle. |
+| `stop_indicator_size`, `tick_size` | Zero hides the corresponding marks. Ticks also require a step. |
+| `focus_ring` | Optional ring override; empty inherits the theme. |
+| `animation_duration` | Handle/state transition duration in seconds. |
+
+Material uses a handle-and-gap treatment with endpoint/tick details; Flat uses a compact round thumb. Width remains constrained by the parent. In a Row with a trailing value label, use `Grow` on the slider when it should receive the remaining width.

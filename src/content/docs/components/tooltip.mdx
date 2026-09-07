@@ -25,3 +25,11 @@ Use Popup when users must focus, activate, or navigate the floating content.
 - Uses `AnchorPlacement`, `AnchorSide`, and `AnchorAlignment`.
 
 See [Popup](../popup/) for interactive floating content.
+
+## `TooltipStyle` fields and timing
+
+`background`, `text_style`, `padding`, `shadow`, and `corner_radii` style the hint. `minimum_height` and `maximum_width` constrain its surface. `placement`, `gap`, and `viewport_margin` set the preferred anchor relationship without allowing it to escape the viewport.
+
+The timing fields are seconds: `hover_delay` before hover display, `exit_delay` before leaving, `long_press_delay` before touch activation, and `touch_show_duration` for touch visibility. Tune the inherited TooltipStyle rather than attaching a timer to each trigger. Tooltip supplies no user-managed LayerId or close button; it follows its retained trigger's lifetime.
+
+The public `message` field holds the StringVariant declaration. `Descriptor()` is modifier integration machinery, not an operation applications call to show the hint. Keep a stable accessible label on the trigger regardless of whether the visual hint is currently visible.

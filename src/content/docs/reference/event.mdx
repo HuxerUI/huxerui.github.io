@@ -59,3 +59,17 @@ Handler erasure and dispatch storage live in `huxerui::detail` and are not exten
 `KeyIntercept` visits the active focus-scope path before component defaults and stops at the first true result. `KeyDown`/`KeyUp` receive otherwise unhandled keys after component handling; return true only when consuming the operation. The Key enum includes letters, digits, function keys, keypad keys, and side-specific modifiers as well as navigation keys. Do not treat `KeyEvent::text` as a replacement for IME editing.
 
 `ScrollInput` receives both wheel/trackpad axes before default nested scrolling; true consumes both axes, false keeps the default transaction. `ContextMenuRequested` receives a window-local Point suitable for `MenuHandle::ShowAt`. Use it rather than assuming a context menu always starts from a right mouse button.
+
+## Notification versus synchronous decision
+
+Use `Event<void(T)>` when reporting a proposed value or completed action. Use a result-bearing Event only when the emitter must make an immediate decision from the handler's return value. A result-bearing emission returns an optional result; “no connected handler” is distinct from a handler returning false.
+
+An asynchronous check cannot be returned from a synchronous bool event. Consume or defer the original application action according to its contract, launch the work through TaskScope, and publish a later explicit state/action. Do not block the UI thread waiting for a worker callback to fill an event return slot.
+
+Capture State and scoped EventEmitter handles by value. They are handles, not deep copies of application data. Payload references are borrowed for the callback; copy data if a later task needs it. For cross-language platform events, supply the key's stable Name and use the platform bridge contract; ordinary component event identity is the C++ key type.
+
+## Interaction sequence identity
+
+InteractionState is the current enabled/hovered/pressed/focused/focus-visible snapshot. InteractionEvent's `press_id` pairs Press with its Release or Cancel; it distinguishes sequences, not selected state or a persistent pointer identifier. Cancel must end pressed feedback without triggering the normal activation action. Use Indication for these visuals rather than maintaining separate State booleans in every button.
+
+Pointer capture and gesture recognition are different from observing raw input. Prefer the built-in Click path for an action and [gesture modifiers](/docs/reference/gesture/) for taps, drags, or transforms. This keeps disabled state, cancellation, keyboard activation, and semantics consistent.

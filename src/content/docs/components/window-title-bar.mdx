@@ -29,3 +29,11 @@ The component is meaningful when custom chrome is enabled in `WindowOptions`; sy
 - `UseWindow() -> WindowHandle` with `Minimize`, `Maximize`, `Restore`, `ToggleMaximize`, and `Close`.
 
 See [Window and system UI](../../guides/window-and-system-ui/).
+
+## Configure the window and content together
+
+Set `AppOptions::window.chrome_mode = WindowChromeMode::Custom` when creating the Application. `WindowOptions::title_bar_height` sets the requested logical control height and must be finite and positive. Giving the layout extra height alone does not configure the platform's caption-control metrics.
+
+`WindowTitleBarMetrics` provides `height`, physical `left_inset`, physical `right_inset`, and `maximized` for the current frame. Let WindowTitleBar reserve those edges; do not add a second fixed 3-button inset that assumes every platform puts controls on the right. Custom chrome retains platform differences, including Apple traffic lights where supplied by the backend.
+
+Window commands are requests, not synchronous geometry setters or a promise that the operating system will grant focus. `Close()` follows the normal close path; `Hide()` and `Minimize()` have different semantics. Keep a reachable drag region and accessible caption labels when customizing the surrounding UI. On a host without custom title-bar metrics, do not assume this layout turns a mobile surface into a desktop window.

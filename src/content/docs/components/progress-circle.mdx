@@ -39,3 +39,18 @@ Reduced-motion themes suppress or simplify continuous motion.
 - Theme style: `ProgressCircleStyle` and `ProgressCircleIndeterminateMotion`.
 
 Use [ProgressBar](../progress-bar/) when the available width should communicate progress along a linear track.
+
+## Complete style surface
+
+All three constructors are declared in `huxerui`, `<huxerui/view.h>`. The no-value constructor means indeterminate; an explicit zero is a determinate empty arc. Progress values represent fractions, so use `0.75F` for 75 percent. The control normalizes its display; retain meaningful domain progress in application state.
+
+| `ProgressCircleStyle` field | Effect |
+| --- | --- |
+| `size`, `stroke_width` | Preferred diameter and ring stroke. |
+| `track_color`, `indeterminate_track_color` | Background tracks for the two modes. |
+| `indicator_color`, `track_gap` | Active arc color and separation from its track. |
+| `indeterminate_motion` | `Sweep` or `PulsingArc`. |
+| `minimum_indeterminate_arc_fraction`, `maximum_indeterminate_arc_fraction` | Shortest and longest visible indeterminate arc. |
+| `animation_duration` | Cycle duration in seconds. |
+
+Flat uses a steady-length sweeping arc; Material varies the arc extent. Keep a useful textual status alongside the indicator for reduced-motion users and assistive technologies. Hiding or removing the indicator does not cancel the operation it represents.

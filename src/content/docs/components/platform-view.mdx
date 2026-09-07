@@ -44,3 +44,13 @@ This shared declaration compiles independently; running it requires an `app/edit
 - Layout modifiers provide the bounds; the platform factory retains and disposes its view.
 
 Prefer [Image with ExternalTexture](/docs/components/external-texture/) for pixels without platform-control input. Read [PlatformView integration](/docs/guides/platform-view/) for registration and compositing constraints.
+
+## From declaration to platform update
+
+The registration name, Properties type, optional Controller type, and host-specific factory must agree. Register during root installation before first composition; changing the name is a different platform view identity, not a property update. A registration is not inferred from a C++ class name or a matching event Name.
+
+Properties are the authoritative snapshot. The platform instance updates its control from them, and user edits emit a typed event back to the owner. Suppress platform feedback loops when applying the owner snapshot; do not let a platform text change and a HuxerUI State independently become competing values. Copy any event data retained after its callback.
+
+A controller is an imperative capability, not another properties store. Its registered type must match `.Controller(...)`. The platform factory owns creation, compatible updates, and disposal; application UI does not call DestroyWindow, release an Android View, or retain a raw platform object obtained from the declaration.
+
+Painting order, clipping, transforms, input, and accessibility bridging remain backend capabilities. Check the [platform matrix](/docs/platforms/) and the integration guide before relying on rotated or translucent embedded controls. A compiling shared declaration alone does not prove every platform factory exists.

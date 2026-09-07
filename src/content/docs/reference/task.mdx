@@ -74,3 +74,55 @@ Launch from a user action or committed Lifecycle, never during composition. For 
 `WorkerSequence::Run(function, arguments...)` serializes calls sharing the sequence. Its function receives `std::stop_token` first. It guarantees order, not a dedicated thread; active cancellation is cooperative and the next call waits for the previous call and its capture cleanup to finish. A worker must inspect its token to stop lengthy processing.
 
 Cancelling pending work can prevent execution; it cannot forcibly interrupt arbitrary active C++. Thread-worker facilities may be unavailable in a Web build without worker support; report that capability instead of blocking the browser thread.
+
+## Cancellation is not a catchable completion
+
+`TaskHandle::Cancel()` destroys suspended coroutine state on the owning UI thread; it does not resume the coroutine with a cancellation exception. Code after the current `co_await` will not run merely to reset a loading flag. Let the action that cancels work also publish the intended UI state, or let a replacement request own that state. Use RAII for resources whose cleanup must happen when the coroutine frame is destroyed.
+
+Destroying a TaskHandle does **not** cancel the task. Store it when an action or Lifecycle cleanup needs explicit cancellation; otherwise TaskScope owns it until completion or scope teardown. An empty/already-completed handle is inert. A Task itself is move-only and single-consumer: do not await the same operation twice or use it as a reusable future.
+
+## Replace work when an input changes
+
+This complete component starts only after a committed dependency change. Cleanup cancels the previous delayed lookup before the next one starts:
+
+```cpp compile="task-replace-on-change"
+#include <huxerui/huxerui.h>
+
+#include <chrono>
+#include <string>
+
+using namespace huxerui;
+
+[[huxerui::composable]]
+View DelayedLookup() {
+  auto query = UseState(TextEditingValue::FromText(""));
+  auto result = UseState<std::string>("Enter a query");
+  auto tasks = UseTaskScope();
+  const std::string text = query->text;
+  Lifecycle([tasks, result, text] {
+    result = text.empty() ? "Enter a query" : "Waiting...";
+    auto request = tasks.Launch([result, text]() -> Task<void> {
+      if (text.empty()) {
+        co_return;
+      }
+      co_await Delay(std::chrono::milliseconds{300});
+      result = "Result for: " + text;
+    });
+    return [request] { request.Cancel(); };
+  }, text);
+  return Column {
+    TextField(query)
+        .Label("Query")
+        .OnChanged([query](const TextEditingValue& next) { query = next; }),
+    Text(result),
+  }.With(Spacing(8.0F));
+}
+```
+
+The dependency is text, so moving the caret alone does not restart a lookup. For real HTTP, replace the Delay and simulated result with Send and handle both transport errors and application status. Scope cancellation prevents the old HuxerUI continuation from publishing a result; it cannot undo a server-side mutation that already happened.
+
+## Exceptions and ownership at launch
+
+`Launch(Task<void>&&)` transfers a named coroutine result. `Launch(factory)` owns the callable until its coroutine finishes, avoiding a dangling capturing-coroutine lambda. Do not immediately invoke a temporary capturing coroutine lambda and pass its result as though its closure would live forever.
+
+Launching during composition, after a scope closes, or with an empty Task is a logic error. Fallible application work should catch and present expected exceptions inside the launched operation; do not use an unobserved launch as an error-reporting strategy. Service APIs may also validate synchronously before returning their lazy Task, so put construction of a fallible request inside the intended error boundary.

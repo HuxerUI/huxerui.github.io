@@ -51,3 +51,9 @@ Do not add scopes to every helper function; stateless composition should stay an
 - Preferred declaration syntax: `[[huxerui::composable]] View Component(...)`.
 
 Read [Composition and identity](/docs/dsl/composition-and-identity/) before introducing explicit scope boundaries or keys.
+
+## Factory ownership and rebuilding
+
+The factory returns one View and runs when the retained scope composes. The variadic form stores decayed, copyable arguments for later invocation; it is not a borrowed call frame. Pass State handles by value when the child must observe future changes. A plain string argument is a value snapshot replaced by a later parent declaration.
+
+Use stable keys on scopes when their siblings reorder. A matching retained scope preserves its UseState and Lifecycle ownership; removing it disposes that lifetime. Avoid reference captures of local variables in a stored factory or cleanup. An empty factory is invalid. Scope itself adds no layout policy or component style; apply sizing to its content or the returned declaration as appropriate.

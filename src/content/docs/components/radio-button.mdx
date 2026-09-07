@@ -11,14 +11,16 @@ The application owns group exclusivity by storing one selected value.
 ## Model one selected value
 
 ```cpp fragment
+const Mode current = mode;
+
 Column {
-  RadioButton("Automatic", mode == Mode::Automatic)
+  RadioButton("Automatic", current == Mode::Automatic)
       .OnChanged([mode](bool selected) {
         if (selected) {
           mode = Mode::Automatic;
         }
       }),
-  RadioButton("Manual", mode == Mode::Manual)
+  RadioButton("Manual", current == Mode::Manual)
       .OnChanged([mode](bool selected) {
         if (selected) {
           mode = Mode::Manual;
@@ -42,3 +44,15 @@ The component exposes radio-button role, selected state, label, focus, and activ
 - Theme style: `RadioButtonStyle`.
 
 For a compact fixed group with one selected index, use [`SegmentedButton`](/docs/components/segmented-button/).
+
+## Selection and keyboard boundaries
+
+The four constructors in `<huxerui/view.h>` take an optional leading `StringVariant` followed by `bool` or `const State<bool>&`. Activating an unselected radio button emits `OnChanged(true)`; activating an already-selected button does not deselect it. Keep the guard in the handler so group policy remains explicit.
+
+The component owns individual focus and activation. It does not register neighboring radios as a group or supply group-level arrow-key navigation. For an unlabeled radio, supply a semantic label. For enum-backed `State`, first read `const Mode current = mode;` and compare `current`; do not rely on overload resolution for `State<Mode> == Mode`.
+
+## `RadioButtonStyle` fields
+
+`size` is the visible ring size; `minimum_interactive_size` and `state_layer_size` control the hit target and feedback separately. `selected_color` and `unselected_color` have independent `disabled_selected_color` / `disabled_unselected_color` counterparts. `border_width` controls the ring and `dot_radius` the selected dot. `animation_duration` is in seconds.
+
+Material reserves a larger interactive area around the visible radio than the compact Flat baseline. Selection behavior stays controlled under either theme.

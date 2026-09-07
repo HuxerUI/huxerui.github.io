@@ -22,7 +22,7 @@ Use `.TitleAlignment(TopAppBarTitleAlignment::Start)` or `Center` to choose titl
 
 Theme definitions supply `TopAppBarStyle`, including height, padding, title typography, background, and spacing. The leading and action views retain their own interaction and accessibility semantics; give icon-only actions meaningful labels.
 
-## Complete example
+## Resource-backed title and actions
 
 ```cpp fragment
 View InboxBar() {
@@ -42,3 +42,13 @@ View InboxBar() {
 - `TopAppBarStyle` and `TopAppBarTitleAlignment` define themed presentation.
 
 See also [NavigationBar](../navigation-bar/) and [WindowTitleBar](../window-title-bar/).
+
+## Layout, safe area, and actions
+
+Declared in `<huxerui/navigation.h>`. Pass `std::nullopt` as the leading view when supplying only trailing actions. Action views are ordinary children: each needs its own handler and enabled state. The app bar does not infer that a menu icon opens a DrawerLayout, or that a back icon pops a NavigationStack.
+
+`TopAppBarStyle::height` is the bar's content height. `horizontal_padding` insets the bar contents; `title_inset` supplies the title inset, `title_spacing` separates it from neighboring content, and `action_spacing` separates trailing actions. `background` and `title_style` control the surface and title. These fields do not replace the styles of child IconButtons.
+
+`TitleAlignment` defaults to `Start`; `Center` changes the title's layout while the leading and action slots remain at their edges. Use a concise title and a bounded action set on narrow screens. This is not a scroll-collapsing large app bar.
+
+On mobile, keep system insets separate from the app bar's intrinsic height. Do not add a fixed top padding to compensate for status bars; use the [window/safe-area contract](/docs/reference/window/). On desktop, use [WindowTitleBar](/docs/components/window-title-bar/) when the region must participate in window dragging and caption controls.

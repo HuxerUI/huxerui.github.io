@@ -43,3 +43,64 @@ Attach a controller through `ScrollView::Controller` or the matching virtual com
 `VirtualLayout<Derived>` accepts either a range/factory pair or an item count/factory pair and invokes the derived static measurement contract. Its erased descriptor and realized-item source are internal.
 
 The built-in lazy components are [`VirtualList`](../../components/virtual-list/) and [`VirtualGrid`](../../components/virtual-grid/).
+
+## Implement a virtual measurement policy
+
+The complete example below realizes only a visible range of fixed-height rows. It illustrates the extension boundary, not a replacement for VirtualList's caching, scroll-to-item refinement, and collection semantics:
+
+```cpp compile="virtual-layout-extension"
+#include <huxerui/huxerui.h>
+
+#include <algorithm>
+#include <cmath>
+#include <cstddef>
+#include <stdexcept>
+
+using namespace huxerui;
+
+class FixedRows final : public VirtualLayout<FixedRows> {
+public:
+  using VirtualLayout::VirtualLayout;
+
+  static VirtualLayoutResult Measure(VirtualLayoutContext& context, ViewNode&, Constraints constraints) {
+    if (!constraints.HasBoundedWidth() || !constraints.HasBoundedHeight()) {
+      throw std::invalid_argument("FixedRows requires bounded width and height");
+    }
+    constexpr float row_height = 40.0F;
+    const Size size{constraints.max_width, constraints.max_height};
+    const std::size_t count = context.ItemCount();
+    const float content_height = static_cast<float>(count) * row_height;
+    const float offset = std::clamp(context.Viewport().offset.y, 0.0F,
+                                    std::max(0.0F, content_height - size.height));
+    const auto first = std::min(count, static_cast<std::size_t>(offset / row_height));
+    const auto last = std::min(count, static_cast<std::size_t>(std::ceil((offset + size.height) / row_height)));
+    VirtualLayoutResult result;
+    for (std::size_t index = first; index < last; ++index) {
+      ViewNode& item = context.Item(index);
+      const Size measured = context.Measure(item, {size.width, size.width, row_height, row_height});
+      static_cast<void>(measured);
+      result.Place(item, {0.0F, static_cast<float>(index) * row_height});
+    }
+    return result.SetSize(size)
+        .SetContentSize({size.width, content_height})
+        .SetAxis(Axis::Vertical)
+        .SetScrollOffset(offset);
+  }
+};
+
+View VirtualRows() {
+  return FixedRows(100, [](std::size_t index) {
+    return Text::Format("Row {}", index + 1).Key(index);
+  }).With(Frame{.width = 320.0F, .height = 240.0F});
+}
+```
+
+Placements are logical content coordinates. Runtime applies the scroll offset; subtracting it again in `Place` would scroll twice. `SetSize` reports the viewport allocation and `SetContentSize` the full scrollable extent, including unrealized rows. `SetScrollOffset` corrects a now-out-of-range offset after content shrinks.
+
+`Item(index)` realizes the requested item; do not call it for every item merely to estimate a fixed-height list. For public collection semantics, `SetCollectionSemantics` declares collection meaning and the `Place(..., SemanticCollectionItem)` overload attaches metadata to realized rows. An optional derived `ScrollOffsetForItem` enables indexed controller scrolling; without it, do not advertise that custom policy as supporting ScrollToItem.
+
+## Geometry and cache ownership
+
+`ViewNode::Bounds()` is local geometry including resolved padding; `ContentBounds()` removes that padding. `PresentationBounds()` is a window-space axis-aligned box, not a clipped polygon. Match coordinate spaces before placing children, painting an extension, or positioning an anchored surface.
+
+A node's `Cache<T>` is retained algorithm state, not storage for raw child references across reconciliation. Recompute input-dependent estimates when declarations change, and do not use a cache as a second authoritative copy of application selection. See the [complete ordinary layout example](/docs/guides/extensions/#own-a-measurement-policy-with-layout) for eager child placement.

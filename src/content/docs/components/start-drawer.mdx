@@ -30,3 +30,9 @@ The active `DrawerStyle` determines modal width, scrim, shadow, edge gesture are
 - `OnOpenChanged(handler)`.
 
 See [DrawerLayout](../drawer-layout/) and [EndDrawer](../end-drawer/).
+
+## Opening is not inline visibility
+
+The default `Open` value is false. It controls modal presentation when the start side cannot be inline; an inline start drawer is automatically present even with Open(false). See the [responsive policy](/docs/components/drawer-layout/#responsive-policy-and-controlled-modal-state) before synchronizing open state with a viewport breakpoint yourself.
+
+`OnOpenChanged` receives `bool`, returns no value, and asks the owner for a new modal value. A navigation destination handler can update both the selected destination and `start_open = false`; on a wide layout this does not remove the persistent navigation pane. The wrapper does not invent an open button or register one by label/icon.

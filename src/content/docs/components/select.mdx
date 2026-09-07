@@ -39,3 +39,25 @@ The selected index and item range may be plain values or `State` values. `OnChan
 Give dynamic rows stable sibling keys. Selection remains positional, so preserve the selected item's meaning when sorting or replacing the range.
 
 The field shares keyboard, popup dismissal, focus, and accessibility behavior with the framework. Use [Menu](/docs/components/menu/) for commands rather than a persistent selected value.
+
+## Item and keyboard contracts
+
+The four constructor families pair a plain range or `State<Range>` with a plain `std::size_t` or `State<std::size_t>`, followed by the same `View(item)` factory. The source captures an owned snapshot for that declaration; update the range through recomposition. The selected index is positional, even when rows have stable keys.
+
+Each returned row root needs a nonempty semantic label. Text provides one naturally; for compound Row content set `Semantics{.label = item_name}` on that root. `Enabled(false)` on a row makes that choice unavailable. The row must not contain independent buttons, text editors, or competing pointer handlers: Select supplies its choice activation.
+
+Up/Down navigate enabled popup choices; Home/End reach the enabled edges; Enter/Space accepts the active choice. Navigation highlight is transient and does not change the controlled selected index until acceptance. Dismissal leaves the current selection intact. `Label` supplies the field's accessible name and `Validation` shows domain feedback without disabling choices.
+
+## `SelectStyle` fields
+
+| Fields | Effect |
+| --- | --- |
+| `background`, `foreground`, `border`, `indicator` | Trigger surface, content, outline, and dropdown marker. |
+| `popup_background`, `active_item_background`, `selected_item_background` | Popup surface, keyboard highlight, and controlled selected state. |
+| `trigger_padding`, `item_padding`, `popup_padding`, `content_spacing` | Spacing for each level. |
+| `minimum_width`, `minimum_height`, `minimum_item_height`, `maximum_popup_height` | Preferred trigger size and bounded scrolling popup. |
+| `indicator_size`, `corner_radii`, `popup_corner_radii`, `popup_shadow` | Marker and surface geometry. |
+| `validation_error`, `validation_text_style`, `validation_spacing` | Domain error presentation. |
+| `indication`, `item_indication` | Trigger and choice interaction visuals. |
+
+Material and Flat provide independent field and popup styles. To fit a toolbar, override the relevant padding/minimums together; shrinking the label alone does not shrink the interactive rows.

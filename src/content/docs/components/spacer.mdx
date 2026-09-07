@@ -26,3 +26,9 @@ Use `Grow(factor)` on ordinary content when the flexible region itself should re
 - Common modifiers: `Frame` for a fixed minimum gap and `Grow` for explicit proportional behavior.
 
 See [Row](../row/) and [Column](../column/) for flexible-axis behavior and alignment rules.
+
+## Flexible space versus a gap
+
+`Spacer()` is the only constructor, in `huxerui`, `<huxerui/view.h>`. It has no style, value, or events. In a bounded Row or Column it consumes remaining main-axis space; if there is no remaining space, it does not force an extra fixed gap.
+
+Use the parent's `Spacing` for a reliable gap between every child. Give a Spacer an explicit Frame only when a particular empty region needs a minimum or fixed dimension. Inside an unbounded scrolling main axis, use content padding/gaps instead of a Spacer intended to push a footer to the screen edge.

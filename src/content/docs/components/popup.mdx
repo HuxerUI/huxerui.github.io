@@ -28,7 +28,7 @@ The anchor is a retained modifier and follows the view's final bounds. `ShowAt(p
 ## Manage focus and semantics
 
 Popup content keeps the semantics declared by its child views.
-Set `focus_trap` for interactive floating surfaces that must contain keyboard and accessibility focus, and give application-defined content an explicit label or role when its visible children are not self-describing.
+Set `trap_focus` for interactive floating surfaces that must contain keyboard and accessibility focus, and give application-defined content an explicit label or role when its visible children are not self-describing.
 
 ## API
 
@@ -40,3 +40,24 @@ Set `focus_trap` for interactive floating surfaces that must contain keyboard an
 - `AnchorSide`, `AnchorAlignment`, `AnchorPlacement`, and `PopupOptions`.
 
 See [Menu](../menu/) for structured actions and [Tooltip](../tooltip/) for descriptive hints.
+
+## Pick the correct coordinate space
+
+| Operation | Anchor and result |
+| --- | --- |
+| `Show(factory, options)` | Uses the full bounds of the View carrying `Anchor()`. Returns `LayerId`. |
+| `ShowAtAnchor(Rect, factory, options)` | Uses a rectangle local to that mounted anchor, for example a caret or selection range. Returns `LayerId`. |
+| `ShowAt(Point, factory, options)` | Uses a fixed point in window DIPs, not desktop pixels. Returns `LayerId`. |
+| `Update(id, factory)` | Replaces content while keeping the anchored request; returns whether it was updated. |
+| `UpdateAnchor(id, Rect)` | Updates an existing local-rectangle anchor without recreating content; returns whether it was updated. |
+| `Dismiss(id)` | Dismisses the matching request; false for a stale request. |
+
+Factories can be `ViewFactory` or `PopupFactory` (`View(PopupContext)`), with copyable bound-argument overloads. Acquire the handle in composition, attach its anchor once to the intended View, and show it from an event. A function-local reference captured by a retained factory is not kept alive by the popup.
+
+## `PopupOptions` reference
+
+`placement` defaults to Below/Start. `gap` is 4 DIPs, `viewport_margin` is 8 DIPs, and `offset` defaults to zero. Above/Below align horizontally; Left/Right align vertically. These values express preferred placement, not permission to draw outside the safe viewport.
+
+`dismiss_on_outside_press` and `dismiss_on_cancel` default to true. A supplied `on_dismiss_request` owns those requests instead of automatic dismissal. `trap_focus` defaults to false; `retain_anchor_focus` also defaults to false and supports suggestions that should leave focus in their anchor editor. Choose a coherent focus policy rather than enabling both for every popup.
+
+Popup has no standard title/message surface or `PopupStyle`: your content owns padding, background, border, radius, and any content-specific presentation visuals. Use the typed Menu or Dialog service when those semantics already match the task.

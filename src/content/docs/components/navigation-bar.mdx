@@ -39,3 +39,23 @@ The component exposes collection and selected-item semantics. Labels remain impo
 - `NavigationBarStyle` configures themed appearance.
 
 See also [NavigationPane](../navigation-pane/) and [Tabs](../tabs/).
+
+## Separate destinations from page history
+
+Declared in `<huxerui/navigation.h>`. `NavigationBar` does not create a NavigationStack or call its controller. For persistent top-level destinations, use one selected State with [IndexedPages](/docs/components/indexed-pages/); each destination can contain its own NavigationStack. This keeps switching sections separate from pushing a detail page.
+
+Items are owned declarations. `NavigationItem(StringVariant)` is label-only; `NavigationItem(ImageVariant, StringVariant)` adds an icon. `SelectedIcon(ImageVariant)` overrides only the selected icon, and `Enabled(bool)` defaults to true. Keep labels meaningful even when icons carry the visual identity. Selection remains index-based: after changing the destination list, supply an index appropriate to the new order.
+
+## `NavigationBarStyle` fields
+
+| Fields | Use |
+| --- | --- |
+| `background`, `label_style` | Bar surface and baseline label typography. |
+| `selected_content`, `disabled_content` | Icon/label state colors. |
+| `height`, `minimum_item_width`, `item_padding` | Bar and item geometry. |
+| `icon_size`, `icon_spacing` | Icon size and label gap. |
+| `indicator`, `indicator_size`, `indicator_corner_radius` | Selected destination's background shape. |
+| `show_unselected_labels` | Whether inactive labels remain visible. |
+| `indication`, `selection_animation` | Interactive feedback and selection transition specification. |
+
+The style's height is content geometry, not a mobile system-navigation-bar inset. Apply the application's [safe-area policy](/docs/reference/window/) once at the appropriate boundary rather than adding a hard-coded bottom margin to every destination.

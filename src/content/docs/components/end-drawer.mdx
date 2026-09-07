@@ -28,3 +28,9 @@ The application owns the open value. The component emits `DrawerEvents::OpenChan
 - `OnOpenChanged(handler)`.
 
 See [DrawerLayout](../drawer-layout/) and [StartDrawer](../start-drawer/).
+
+## Independent trailing content
+
+Give this side its own boolean State, defaulting to false, rather than sharing the start drawer's open flag. It remains modal in Medium and prefers inline in Expanded, subject to the actual width budget. An inline end drawer is visible regardless of its modal Open value; [DrawerLayout](/docs/components/drawer-layout/#responsive-policy-and-controlled-modal-state) defines the fallback order when both sides cannot fit.
+
+The content is one View, often a Column or ScrollView, and it retains its own application state. `.Open` and `.OnOpenChanged` are rvalue-qualified configuration methods chained on the declaration. `OnOpenChanged(bool)` requests a change; no implicit assignment to a passed State is performed.

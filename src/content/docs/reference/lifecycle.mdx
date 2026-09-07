@@ -26,3 +26,13 @@ A `State<T>` or `StateList<T>` dependency tracks its cell version without forcin
 Setup exceptions propagate through the frame commit.
 Cleanup is required to be callable as `void()`; it should not throw.
 Use `Lifecycle` for external subscriptions and retained resources, an event handler for user actions, and `TaskScope` for cancellable coroutine work.
+
+## Choose dependencies, not incidental captures
+
+Capturing a value in the setup lambda does not itself request a restart when that value changes. Pass the values that define the external operation as dependencies. For a text lookup, depend on the text string if caret/selection changes should not restart it; depending on the complete TextEditingValue restarts for its complete value changes.
+
+Without dependencies, a later recomposition does not re-run mount setup merely because the lambda was rebuilt. With dependencies, cleanup precedes replacement setup. Keep registrations stable inside the declaring scope, and avoid side effects before registering the callback.
+
+Cleanup is synchronous. It can unsubscribe, close an owned token, or cancel a TaskHandle, but it cannot await an asynchronous save before allowing unmount. Essential persistence needs an application-owned workflow rather than a promise that unmount cleanup will finish network I/O. A covered NavigationStack page can remain mounted, so mount lifetime is not the same as screen visibility.
+
+The [dependency-driven Task example](/docs/reference/task/#replace-work-when-an-input-changes) demonstrates setup, explicit cancellation, replacement, and final cleanup together. [Application activation](/docs/guides/lifecycle-and-activation/) is a separate source of cold/warm events, not another Lifecycle dependency policy.

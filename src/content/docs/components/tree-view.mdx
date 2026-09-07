@@ -62,3 +62,15 @@ Put stable sibling keys on the returned row root. Factories run for the expanded
 - `Style(TreeViewStyle)` overrides the theme's tree appearance.
 
 Declared by `<huxerui/view.h>`. Use [VirtualList](/docs/components/virtual-list/) for flat data. [Run the TreeView example](/examples/tree_view/).
+
+## Expansion, loading, and row lifetime
+
+Expansion is a proposal, not a mutation of your Node. Keep child data and expanded identifiers in application State, then have the information provider read that snapshot. For asynchronous children, publish a loading row or an updated child collection after work finishes; a synchronous provider must not return references to temporary storage or start a fresh request on every read.
+
+A row leaving the realization window may lose its local composition state. Store selection, edits, and loaded child data outside the virtualized row when they must survive scrolling. Keys preserve identity while siblings reconcile, but do not turn off virtualization. A changing hierarchy also changes flattened scroll indexes, so retain a domain identifier rather than treating an old flattened index as permanent identity.
+
+## `TreeViewStyle` fields
+
+`background`, `foreground`, and `disabled_foreground` define the base palette. `selected_background` represents application-owned selection; `active_background` and `focus_indicator` represent interaction/navigation feedback, not a second selected Node. `item_extent` is the fixed row height, `indentation` the depth step, `indicator_size` the disclosure marker size, and `item_padding` the row inset. `disclosure_motion` animates expansion feedback and `indication` overrides row interaction visuals.
+
+Use `ItemExtent` when the tree needs a different fixed row height; variable-height rows are not this component's model. A custom disclosure image should face right in its unexpanded form. Keep labels and selection semantics in `TreeItemInfo`, even when the visible row is a complex composition.

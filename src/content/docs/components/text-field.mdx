@@ -77,3 +77,47 @@ See [Text and input API](/docs/reference/text-and-input/) for editing ranges, co
 `.TrailingIcon(icon)` is decorative. To create an accessible action, use `.TrailingIcon(icon, semantic_label)` with `.OnTrailingIconClick(handler)`. The action has its own interaction and semantic target; do not overlay a second unrelated button on top of the editor.
 
 `.Align(TextAlign)` and `.VerticalAlign(TextVerticalAlign)` control paragraph placement. `.MaxLength` counts grapheme clusters, not bytes. Use [ComboBox](/docs/components/combo-box/) for editable suggestion selection instead of assembling a competing popup/input state machine.
+
+## Every configuration method
+
+All methods below configure the returned declaration; call them before general `.With(...)` composition. They do not mutate a mounted editor directly.
+
+| Method | Contract |
+| --- | --- |
+| `Label(StringVariant)`, `Placeholder(StringVariant)` | Accessible field name and empty-value hint; resource values resolve through the active locale. |
+| `LeadingIcon(ImageVariant)` | Decorative leading content. |
+| `TrailingIcon(ImageVariant)` | Decorative trailing content. |
+| `TrailingIcon(ImageVariant, StringVariant)` | Separate action with required semantic label; bind `OnTrailingIconClick(void())`. |
+| `Variant(TextFieldVariant)` | Standard, Filled, or Outlined; omitted uses the theme's variant. |
+| `LineLimits(TextFieldLineLimits)` | Single-line by default; multiline limits control intrinsic visible height, not total stored line count. |
+| `Shaping(TextShapingOptions)` | Direction and optional locale for editor/supporting labels. |
+| `Align(TextAlign)`, `VerticalAlign(TextVerticalAlign)` | Paragraph placement within available editor space. |
+| `MaxLength(std::size_t)` | Maximum accepted grapheme count; does not substitute for domain validation. |
+| `Validation(ValidationResult)` | Complete external validation presentation. |
+| `Secure(bool = true)` | Protected entry: masks text and prevents Copy/Cut and semantic text disclosure. |
+| `InputConfiguration(TextInputConfiguration)` | Replaces platform input hints and reconciles multiline mode with line limits. |
+
+`TextFieldLineLimits::SingleLine()` disables wrapping/newline entry. `MultiLine(minimum = 1)` has no intrinsic maximum; `MultiLine(minimum, maximum)` sets both. Minimum must be positive and maximum must not be smaller. `IsMultiline()`, `Minimum()`, and `Maximum()` inspect the value. More content than the visible limit scrolls inside the editor. Secure multiline configuration is unsupported.
+
+## Read-only, disabled, and programmatic edits
+
+`InputConfiguration({.read_only = true})` preserves a readable/selectable field while preventing edits and opening of an input session. `Enabled(false)` represents an unavailable control. Neither is a password policy; use Secure for that purpose.
+
+Assign `TextEditingValue::FromText(new_text)` when intentionally replacing a document or resetting a field. For ordinary OnChanged proposals, assign the full received value so UTF-16 selection, affinity, and composition survive. `OnSubmitted(void())` carries no text argument: read your controlled value in the handler. Keyboard type and capitalization are platform hints, not validators.
+
+## Style fields by responsibility
+
+| `TextFieldStyle` fields | Effect |
+| --- | --- |
+| `variant`, `show_label`, `standard`, `filled`, `outlined` | Default variant, visual label policy, and per-variant surfaces. Hiding the visual label does not remove the semantic label. |
+| `text_style`, `label_style`, `floating_label_style`, `placeholder_style` | Editor and label typography. |
+| `disabled_text`, `focused_label`, `disabled_label`, `error_label`, `disabled_placeholder`, `disabled_supporting_text` | State-specific text colors. |
+| `leading_icon`, `focused_leading_icon`, `disabled_leading_icon`, `error_leading_icon` | Leading icon state colors. |
+| `trailing_icon`, `focused_trailing_icon`, `disabled_trailing_icon`, `error_trailing_icon` | Trailing icon state colors. |
+| `selection`, `caret`, `error_caret`, `composition`, `caret_width` | Editing decorations. |
+| `border_width`, `focused_border_width` | Ordinary outline thickness. |
+| `padding`, `leading_icon_size`, `trailing_icon_size`, `icon_spacing`, `label_spacing`, `label_cutout_padding` | Internal content layout. |
+| `label_animation_duration`, `caret_blink_interval` | Seconds for label motion and caret blinking. |
+| `validation_error`, `validation_border_width`, `focused_validation_border_width`, `validation_text_style`, `validation_spacing` | Invalid state and supporting error message. |
+
+Each `TextFieldVariantStyle` contains `background`, optional `disabled_background`, `border`, `hovered_border`, `focused_border`, `disabled_border`, `corner_radii`, and `minimum_height`. Material provides filled/outlined label treatments while Flat's baseline is compact. Copy the effective style before overriding fields so the active family's other states remain coherent.

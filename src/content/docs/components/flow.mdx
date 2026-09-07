@@ -37,3 +37,11 @@ For a very large scrollable data set, use `VirtualGrid` rather than mounting eve
 
 - Construction: `Flow { children... }` or an explicit child vector.
 - Common modifiers: `Spacing`, `MainAlign`, `CrossAlign`, `Padding`, `Frame`.
+
+## Wrapping and lifecycle
+
+Flow is in `huxerui`, `<huxerui/view.h>`. Braced View/Views content and vector construction use the inherited Layout constructors. Finite available width determines wrapping; a Flow measured with unbounded width has no width boundary at which to wrap.
+
+All children remain mounted as the window width changes. A visual row break does not create a new child scope or reorder the semantic reading order. Keys identify the logical items, not their temporary line positions. Flow has no independent selection model, events, or Style; bind each Chip's controlled event separately.
+
+Use Flow for heterogeneous content-width items. Use VirtualGrid when columns should line up across rows or when item creation must be bounded by the viewport. For a fixed-height region that may gain extra lines, place Flow inside a ScrollView rather than assuming the wrapping container scrolls by itself.

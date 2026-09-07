@@ -16,11 +16,11 @@ Prefer ordinary conversion and member access in application expressions; use `Ge
 Assignment publishes a replacement value.
 Supported compound operators are `+=`, `-=`, `*=`, `/=`, `%=`, `&=`, `|=`, `^=`, `<<=`, and `>>=` when the stored type supports them.
 Prefix and postfix increment and decrement are also available.
-`Update(function)` mutates the stored value and publishes one update, while `IsValid()` reports whether the handle is connected.
+`Update(function)` applies a mutation to the value, while `IsValid()` reports whether the handle holds a state cell. Equality-comparable replacement values can suppress unchanged notifications.
 
 ## `StateList<T>`
 
-Observable vector-like state for dynamic collections. It exposes validity, size/empty queries, indexed reads, snapshots and iterators, plus mutation operations for insertion, erasure, clearing, push/pop, replacement, and element update. Mutations invalidate subscribed scopes while preserving the cell identity.
+Observable vector-like state for dynamic collections. `Size`, `Empty`, `At`, `operator[]`, and const iterators read its current elements. `PushBack`, `Insert`, `Set`, `Erase`, `Move`, `PopBack`, and `Clear` mutate the collection while preserving the cell identity. It has no separate Snapshot or per-element Update method.
 
 ## State creation
 
@@ -70,3 +70,25 @@ View CounterSettings() {
 ```
 
 `State` is passed by value to the control and event handlers; the application writes the next controlled value after the event.
+
+## Read a value versus copy a handle
+
+`auto copy = state` copies the handle; `const T value = state` copies the current value. `const T& value = state` borrows it and must not be retained across updates. `operator->` returns a const pointer, so mutating a vector through `state->push_back(...)` is not the update API. Use `state.Update([](T& value) { ...; })` for mutation.
+
+Assignment of a T publishes a value, while assignment from another State handle can rebind a local handle. Keep those two operations distinct. Comparisons involving class/enum types may need an explicit `const T current = state` before overload resolution; natural reads do not make State an arbitrary forwarding proxy for every T operator.
+
+The initial argument to UseState is evaluated by normal C++ whenever the function runs, but the stored initial value is used only when that slot is first created. Do not put I/O or expensive construction into an initial-value expression expecting lazy execution. State identity depends on the current scope, source location, and occurrence, not a variable's spelling.
+
+## Collection mutation and keys
+
+`Insert(index, value)` accepts the end position; indexed reads, Set, Erase, and Move require existing indices. `Move(from, to)` preserves the moved element's value and places it at the final destination index; it is not a selection-remapping operation. PopBack on an empty list throws `std::out_of_range`. Iterators and references are borrowed from the current vector and can be invalidated by mutation.
+
+Render a stable domain key for a changing list. Keys belong to sibling reconciliation, not to StateList indexes; inserting at index zero without keys can transfer a row's local state to the wrong domain item. For complex edits to one item, copy that item, change it, then call Set. For an application that needs whole-vector transformations, State of vector with Update is often a better fit.
+
+State is a UI observation facility, not a cross-thread lock. Worker tasks operate on owned input values and publish their returned result on the UI continuation; external callbacks enter through TaskScope::Post. `IsValid()` reports a nonempty handle, not whether a component is visible or an asynchronous result is still the newest request.
+
+## Environment lookup and service distinction
+
+ProvideEnvironment establishes a typed subtree boundary. A matching nearer value shadows the outer value; unrelated types continue to inherit. `static Default()` supplies the baseline for an EnvironmentValue, while Theme installs coordinated visual values for a family. Do not replace required component inputs with a global environment lookup just to shorten a constructor.
+
+UseService is different: it resolves an explicitly installed root-owned service and fails when missing. UseEnvironment reads inherited copyable configuration. Neither API turns mutations inside an arbitrary shared object into State notifications.

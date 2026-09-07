@@ -39,3 +39,22 @@ Action chips expose button behavior; selectable chips expose their selected stat
 - Theme style: `ChipStyle`.
 
 Use [`SegmentedButton`](/docs/components/segmented-button/) for a fixed mutually exclusive set and [`Checkbox`](/docs/components/checkbox/) for a conventional binary setting.
+
+## Action versus selection
+
+All four constructors are in `huxerui`, `<huxerui/view.h>`, and use `StringVariant` for labels and `ImageVariant` for icons. The two selection forms take a `bool`; a `State<bool>` supplies that bool through conversion. There is no independent multi-selection model: a row of filter chips normally stores a bool per independent filter or a set of selected IDs.
+
+Bind `OnClick(void())` for an action and `OnChanged(void(bool))` for the selection form. An ignored selection proposal leaves the displayed selection unchanged. Disabling a selected chip keeps its selected value while preventing changes. This is useful when a filter is active but temporarily locked.
+
+## `ChipStyle` fields
+
+| Fields | What they control |
+| --- | --- |
+| `background`, `selected_background` | Unselected and selected surfaces. |
+| `label_style`, `selected_label` | Label typography and selected foreground. |
+| `disabled_background`, `disabled_selected_background`, `disabled_label`, `disabled_selected_label` | Each disabled state independently. |
+| `border`, `selected_border`, `disabled_border`, `disabled_selected_border` | Surface outlines; optional selected overrides permit inheritance. |
+| `padding`, `icon_size`, `icon_spacing`, `minimum_height` | Content and touch layout. |
+| `corner_radii`, `indication`, `selected_indication` | Shape and feedback for each selection state. |
+
+Material uses a 32-DIP minimum-height chip treatment; Flat uses a more compact 28-DIP baseline. Theme overrides change presentation only. There is no built-in trailing delete action in these constructors; use a separate action if removing a token is different from selecting it.

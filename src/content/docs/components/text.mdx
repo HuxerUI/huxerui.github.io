@@ -30,7 +30,7 @@ A mismatch between placeholders and arguments throws `std::invalid_argument`.
 
 ## Style
 
-`.Style(TextStyle)` supplies a complete font, color, decoration, and shaping style.
+`.Style(TextStyle)` supplies the complete base font, foreground color, and decoration. Use `.Shaping(...)` separately for direction and locale.
 Use `FontSize` or `Foreground` for focused overrides that should compose with the theme-resolved role style.
 
 ```cpp fragment
@@ -88,3 +88,20 @@ The example displays the requested URI; it does not open arbitrary external link
 `.Align(TextAlign)`, `.VerticalAlign(TextVerticalAlign)`, and `.Shaping(TextShapingOptions)` configure paragraph placement/direction. Vertical alignment changes placement in extra height, not the intrinsic text height. Text range offsets are UTF-16 code units, not UTF-8 bytes.
 
 Use `.SelectionBlock(id)` with a [SelectionArea source](/docs/components/selection-area/#virtual-document-selection) when selection must reach unrealized content.
+
+## Select the formatting boundary
+
+| Need | API |
+| --- | --- |
+| Display a resource without arguments | `Text(strings::title)`. |
+| Display formatted literal or resource text | `Text::Format(pattern_or_resource, arguments...)`. |
+| Obtain localized text for application logic or another API | `UseString(resource, arguments...)` during composition. |
+| Keep formatted resource text in an API accepting StringVariant | `StringVariant::Format(resource, arguments...)`. |
+
+The role-first Format overload takes `TextRole` before the literal/resource. Do not resolve a resource to an Asset or intermediate string merely to construct Text. A `State<T>` constructor reads its current printable value; it does not turn Text into an editor or emit changed events.
+
+## Paragraph and run responsibilities
+
+`Style(TextStyle)` replaces the base typography, while `Shaping(TextShapingOptions)` selects direction/locale and `Align(TextAlign)` positions paragraph content. `VerticalAlign(TextVerticalAlign)` needs extra assigned height to have an effect. Inline TextSpan styles inherit unspecified fields, so use run overrides for emphasis rather than rebuilding the entire paragraph style.
+
+`TextEvents::LinkActivated` reports a `TextLinkActivation`; it does not implicitly open an external browser. Treat link targets as untrusted input when routing or launching another application. Parser-generated style/link ranges must use UTF-16 offsets into the same text snapshot, not bytes from a UTF-8 source buffer. Changing styles alone should preserve the underlying text and link identities where appropriate.

@@ -32,7 +32,7 @@ An outside or platform-cancel request follows `BottomSheetOptions` rather than b
 
 ## Theme and environment
 
-`BottomSheetStyle` controls scrim, surface, top corners, shadow, drag-handle geometry, maximum width, and enter/exit animation. Content retains the environment captured at `Show` time.
+`BottomSheetStyle` controls scrim, surface, top corners, shadow, drag-handle geometry, maximum width, and enter/exit animation. Content uses the Environment captured by `UseBottomSheet()`.
 
 ## API
 
@@ -44,3 +44,15 @@ An outside or platform-cancel request follows `BottomSheetOptions` rather than b
 - `BottomSheetOptions` and `BottomSheetStyle`.
 
 See [Dialog](../dialog/) for centered modal presentation.
+
+## Size and close the sheet
+
+The sheet supplies a bottom-aligned surface rather than the standard title/message/actions of an alert. Your factory owns content padding, scrolling, and action layout. Bound-argument calls such as `sheets.Show(ShareContent, document)` retain copyable arguments; a context-aware function receives `BottomSheetContext` before those arguments.
+
+Both outside-press and cancel dismissal default to true. `on_dismiss_request`, if provided, handles a request instead of automatic dismissal. Explicit `Dismiss(id)` and `context.Dismiss()` return a boolean and are safe for a stale/exiting layer. They do not call the request handler as a completion notification. There is no `BottomSheetHandle::Update` overload; use State read by the content for live changes.
+
+## `BottomSheetStyle` fields
+
+`scrim`, `background`, `shadow`, and `corner_radii` define the barrier and bottom surface. `maximum_width` caps the sheet on large windows. `drag_handle`, `drag_handle_size`, and `drag_handle_padding` control the visible handle; transparent handle color hides it. `enter` and `exit` are independent `AnimationSpec` values, unlike Dialog's optional `PresentationMotion`.
+
+Do not infer configurable detents, nested scrolling handoff, or a persistent side panel from the handle's appearance. Those are not constructor options on this API. Use [DrawerLayout](/docs/components/drawer-layout/) for responsive side content.

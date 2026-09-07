@@ -62,3 +62,39 @@ View StatusCanvas() {
 ```
 
 The painter receives local size and emits platform-neutral commands. It does not own a platform canvas or world-coordinate transform.
+
+## Source paint versus geometry
+
+A Brush contains Color, LinearGradient, or RadialGradient. A VisualFill additionally permits image-backed surfaces; it is used by Background and component styles. Do not pass an ImageFill to a Brush-only path operation and assume the renderer will resolve a resource there. Resolve an image during composition when drawing it explicitly with PaintContext.
+
+Gradient stops require at least two ordered offsets in [0, 1]; equal offsets intentionally create a hard transition. LinearGradient's start/end and RadialGradient's center/radius use normalized destination coordinates. Radial radii must be positive. Their `transform` changes sampling coordinates, not the geometry being painted. Use PushTransform when the shape itself must move or rotate.
+
+ImageFill contains `source`, `fit`, `horizontal_alignment`, `vertical_alignment`, `sampling`, optional `tint`, and `opacity` in [0, 1]. Fit defaults to Fill. Vector tint and raster sampling have source-specific rules; see [Image](/docs/components/image/).
+
+## Drawing overloads and coordinate units
+
+| Operations | Inputs and important distinction |
+| --- | --- |
+| `DrawRect` | Rect, Brush, and optional CornerRadii. A Color/gradient converts to Brush. |
+| `DrawText` | Rect, string or AttributedText, TextStyle, TextLayoutOptions, optional paragraph offset. |
+| `DrawTextRun` / `DrawTextRuns` | Explicit run bounds and baseline origins; use when the caller already owns run positioning. |
+| `DrawImage` | Whole ImageAsset, VectorAsset, or shared ExternalTexture into a destination rectangle. |
+| `DrawImageRect` | A source subrectangle into a destination; source coordinates are intrinsic logical units, not encoded pixel coordinates. |
+| `DrawCircle`, `DrawLine`, `DrawArc` | Color-based primitives; line/arc take StrokeStyle, arc angles are radians. |
+| `DrawBorder` / `DrawShadow` | Rectangular border or shadow geometry; shadow offset, blur, and spread are separate values. |
+| `FillPath` / `StrokePath` | Path plus Brush and fill rule or stroke style; optional explicit brush bounds decouple gradient mapping from path bounds. |
+| `DrawPathShadow` | A path silhouette rather than a rectangular shadow. |
+| `PushClip` / `PushPathClip` | Intersect the recording clip with a rounded rectangle or path. |
+| `PushTransform` | Compose an affine transform for subsequent commands. |
+
+Raster/texture image overloads accept ImageSampling and opacity; vector overloads accept optional tint and opacity. Drawing an image rectangle does not apply ImageFit automatically: the caller already chose source/destination geometry.
+
+## Recording lifecycle
+
+Inside a Canvas callback, use the supplied context and balance every push with its corresponding pop. Runtime owns finishing that recording. When an extension/integration explicitly constructs `PaintContext(sequence, bounds)`, it owns one recording and must call Finish once; Finish validates balanced stacks and closes the context. Its bounds do not implicitly clip drawing.
+
+Do not retain a PaintContext beyond the callback, append to a finished one, or mutate resources referenced by immutable commands behind the renderer's back. PaintSequence's bounds are conservative damage information, not a per-pixel hit mask. For input, use the View's geometry and semantics rather than interpreting a sequence as an interactive scene graph.
+
+## Platform-renderer boundary
+
+RenderScene, RenderNode, RenderFrame, and FrameCommit are integration contracts, not values an application edits to move a component. Their borrowed pointers cannot be cached across Runtime frame construction. A renderer must handle every command variant, preserve clipping/transform balance, and respect group opacity and child ordering. Adding a PaintCommand therefore requires every renderer to implement it; ordinary application custom drawing should stay with Canvas, paths, and existing commands.

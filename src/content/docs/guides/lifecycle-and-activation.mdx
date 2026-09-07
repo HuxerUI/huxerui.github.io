@@ -118,6 +118,48 @@ File contents are asynchronous.
 Capture the `FileReference` in a task launched by `UseTaskScope()`, handle `FileResult` failure explicitly, and let scope unmount cancel the work.
 The [Files guide](/docs/guides/files/) covers that ownership path.
 
+## Read a file delivered by activation
+
+This complete component handles startup and later file requests with the same operation. It keeps the latest requested document authoritative by canceling the previous read's HuxerUI continuation:
+
+```cpp compile="activation-read-file"
+#include <huxerui/huxerui.h>
+
+#include <string>
+#include <variant>
+
+using namespace huxerui;
+
+Task<void> ReadActivatedText(FileReference file, State<std::string> content) {
+  content = "Opening " + file.Name();
+  auto result = co_await file.ReadStringAsync();
+  content = result.Succeeded() ? result.Value() : "Could not open file: " + result.Error().message;
+}
+
+[[huxerui::composable]]
+View ActivatedDocument() {
+  auto application = UseApplication();
+  auto tasks = UseTaskScope();
+  auto pending = UseState(TaskHandle{});
+  auto content = UseState<std::string>("Open a text file with this application");
+  auto open = [tasks, pending, content](const ApplicationActivation& activation) {
+    const auto* files = std::get_if<FileActivation>(&activation);
+    if (files == nullptr || files->files.empty()) {
+      return;
+    }
+    pending->Cancel();
+    pending = tasks.Launch(ReadActivatedText(files->files.front(), content));
+  };
+  Lifecycle([application, open] { open(application.StartupActivation()); });
+  application.OnActivation(open);
+  return ScrollView(SelectionArea(Text(content))).With(Padding(16.0F));
+}
+```
+
+The FileReference is copied into the coroutine so its provider authority survives the activation callback. This example chooses the first file and reads all its UTF-8 content; a production editor should explicitly decide how to handle multiple files and large/unsupported documents. A display name or `.txt` extension does not prove that the data is UTF-8. ReadStringAsync reports invalid encoding rather than silently converting it.
+
+Startup work runs from Lifecycle after commit, not while building the view. OnActivation receives only warm requests. This UI still needs file associations in the platform shell; declaring an activation callback does not register an Android intent filter or desktop file type. Use the platform example and registration instructions before testing “Open with” from another application.
+
 ## Observe foreground state
 
 `LifecycleState()` returns `Active`, `Inactive`, or `Background` and subscribes the composing scope to changes.

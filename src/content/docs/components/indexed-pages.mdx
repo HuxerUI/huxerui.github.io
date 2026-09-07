@@ -34,3 +34,9 @@ Declared by `<huxerui/view.h>`. Constructors accept an initializer list or vecto
 Offscreen retention is not disposal: lifecycle-owned work can remain active. Stop expensive work based on your application's selected-page state when necessary. Preserve stable page identity when pages reorder.
 
 The owner changes the index; there is no user-driven change event. Use [Pager](/docs/components/pager/) for swiping and transition motion, and [NavigationStack](/docs/components/navigation-stack/) for push/pop history.
+
+## Retention versus selection
+
+The four overloads combine `initializer_list<View>` or `vector<View>` with `std::size_t` or `const State<std::size_t>&`. No page factory or deferred loading is implied: the supplied pages are retained together. An empty page list and an out-of-range index are invalid configuration.
+
+Only the selected page contributes the presented layout. Changing to a taller page can change the container's intrinsic height; constrain the content area if the outer shell should stay stable. Offscreen page state survives selection changes, but removing a page ends its lifetime. Pass the selected state to pages whose work should pause while hidden. IndexedPages has no separate style, animation configuration, or OnChanged event.

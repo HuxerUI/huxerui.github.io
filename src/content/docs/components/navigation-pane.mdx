@@ -40,3 +40,18 @@ Each destination is a labelled semantic button with stable selected and disabled
 - Uses [NavigationBar](../navigation-bar/)'s `NavigationItem` values.
 
 See also [DrawerLayout](../drawer-layout/) and [responsive interfaces](../../layout/responsive-interfaces/).
+
+## Sizing and theme fields
+
+Declared in `<huxerui/navigation.h>`. Both modes accept the same initializer-list/vector and index/State constructor forms. The `expanded` argument changes presentation only; it does not mean a modal drawer is open. To put destinations in a dismissible or responsive side region, place the pane in `StartDrawer` and let `DrawerLayout` own that region's presentation.
+
+| `NavigationPaneStyle` fields | Use |
+| --- | --- |
+| `background`, `label_style`, `selected_content`, `disabled_content` | Pane and destination colors/typography. |
+| `compact_width`, `expanded_min_width` | Preferred compact width and expanded minimum width. |
+| `item_height`, `item_margin`, `item_padding` | Row height, outer spacing, and content inset. |
+| `icon_size`, `icon_spacing` | Icon geometry and label gap. |
+| `indicator`, `compact_indicator_size`, `indicator_corner_radius` | Selected surface; compact mode uses an icon-sized indicator. |
+| `indication`, `selection_animation` | State feedback and selection motion. |
+
+Keep the pane background transparent when it should share a drawer's surface. Copying a Flat style wholesale into a Material drawer also replaces its typography and geometry; prefer changing just the inherited fields you need.

@@ -26,8 +26,8 @@ Prefer local coordinates derived from the supplied `Size`; parent placement is a
 
 ## Updating a canvas
 
-Capture declarative values in the painter.
-When a captured `State` read changes, recomposition supplies a new painter and invalidates the canvas paint result.
+Read State during composition and capture the resulting declarative values in the painter.
+When those subscribed values change, recomposition supplies a new painter and invalidates the canvas paint result.
 For continuous visual motion, apply retained animation modifiers such as `Rotation(AnimateTo(...))` rather than updating state every display frame.
 
 ## Accessibility and input
@@ -49,3 +49,24 @@ Canvas(DrawChart)
 - Common modifiers: `Frame`, `Grow`, `ClipChildren`, transforms, `Semantics`.
 
 Read [Canvas, paint, path, and vector](/docs/guides/graphics/) for the full drawing surface.
+
+## Keep drawing deterministic
+
+The painter may be recorded again after size or declaration changes, or its recorded commands may be replayed without running it. Do not launch tasks, write State, increment a simulation clock, or acquire platform objects inside the callback. Capturing only a State handle and reading it later in paint is not a substitute for a composition-time subscription.
+
+```cpp compile="canvas-controlled-value"
+#include <huxerui/huxerui.h>
+
+using namespace huxerui;
+
+[[huxerui::composable]]
+View Meter(State<float> progress) {
+  const float value = progress;
+  return Canvas([value](PaintContext& paint, Size size) {
+    paint.DrawRect({0.0F, 0.0F, size.width, size.height}, Color::Rgb(225, 228, 235));
+    paint.DrawRect({0.0F, 0.0F, size.width * value, size.height}, Color::Rgb(92, 72, 180));
+  }).With(Frame{.width = 200.0F, .height = 12.0F});
+}
+```
+
+This small example assumes progress in [0, 1]; production code should validate or clamp its domain input. Prefer [ProgressBar](/docs/components/progress-bar/) for an actual progress control with built-in semantics and theme behavior. A Canvas has no content-derived intrinsic image size: give it meaningful constraints, and draw relative to the Size supplied at recording time.

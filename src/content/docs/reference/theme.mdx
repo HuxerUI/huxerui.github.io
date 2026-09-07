@@ -81,3 +81,36 @@ The theme supplies the normal component style; the explicit `Indication` replace
 ## Reusable surface values
 
 Where a component style exposes a surface, use its current typed `VisualFill`, `Border`, and `CornerRadii` fields rather than parallel color/width/radius values from older snippets. Not every numeric corner field was replaced: indicator/thumb geometry still follows the owning control's contract. Material and Flat also resolve `SnackBarStyle` alongside existing presentation styles.
+
+## Override one component style
+
+Copy the nearest style to preserve its existing theme family, change the fields you own, then provide the override to a child subtree:
+
+```cpp compile="component-style-override"
+#include <huxerui/huxerui.h>
+
+using namespace huxerui;
+
+[[huxerui::composable]]
+View CompactActions() {
+  ButtonStyle button = UseEnvironment<ButtonStyle>();
+  button.padding = EdgeInsets::Symmetric(12.0F, 6.0F);
+  button.minimum_height = 32.0F;
+  ThemeDefinition overrides;
+  overrides.Set(button);
+  return Theme(overrides, Row {
+    Button("Preview").OnClick([] {}),
+    Button("Export").OnClick([] {}),
+  }.With(Spacing(8.0F)));
+}
+```
+
+`ThemeDefinition()` starts with no overrides. `Set(value)` replaces that type's whole value and returns `ThemeDefinition&` for chaining; it does not merge individual struct fields. Unspecified types inherit from the surrounding environment. `ThemeDefinition(spec)` supplies a ThemeSpec, but does not derive a complete Material/Flat component family from changed colors by itself. Use `MaterialThemeDefinition(spec)` or `FlatThemeDefinition(spec)` when deriving a complete family.
+
+Component pages document the fields of their corresponding Style. Numbers in those fields are logical pixels except where named as fractions or durations. Defaults in a struct declaration describe a fallback, while an installed theme definition may override them. Reading `UseEnvironment<Style>()` obtains the effective style at the caller, before any provider returned by that caller.
+
+## Choose the lifetime of an override
+
+Create a family definition at the application theme boundary. Place local overrides around related controls; they continue to participate in normal environment subscriptions. Do not retain a reference returned by `UseTheme` or `UseEnvironment` in a delayed callback: copy the small configuration value if the callback needs a snapshot.
+
+Use component value/configuration methods for behavior and Theme for shared appearance. For example, `Slider::Step` changes accepted proposals while `SliderStyle::tick_size` only changes their marks. `TextField::LineLimits` enables multiline editing while a taller theme minimum height does not.

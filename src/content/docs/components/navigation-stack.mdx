@@ -8,6 +8,7 @@ description: Retain pages, push destinations, and model typed route history.
 ## Push local page factories
 
 ```cpp fragment
+[[huxerui::composable]]
 View HomePage() {
   auto navigation = UseNavigation();
   return Button("Open details").OnClick([navigation] {
@@ -65,3 +66,23 @@ Use labelled controls for push and pop actions, and keep route identity separate
 - `RouteNavigationController<Route>`: `Push`, `Pop`, `Replace`, `SetPath`, `CanPop`, `Depth`.
 
 See [Navigation and routing](../../guides/navigation-and-routing/) for browser URL integration.
+
+## Controller operations and route identity
+
+| Operation | Factory stack | Typed route stack |
+| --- | --- | --- |
+| `Push` | Retains a page factory and copied bound arguments. | Appends one Route value to the controlled path. |
+| `Pop() -> bool` | Removes the current destination when possible. | Removes the last route; false at the fixed root. |
+| `Replace` | Replaces the current page factory. | Replaces the last route; throws at the fixed root. |
+| `SetPath` | Not available. | Replaces the route sequence; an empty path returns to the fixed root. |
+| `CanPop` / `Depth` | Queries the connected stack. | Depth includes the root, so an empty path has depth one. |
+
+Route equality is destination identity for reconciliation. Put stable identifiers and parameters in the Route, not an open file grant, controller, or mutable View. Changing parameters that participate in equality can change retained page identity. `NavigationPath::Routes()` returns a read-only span: copy the path's values before replacing the owning State rather than retaining a span across mutation.
+
+`UseNavigation` chooses the nearest compatible stack; `UseRootNavigation` chooses the outermost compatible one. Typed and factory controllers are distinct, and a typed lookup must find the matching Route type. A missing compatible stack is a logic error. After disconnect, controller queries return zero/false, Pop returns false, and Push/Replace require a live stack.
+
+## Transition fields and page work
+
+`NavigationStyle::motion` is optional. Its `NavigationMotion` defines `entering_offset_fraction`, `covered_offset_fraction`, `entering_scale`, `covered_scale`, `entering_opacity`, `covered_opacity`, and independent `push` / `pop` AnimationSpecs. Offsets are fractions of page size, not DIPs. Set motion to `std::nullopt` to disable it rather than setting every field to a guessed neutral value.
+
+Covered page retention preserves local State; it does not imply that every external producer or task pauses. Tie expensive work to application-visible destination policy when it must stop offscreen. Browser history integration uses [BrowserNavigationStack](/docs/reference/navigation/), not serialization of factory captures.

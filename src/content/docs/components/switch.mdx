@@ -33,3 +33,23 @@ Switch role, checked state, label, focus, and activation semantics are provided 
 - Event: `.OnChanged(function)` with `bool`.
 - Theme style: `SwitchStyle`.
 - Common modifiers: `Enabled`, `Semantics`, `Opacity`.
+
+## Constructor and event details
+
+In namespace `huxerui`, `<huxerui/view.h>`, the four overloads take `(bool)`, `(const State<bool>&)`, `(StringVariant, bool)`, or `(StringVariant, const State<bool>&)`. `OnChanged(void(bool))` proposes the opposite checked value. Passing State does not install a write-back handler.
+
+Enter, Space, pointer activation, and accessibility activation use that same proposal. The unlabeled form needs `Semantics{.label = "…"}`. An asynchronous setting change should expose its pending state and disable repeated activation if appropriate; the switch itself has no loading or request ownership.
+
+## `SwitchStyle` fields
+
+| Fields | Effect |
+| --- | --- |
+| `width`, `height`, `corner_radius` | Track geometry. |
+| `minimum_interactive_height`, `state_layer_size` | Interaction and feedback area. |
+| `unchecked_track`, `checked_track`, `unchecked_track_border`, `checked_track_border` | Each track state's fill and outline color. |
+| `unchecked_thumb`, `checked_thumb` | Thumb colors. |
+| `disabled_unchecked_track`, `disabled_checked_track`, `disabled_unchecked_track_border`, `disabled_checked_track_border`, `disabled_unchecked_thumb`, `disabled_checked_thumb` | Disabled counterparts. |
+| `unchecked_thumb_radius`, `checked_thumb_radius`, `track_border_width` | State-dependent thumb and stroke geometry. |
+| `animation_duration` | Checked-state transition duration in seconds. |
+
+Material varies thumb size and outlines between states. Flat uses the same-radius thumb on a compact track. Override the style through Theme rather than attempting to replace the switch's internal children.

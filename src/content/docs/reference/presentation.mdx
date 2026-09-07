@@ -35,9 +35,17 @@ Each [presentation component page](../../components/dialog/) lists exact `Show`,
 ## Handle and environment contract
 
 `UseToast`, `UseDialog`, `UseBottomSheet`, `UsePopup`, and `UseMenu` return lightweight handles connected to the current Runtime.
-`Show` captures the current `Environment`, so theme and resource resolution follow the presenting subtree even though the layer is outside its layout tree.
+The `Use…` call captures the current `Environment` in the handle, so later `Show` calls resolve theme and resources from the presenting subtree even though the layer is outside its layout tree.
 Custom factories and captured arguments must be copyable because presentation may rebuild them.
 
 Modal surfaces trap focus and use barrier/cancel policy; anchored surfaces retain a `LayerAnchor` tied to the mounted anchor node.
-Calling a disconnected handle or updating an unknown layer is a logic error.
+Attaching through a disconnected LayerController is a logic error. Its `Update` returns false for a disconnected controller or stale identifier, and `Dismiss` returns false for stale/already-exiting entries. Do not treat a false update result as a successful replacement.
 Dismiss explicitly when application state no longer owns the surface; options determine outside-click and cancel behavior.
+
+## Ownership of a dismissal request
+
+`on_dismiss_request` is an owner callback **instead of** automatic removal, not an after-close observer. An explicit `Dismiss` bypasses that request path. For a declarative Dialog, the callback writes its `visible` State to false; for an imperative owner, it may dismiss the specific layer. Do not maintain a separate hidden/visible flag that contradicts the declarative input.
+
+`LayerOptions::barrier_color` and outside-press dismissal require `LayerPointerPolicy::Barrier`; invalid combinations and empty attach factories throw `std::invalid_argument`. `PassThrough` is for non-interactive overlays, `Content` hit-tests the layer's content, and `Barrier` blocks the rest of the viewport. `LayerCancelPolicy::Consume` handles cancel without removing content; `PassThrough` lets lower content respond.
+
+`LayerController::Update(id, content)` preserves options. `Update(id, options, content)` replaces both under the same identity. Keep layers window-scoped: a LayerId is not a globally persistent UI handle. Prefer the component pages for [Dialog](/docs/components/dialog/), [Popup](/docs/components/popup/), [Menu](/docs/components/menu/), [Toast](/docs/components/toast/), [SnackBar](/docs/components/snack-bar/), and [BottomSheet](/docs/components/bottom-sheet/) before building a custom layer service.

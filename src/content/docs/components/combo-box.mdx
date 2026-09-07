@@ -37,7 +37,7 @@ Supply the suggestions appropriate to the current query. The example deliberatel
 
 ## API
 
-Declared by `<huxerui/view.h>`. Value and source support controlled State forms.
+Declared by `<huxerui/view.h>`. The value accepts `TextEditingValue` or `State<TextEditingValue>`. Suggestions are an input range: read a State-held collection in composition and pass the collection, not a second editor-owned data store.
 
 - Field configuration: `Label`, `Placeholder`, `LeadingIcon`, `TrailingIcon`, `Variant`, `Align`, `MaxLength`, `Validation`, and `InputConfiguration`.
 - `EmptyContent(factory)` supplies content when there are no suggestions.
@@ -46,3 +46,28 @@ Declared by `<huxerui/view.h>`. Value and source support controlled State forms.
 - `ComboBoxStyle` owns theme appearance.
 
 This is a single-line, non-secure editor. IME composition takes precedence over suggestion acceptance; do not intercept Enter blindly. For multiline or secure input use [TextField](/docs/components/text-field/); for a non-editable value use [Select](/docs/components/select/).
+
+## Configuration signatures
+
+| Operation | Accepted value and behavior |
+| --- | --- |
+| `Label`, `Placeholder` | `StringVariant`, including direct string resources. |
+| `LeadingIcon`, `TrailingIcon` | `ImageVariant`; the trailing icon is decorative, not a separate action. |
+| `Variant` | `TextFieldVariant::Standard`, `Filled`, or `Outlined`. |
+| `Align` | `TextAlign` within the editable viewport. |
+| `MaxLength` | `std::size_t`, counted in grapheme clusters for direct edits. |
+| `Validation` | Complete `ValidationResult`; does not filter suggestions. |
+| `InputConfiguration` | Complete `TextInputConfiguration`; multiline, secure, read-only, and newline-action settings are rejected. |
+| `EmptyContent` | Nonempty `std::function<View()>` producing non-interactive empty-state content. |
+
+Plain string-like suggestion ranges and `initializer_list<StringVariant>` use built-in text rows. Domain ranges use `(value, range, text_factory, content_factory)`; the text factory must produce a StringVariant-compatible value and the content factory a View. Both forms accept a TextEditingValue or State-held value. Suggestion rows must not contain independent interactive controls.
+
+## Events, async suggestions, and empty results
+
+`OnChanged` takes `const TextEditingValue&`; `OnSelected` takes `std::size_t` and `const TextEditingValue&`; `OnSubmitted` takes no arguments; `OnExpandedChanged` takes `bool`. Every callback runs on the UI thread and is bound to the current declaration. Popup visibility/highlight belongs to the component, so ExpandedChanged is an observation rather than a setter to feed back.
+
+For server suggestions, update the complete editing value immediately, cancel the old search through TaskScope, and publish results only for the current query. An empty suggestion list is valid; provide `EmptyContent` if an open result surface should explain “No matches.” Do not replace an in-progress IME composition with a suggestion simply because a request completed.
+
+## Field and popup styling
+
+The editor uses `TextFieldStyle`, including the chosen variant, caret, and validation. `ComboBoxStyle` owns only the popup: `popup_background`, `foreground`, `active_item_background`, `item_padding`, `popup_padding`, `popup_shadow`, `minimum_item_height`, `maximum_popup_height`, `popup_corner_radii`, and `item_indication`. The height limit bounds scrolling; it does not truncate the suggestion collection.

@@ -39,3 +39,9 @@ A divider is decorative and does not expose an interactive semantic action.
 - Theme style: `DividerStyle` with `color` and `thickness`.
 
 See [Row](../row/) and [Column](../column/) for the parent layouts that give a divider its axis and available extent.
+
+## Axis and appearance
+
+`Divider(Axis::Horizontal)` and `Divider(Axis::Vertical)` describe the direction of the rule itself, not the direction in which neighboring content is laid out. The long dimension comes from the parent constraints or an explicit Frame; `DividerStyle::thickness` is the narrow dimension and `color` paints it.
+
+This is the entire component-specific API in `huxerui`, `<huxerui/view.h>`. It has no callback or controlled value. Theme supplies both fields; use a local DividerStyle override for a subtree rather than changing unrelated foreground text color. A menu section boundary should use `MenuSection`, which participates in menu normalization and theme policy, rather than a Divider inserted as a menu item.

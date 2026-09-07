@@ -26,7 +26,7 @@ Alert overloads accept title, message, positive action, optional negative action
 ## Present custom content
 
 Use a `ViewFactory` when the content is self-contained and `DialogFactory` when an action inside the dialog needs `DialogContext::Dismiss()`.
-The factory composes in the environment captured at `Show` time.
+The factory composes in the Environment captured by `UseDialog()`, including the presenting subtree's theme and resource context.
 
 ## Control dismissal and updates
 
@@ -50,3 +50,71 @@ The dialog exposes a dismiss action only when its cancellation policy allows dis
 - `DialogOptions`, `DialogStyle`, `DialogFactory`, and declarative `Dialog`.
 
 See [BottomSheet](../bottom-sheet/) for bottom-aligned modal content.
+
+## Standard actions close before calling you
+
+An alert action dismisses its layer **before invoking its nonempty callback**. Supplying a callback does not keep the alert open, and returning from the callback does not provide a validation result. The title and message must be nonempty; an omitted positive label uses the built-in localized default. The two-action overload requires the positive and negative label arguments before either callback.
+
+Use a standard alert for a decision whose answer immediately completes the prompt. For validation or a save request that must finish before closing, use custom content and call `DialogContext::Dismiss()` only when ready. Capture context values by value, not by reference to a factory-local variable.
+
+```cpp compile="dialog-draft"
+#include <huxerui/huxerui.h>
+
+using namespace huxerui;
+
+[[huxerui::composable]]
+View EditName(DialogContext dialog, State<std::string> name) {
+  const std::string initial = name;
+  auto draft = UseState(TextEditingValue::FromText(initial));
+  return Column {
+    Text("Rename", TextRole::Title),
+    TextField(draft)
+        .Label("Name")
+        .OnChanged([draft](const TextEditingValue& next) { draft = next; }),
+    Row {
+      Button("Cancel").OnClick([dialog] { dialog.Dismiss(); }),
+      Button("Save")
+          .OnClick([dialog, draft, name] {
+            name = draft->text;
+            dialog.Dismiss();
+          })
+          .With(Enabled(!draft->text.empty())),
+    }.With(Spacing(8.0F)),
+  }.With(Padding(24.0F), Spacing(12.0F));
+}
+
+[[huxerui::composable]]
+View RenameAction(State<std::string> name) {
+  auto dialog = UseDialog();
+  return Button("Rename").OnClick([dialog, name] {
+    dialog.Show(EditName, name);
+  });
+}
+```
+
+The draft belongs to this dialog's composition, not the underlying document. Cancel leaves the document unchanged. Bound factory arguments are copied into retained storage; the State copy still refers to the same application-owned value.
+
+## Dismissal policy versus explicit dismissal
+
+Imperative `DialogOptions` defaults both `dismiss_on_outside_press` and `dismiss_on_cancel` to true. A supplied `on_dismiss_request` handles those requests instead of automatic removal; it is not a notification after every way a dialog closes. Explicit `Dismiss(id)` and standard actions do not use that callback as a veto.
+
+The declarative `Dialog` modifier instead defaults both policies to false. When enabling either, provide `on_dismiss_request` and update the controlled `visible` value. Otherwise the declaration still asks for the dialog to remain open. Its content is a no-argument ViewFactory, not a DialogContext factory.
+
+`Update(id, factory)` preserves the layer identity and options while replacing custom content. `Update`/`Dismiss` return false for a stale layer rather than requiring a catch-and-retry loop. Dismissal may leave a non-interactive surface mounted until its exit animation ends.
+
+## `DialogStyle` reference
+
+| Fields | Responsibility |
+| --- | --- |
+| `scrim`, `background`, `shadow`, `corner_radii` | Modal barrier and surface treatment. |
+| `minimum_width`, `maximum_width`, `viewport_margin`, `placement` | Width limits and safe viewport placement. |
+| `title_style`, `message_style`, `content_padding`, `content_spacing`, `content_alignment` | Standard alert text layout. |
+| `positive_action_style`, `negative_action_style` | Standard action typography/foreground. |
+| `positive_action_background`, `negative_action_background` | Standard action fills. |
+| `positive_action_indication`, `negative_action_indication` | Standard action interaction visuals. |
+| `action_padding`, `minimum_action_height`, `action_corner_radii` | Standard action geometry. |
+| `action_layout`, `action_alignment`, `action_spacing` | Horizontal/vertical action arrangement, alignment, and gap. |
+| `action_separator_color`, `action_separator_thickness` | Standard action separators; zero thickness disables them. |
+| `motion` | Optional `PresentationMotion`; `std::nullopt` disables transitions. |
+
+Custom content owns its internal layout and child styles; changing standard title/action fields does not restyle an arbitrary custom View tree. See [theme overrides](/docs/reference/theme/#override-one-component-style) for inheriting a theme while changing selected fields.

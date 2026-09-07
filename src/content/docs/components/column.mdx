@@ -37,3 +37,11 @@ Children retain declaration order for layout, painting, hit testing, and semanti
 - Child metadata: `Grow`.
 
 Use [`Row`](/docs/components/row/) for horizontal placement and [`Flow`](/docs/components/flow/) when items should wrap.
+
+## Constraints and common mistakes
+
+Column is declared in `huxerui`, `<huxerui/view.h>`. Its inherited constructors accept a child vector or braced View/Views content, including an empty collection. It has no component-specific events or style struct; child controls resolve their own themes.
+
+`MainAlign(Start/Center/End/SpaceBetween/SpaceAround/SpaceEvenly)` positions children along the vertical axis; `CrossAlign(Start/Center/End/Stretch)` positions them horizontally. Extra space exists only when the parent gives the column more height than its content needs. Putting `MainAlign(Center)` on a content-height column will not center that column in the window.
+
+Use a bounded-height parent and `Grow()` on a scrollable child to build a header/body/footer layout. A Column inside a vertical ScrollView measures its full content height; a Spacer there has no useful finite remaining height to fill. Use `Spacing` for uniform sibling gaps and `Padding` for the container's inside edge.

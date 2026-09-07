@@ -35,3 +35,20 @@ The required `StringVariant` label becomes button semantics; add `Tooltip` when 
 - Theme style: `IconButtonStyle`.
 
 Use [`Button`](/docs/components/button/) when text is part of the visible action.
+
+## Size, state layer, and icon ownership
+
+The declared signature is `IconButton(ImageVariant icon, StringVariant semantic_label)` in `<huxerui/view.h>`, namespace `huxerui`. Image values are retained by the declaration; pass resources directly so resolution follows the active configuration. The semantic label can also be a string resource. `OnClick` accepts `void()`.
+
+| `IconButtonStyle` field | Effect |
+| --- | --- |
+| `foreground`, `disabled_foreground` | Icon tint for enabled and disabled states. |
+| `icon_size` | Visible image size. |
+| `minimum_interactive_size` | Minimum hit-target dimensions, separate from visible icon size. |
+| `state_layer_size` | Visible hover/pressed feedback area. |
+| `corner_radius` | State-layer rounding. |
+| `indication` | Optional interaction visual override. |
+
+Material uses a 48-DIP interactive target while displaying a smaller icon and state layer. A tight `Frame` can constrain that target, so do not size the whole control to the glyph merely to make the glyph smaller. Change `icon_size` through [the theme](/docs/reference/theme/#override-one-component-style) instead.
+
+For a toggle action, keep selection in application state and choose the icon/semantic label from that state, or use a selectable Chip. A tooltip supplements the accessible label; it does not replace the constructor's required label.

@@ -5,7 +5,7 @@ sidebar:
   order: 11
 ---
 
-`Image` displays an `ImageResource`, decoded `ImageAsset`, `VectorAsset`, or `ExternalTexture`.
+`Image` displays an `ImageResource`, raster `ImageAsset`, `VectorAsset`, or shared `ExternalTexture` stream.
 
 ```cpp fragment
 Image(app::images::cover)
@@ -33,7 +33,7 @@ Alignment controls where unused space or cropped content is anchored.
 ## Sampling and tint
 
 `.Sampling(...)` selects the raster sampling policy.
-`.Tint(Color)` recolors compatible raster or vector content and is useful for theme-owned icons.
+`.Tint(Color)` recolors vector content, including vector-backed image resources, and is useful for theme-owned icons. It is not a general raster recoloring operation.
 
 ## Accessibility
 
@@ -50,10 +50,24 @@ Image(app::images::status)
 
 ## API
 
-- Constructors: `Image(ImageResource)`, `Image(ImageAsset)`, `Image(VectorAsset)`, `Image(ExternalTexture)`.
+- Constructors: `Image(ImageVariant)` and `Image(std::shared_ptr<ExternalTexture>)`.
 - Fluent methods: `.Fit(ImageFit)`, `.Align(horizontal, vertical)`, `.Sampling(ImageSampling)`, `.Tint(Color)`.
 - Common modifiers: `Frame`, `CornerRadius`, `ClipChildren`, `Opacity`, `Semantics`.
 
 See [Resources and localization](/docs/guides/resources-and-localization/) and [ExternalTexture](/docs/components/external-texture/).
 
 The constructor accepts `ImageVariant`: ImageResource, ImageAsset, or VectorAsset. Pass a resource directly so the component owns context-sensitive resolution. Live content instead uses `std::shared_ptr<ExternalTexture>`.
+
+## Fit is not layout size
+
+| `ImageFit` | Result inside measured bounds |
+| --- | --- |
+| `Fill` | Scale each axis to fill the destination, allowing distortion. |
+| `Contain` | Preserve aspect ratio and keep the whole image visible. |
+| `Cover` | Preserve aspect ratio and cover the destination, cropping excess. |
+| `None` | Keep the source's intrinsic size. |
+| `ScaleDown` | Use intrinsic size when it fits; otherwise shrink while preserving aspect ratio. |
+
+Give a cover thumbnail a bounded Frame; `Cover` does not itself request a particular thumbnail size. `Align` accepts content alignment, not `Stretch`; use Fit to control scaling. Vector sources reject raster `Sampling` configuration, so do not apply one generic modifier chain blindly to every ImageVariant.
+
+Asset values carry their storage ownership into the declaration. A resource reference resolves against the current resource context; a pre-resolved asset is a chosen variant and does not redo resource selection by itself. Keep live producer lifecycle outside Image: displaying an ExternalTexture is not an instruction to start a camera or decoding thread.

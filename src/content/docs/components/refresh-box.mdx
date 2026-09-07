@@ -46,3 +46,20 @@ Declared by `<huxerui/view.h>`: `RefreshBox(View content, bool refreshing)` and 
 `RefreshBoxStyle` controls the theme's indicator and geometry. The child remains responsible for its scrolling content and bounded layout. Use ordinary state to retain fetched data.
 
 See [Tasks](/docs/guides/tasks/) for cancellation and [the live example](/examples/refresh_box/).
+
+## Pull, refresh, and completion
+
+The wrapper reacts to qualifying direct pull remaining at the leading scroll boundary. Ordinary wheel scrolling is not a request to refresh. Its accessibility refresh action uses the same `OnRefresh(void())` callback. The child can be a ScrollView, VirtualList, or another participating scroll subtree; RefreshBox does not replace its data source or scrolling policy.
+
+When a request arrives, set `refreshing = true` before launching asynchronous work. Clear it after success or handled failure. Programmatic `refreshing = true` is also useful for a visible Reload button and does not emit another OnRefresh. Keep errors separate from that bool so the indicator can settle while the page explains the failure.
+
+| `RefreshBoxStyle` field | Effect |
+| --- | --- |
+| `indicator` | ProgressCircleStyle for determinate pulling and indeterminate refreshing. |
+| `container_color`, `container_size` | Indicator backing surface and diameter. |
+| `pull_resistance` | Fraction of unconsumed direct pull retained as displacement. |
+| `maximum_pull_distance`, `trigger_distance` | Pull limit and release threshold. |
+| `refresh_distance` | Displacement retained while refreshing. |
+| `settle_motion` | TweenSpec for reveal/settlement. |
+
+Tune the threshold and maximum together. Changing these visuals does not alter request cancellation or the lifetime of the task that fetches the feed.

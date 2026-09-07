@@ -44,3 +44,50 @@ Use `Semantics{.hint = ...}` only when the visible label does not fully explain 
 - Theme style: `ButtonStyle`.
 
 Use [`IconButton`](/docs/components/icon-button/) for an icon-only action and [`Chip`](/docs/components/chip/) for compact action or selection tokens.
+
+## Configure size and appearance
+
+Declared in `<huxerui/view.h>`, namespace `huxerui`. The actual constructor is `explicit Button(StringVariant label)`; the string and resource forms above convert to that value. The declaration owns the label for its UI lifetime. `OnClick` accepts a `void()` callable and provides no automatic loading state or asynchronous completion tracking.
+
+| `ButtonStyle` field | Effect |
+| --- | --- |
+| `background`, `disabled_background` | Normal and disabled surface fills, including supported brush/image fills. |
+| `label_style`, `disabled_label` | Normal typography and disabled text color. |
+| `padding` | Space between the label and the control surface. |
+| `minimum_width`, `minimum_height` | Lower size preferences; parent constraints still apply. |
+| `corner_radii` | Per-corner surface geometry. |
+| `indication` | Optional interaction visual override. |
+
+Material supplies a 40-DIP minimum height and a rounded filled treatment. Flat uses its compact padding-based treatment. To customize a subtree, override `ButtonStyle` in its theme definition; see [style overrides](/docs/reference/theme/#override-one-component-style). Use `Frame` for application layout requirements, not a style override on every individual button.
+
+## Prevent repeated submission
+
+This complete component leaves the simulated work inside its composition lifetime. Use the same busy-state pattern around a real request:
+
+```cpp compile="button-busy"
+#include <huxerui/huxerui.h>
+
+#include <chrono>
+
+using namespace huxerui;
+
+[[huxerui::composable]]
+View SaveAction() {
+  auto busy = UseState(false);
+  auto tasks = UseTaskScope();
+  return Button(busy ? "Saving..." : "Save")
+      .OnClick([busy, tasks] {
+        if (busy) {
+          return;
+        }
+        busy = true;
+        tasks.Launch([busy]() -> Task<void> {
+          co_await Delay(std::chrono::milliseconds{300});
+          busy = false;
+        });
+      })
+      .With(Enabled(!busy));
+}
+```
+
+For fallible work, restore the busy state on both success and handled failure and show the error near the action. A button with no handler still looks and reads as a button; use `Enabled(false)` for an intentionally unavailable action.

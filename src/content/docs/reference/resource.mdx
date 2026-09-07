@@ -44,6 +44,7 @@ Factories: `FromFile`, `FromEncoded`, and `CopyEncoded`, each with optional scal
 
 using namespace huxerui;
 
+[[huxerui::composable]]
 View InboxSummary(int unread_count) {
   const StringResource title("app", "inbox_title");
   const ImageResource cover("app", "inbox_cover");
@@ -57,3 +58,13 @@ View InboxSummary(int unread_count) {
 ```
 
 `Text::Format` resolves text owned by `Text`; `UseString` resolves an immediate string for `Button`; `Image` receives its resource ID directly.
+
+## Buffer ownership and decoded text
+
+`RawAsset::FromBytes` accepts owned Bytes, `CopyBytes` copies a borrowed span, and `FromSharedBytes(owner, data, size, mime_type)` keeps a supplied owner alive while referencing its immutable byte region. The pointer must remain valid within that owner's lifetime; shared ownership does not freeze a mutable producer buffer for you.
+
+`Bytes()` and `AsStringView()` borrow storage from the asset. Keep the asset alive while using those views. `ToString()` creates an owned string. Raw text conversion does not apply localization, decode an arbitrary character set, or turn binary data into validated UTF-8; use [File::ReadString](/docs/reference/file/#read-write-and-export-contracts) when file UTF-8 validation is the intended operation.
+
+`ImageAsset::FromFile` reads a local encoded raster file, `FromEncoded` takes owned encoded Bytes, and `CopyEncoded` copies a span. These are encoded PNG/JPEG data, not raw RGBA pixels. Scale is the logical density: intrinsic DIPs derive from pixel dimensions divided by scale. Resource selection and density handling should remain with ImageResource when using packaged variants.
+
+`StringVariant` retains string ownership; a string_view constructor is not a promise to borrow the caller's storage indefinitely. Literal Format and resource formatting serve different consumers. Prefer a generated ID over spelling ResourceId domain/key strings throughout UI, and keep locale-dependent resolution in composition so the owning scope can observe context changes.

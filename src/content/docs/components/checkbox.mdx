@@ -36,3 +36,20 @@ Checkbox role, checked state, label, focus, and activate action are exposed auto
 - Theme style: `CheckboxStyle`.
 
 Use [`RadioButton`](/docs/components/radio-button/) for one choice in a mutually exclusive group and [`Switch`](/docs/components/switch/) for an immediately applied setting.
+
+## Value and label contract
+
+The four overloads in `<huxerui/view.h>` accept `(bool)`, `(const State<bool>&)`, `(StringVariant, bool)`, and `(StringVariant, const State<bool>&)`. They all declare the same controlled boolean. There is no indeterminate/three-state overload. A group-level “partially selected” indicator needs a separately designed control rather than a third boolean interpretation.
+
+`OnChanged` accepts `void(bool)` and proposes the inverse of the current checked value. Keyboard and accessibility activation follow the same path. For the unlabeled form, provide an accessible name with `Semantics{.label = "…"}`; nearby text is not automatically a semantic label.
+
+| `CheckboxStyle` field | Effect |
+| --- | --- |
+| `size` | Visible box dimensions. |
+| `minimum_interactive_size`, `state_layer_size` | Hit-target and feedback dimensions, independently of the box. |
+| `checked_background`, `checkmark` | Selected fill and mark. |
+| `unchecked_border` | Unselected outline, including its stroke. |
+| `disabled_checked_background`, `disabled_checkmark`, `disabled_unchecked_border` | Disabled counterparts. |
+| `corner_radii` | Box corners. |
+
+Material enlarges the interactive/state-layer area around its box; Flat uses a compact baseline. Keep boolean state even while disabled; `Enabled(false)` changes availability, not the application's saved choice.

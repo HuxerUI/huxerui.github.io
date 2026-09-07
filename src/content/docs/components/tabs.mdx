@@ -53,3 +53,24 @@ Tabs expose tab-list, tab, selected, disabled, focus, and activation semantics.
 - `TabItem`: label, icon plus label, `IconOnly`, and `.Enabled(bool)`.
 - Event: `.OnChanged(function)` with `std::size_t`.
 - Theme style: `TabsStyle` and `TabIndicatorSizing`.
+
+## Size the tab list and indicator
+
+The constructor owns its item declarations, not the pages they describe. Label collections accept an initializer list or vector of `StringVariant`; richer collections accept a vector of `TabItem`. Both take an index or `const State<std::size_t>&`. `TabItem::IconOnly(ImageVariant, StringVariant)` keeps an accessible label without visible text. `Enabled(false)` belongs to one item; `Enabled(false)` on the Tabs view disables the entire control.
+
+| `TabsStyle` fields | Use |
+| --- | --- |
+| `background`, `label_style`, `selected_label`, `disabled_label` | Surface and text states. |
+| `item_padding`, `minimum_item_width`, `minimum_height` | Item sizing within parent constraints. |
+| `icon_size`, `icon_spacing` | Icon dimensions and distance to label. |
+| `expand_items` | Share available width between items instead of using their content widths. |
+| `indicator`, `indicator_sizing`, `indicator_min_width` | Indicator color and horizontal extent. |
+| `indicator_height`, `indicator_corner_radius` | Indicator thickness and rounding. |
+| `divider_color`, `divider_height` | Baseline under the tabs. |
+| `indication`, `indicator_animation_duration` | Interaction feedback and indicator transition time in seconds. |
+
+A short Material-style indicator uses `Content`; changing the whole tab width is not necessary. A `Frame` controls the list's layout allocation, while the style controls the indicator inside that allocation. Copy the inherited style before changing a field so light/dark colors and unrelated theme choices survive; see [style overrides](/docs/reference/theme/#override-one-component-style).
+
+## Retain page state deliberately
+
+Conditional content in the example replaces the inactive page. Use [IndexedPages](/docs/components/indexed-pages/) with the same selected index to retain page scopes, or [Pager](/docs/components/pager/) to add a swipe gesture. In the Pager case, handle both components' `OnChanged` events by writing the same authoritative State. Tabs neither mounts pages nor pushes navigation history by itself.

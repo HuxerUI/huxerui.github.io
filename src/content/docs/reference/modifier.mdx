@@ -49,3 +49,28 @@ Moving or conditionally inserting retained modifiers can therefore replace an ex
 `Background` paints behind node content, `Foreground` changes the content foreground color, and indication layers choose behind- or above-content placement.
 `FocusRing` is a style value used by themes and controls, not a standalone `ViewModifier`.
 `NodeExtension` is an extension API; application components normally prefer property modifiers, typed events, `Lifecycle`, and built-in indication.
+
+## Extension callbacks and invalidation
+
+| Callback or operation | What its owner must do |
+| --- | --- |
+| Constructor / `Update(ViewNode&, const Modifier&)` | Retain owned configuration; preserve compatible transient state during Update. |
+| `OnFrame(ViewNode&, FrameInfo)` | Advance retained state; return `needs_frame` or an optional `wake_after` in seconds. |
+| `InvalidatePaint(PaintInvalidation)` | Mark recorded output dirty when a visual input changes; scheduling alone does not do this. |
+| `PrepareGeometry(ViewNode&, TextMeasurer&)` | Reconcile geometry-dependent inputs and return affected paint phases; borrow the measurer only during the call. |
+| `PaintBehindContent` / `PaintAboveContent` | Record output in node-local coordinates without changing the tree. |
+| `OnInteraction` | Observe current InteractionState and an optional event; do not invent a parallel pressed-state owner. |
+| `OnPreScroll` / `OnPostScroll` | Consume only a finite, same-direction amount no larger than the available delta. |
+| `OnPreFling` | Apply the corresponding consumption rule to available release velocity. |
+
+`FrameInfo::timestamp` is monotonic seconds, `delta_time` is the Runtime-clamped interval, and `reduced_motion` asks visual motion to settle. `FrameResult::wake_after` is for sparse updates; do not request continuous frames for a static decoration.
+
+`PaintInvalidation::Content` invalidates behind-content recording, `Foreground` above-content recording, `Both` both, and `None` neither. These are recording phases, not a request to mutate a text's Foreground color. Compatible extension reuse follows modifier type and position; destructor cleanup releases subscriptions or owned resources when that attachment ends.
+
+See [the complete retained modifier](/docs/guides/extensions/#retain-node-local-behavior-with-nodeextension) before implementing a custom descriptor. The public automatic nested Extension pattern requires no application access to `detail::ModifierDescriptor`.
+
+## Build interaction visuals without another state store
+
+Use a base Background/Border/CornerRadius for normal appearance. Indication's optional `focus`, `hover`, and `press` layers describe state-dependent visuals; `ripple` adds color-based expansion feedback. Omitting a layer means no visual for that state, not an inverted-state selector. Selected or checked appearance comes from the controlled component/style, not a hidden selection flag in Indication.
+
+Each IndicationLayer can override `fill`, `border`, and `corner_radii`, choose `placement`, and specify `enter` / `exit` AnimationSpecs. `geometry.layer_size` changes the visual footprint without changing measured layout; `clip_corner_radii` controls clipping of that footprint. `RippleEffect` uses a Color and separate `expansion` / `fade_out` specs, not an arbitrary image fill. Foreground remains a content Color; use a VisualFill in a surface layer for gradients or images.

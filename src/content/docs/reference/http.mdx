@@ -96,3 +96,26 @@ Task<void> CountResponse(std::shared_ptr<HttpClient> http, State<std::string> st
 ```
 
 Launch this task from an event through `TaskScope`. Keeping `opened` alive keeps its referenced stream alive, so no ownership transfer is needed. Chunks are 1 byte through 64 KiB and do not preserve UTF-8, JSON, or record boundaries. Decode incrementally or collect bytes under an application size limit. Browser requests remain subject to CORS and server policy.
+
+## Validate requests and classify outcomes
+
+HttpClient validates a declaration synchronously before returning a Task. The URL must be absolute HTTP/HTTPS; GET and HEAD must not carry a body. Header names must be valid nonempty HTTP tokens, and values must not contain NUL, CR, or LF. A specified timeout must be positive. These are caller errors, not `HttpErrorCode::Transport` results to retry unchanged.
+
+| Outcome | Application handling |
+| --- | --- |
+| `HasResponse()` with expected 2xx status | Consume/decode the body under application limits. |
+| Response with 4xx/5xx status | Handle protocol/application failure; a response is not necessarily success. |
+| `HttpErrorCode::Transport` | Connection, TLS, loading, or protocol failure before the requested result. |
+| `HttpErrorCode::Timeout` | The complete operation exceeded its deadline. |
+| `HttpErrorCode::Unsupported` | The adapter cannot provide this capability; choose a feature fallback. |
+| Task cancellation | No normal completion or cancellation exception; the task owner updates UI policy. |
+
+`timeout` covers redirects and streamed body consumption, not just opening the connection. Setting it to `std::nullopt` removes HuxerUI's deadline, not platform or network failures. The final response URL can differ after redirects; do not assume it is the original origin when applying application policy.
+
+## Body and progress ownership
+
+HttpRequest owns a `Bytes` body; encode JSON or form data and supply the corresponding Content-Type yourself. Buffered response bodies occupy memory until released. Choose `SendStream` for large/unknown bodies, enforce an application byte limit, and stop reading when the response is not useful. Destroying the unfinished stream cancels its remaining work.
+
+Progress callbacks run on the UI thread. Keep them short, update only meaningful UI state, and do not perform synchronous disk writes in them. `total_bytes` is optional; transferred bytes are useful even when a percentage is not. Never infer a completed document from a progress value alone—wait for the buffered result or stream EOF.
+
+Retries, authentication refresh, response parsing, and caching belong to application policy. Retry only operations safe to repeat; cancellation or a transport failure does not prove that a POST had no effect. Do not wrap HTTP in a worker or add a second callback-dispatch layer around its Task continuation.

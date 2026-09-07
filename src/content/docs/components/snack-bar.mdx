@@ -37,3 +37,15 @@ Declared by `<huxerui/presentation.h>`.
 - `SnackBarStyle` belongs to the current theme.
 
 Labels accept `StringVariant`, including string resources. Keep essential application state outside the presentation; an action is not guaranteed to be invoked before dismissal.
+
+## `SnackBarStyle` fields
+
+| Fields | Use |
+| --- | --- |
+| `background`, `message_style` | Message surface and typography. |
+| `padding`, `content_spacing`, `minimum_height`, `maximum_width` | Content inset, message/action gap, and surface sizing. |
+| `shadow`, `corner_radii`, `viewport_padding`, `motion` | Surface treatment, safe-edge spacing, and optional transitions. |
+| `action_text_style`, `action_background`, `action_indication` | The action's typography, fill, and interaction states. |
+| `action_padding`, `action_minimum_height`, `action_corner_radii` | The action's geometry. |
+
+A specified duration must be finite and positive. For an indefinite request, use `SnackBarOptions{.duration = std::nullopt}` and keep a dismiss path. The action callback is a command, not a boolean permission to close; the service closes its request first. A newer request does not queue behind the old one, so do not use SnackBar as an audit log or transaction queue.

@@ -37,3 +37,23 @@ View MeetingTime() {
 Locale chooses hour-cycle and text direction. Keep scheduling rules and date/timezone conversion in application code; the picker does not infer them from display text.
 
 See [DatePicker](/docs/components/date-picker/) for the corresponding calendar value.
+
+## Local clock selection
+
+TimePicker is inline clock-face content. To collect a confirmed value, place it inside a Dialog or BottomSheet with a draft `State<std::chrono::minutes>` and explicit Apply/Cancel actions. A value such as `9h + 30min` always means 09:30 local clock time; choosing a 12-hour locale changes presentation, not the stored number.
+
+`DisabledTimes` receives `std::chrono::minutes` and returns true for an unavailable choice. `OnChanged` receives the same type by value. A step that is zero, exceeds one hour, or does not divide one hour is invalid; invalid or off-step controlled values are not silently repaired. Domain feedback belongs to `Validation`, independently of disabling choices.
+
+## `TimePickerStyle` fields
+
+| Fields | Effect |
+| --- | --- |
+| `background`, `dial_background`, `border`, `corner_radii`, `padding` | Outer and clock surfaces. |
+| `foreground`, `disabled_foreground`, `selected_background`, `selected_foreground`, `hand` | Clock text, selection, and hand colors. |
+| `field_background`, `selected_field_background`, `selected_field_foreground`, `field_corner_radii` | Hour/minute field states. |
+| `selected_period_background`, `selected_period_foreground`, `period_border`, `period_corner_radii` | AM/PM group appearance. |
+| `header_style`, `period_style`, `dial_style`, `label_style` | Typography by role. |
+| `dial_size`, `header_height`, `field_width`, `separator_width`, `content_spacing` | Main layout dimensions. |
+| `period_width`, `period_spacing` | AM/PM dimensions; the group is omitted in a 24-hour locale. |
+| `selection_radius`, `hand_width` | Clock marker and hand geometry. |
+| `label_spacing`, `validation_error`, `validation_text_style`, `validation_spacing` | Label and validation feedback. |

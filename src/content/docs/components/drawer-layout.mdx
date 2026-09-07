@@ -39,3 +39,21 @@ Navigation content should use controls such as `NavigationPane`, while custom dr
 - `DrawerStyle` and `DrawerMotion` configure responsive placement and motion.
 
 See [NavigationPane](../navigation-pane/) for typical drawer content.
+
+## Responsive policy and controlled modal state
+
+| Viewport class | Start drawer preference | End drawer preference |
+| --- | --- | --- |
+| Compact | Modal | Modal |
+| Medium | Inline | Modal |
+| Expanded | Inline | Inline |
+
+Available layout width can override these preferences. Inline drawers first shrink from `preferred_width` toward `minimum_width` while preserving `minimum_content_width`. If both cannot fit, the end drawer falls back to modal first. This prevents a large window's narrow nested layout from consuming all its content space.
+
+Inline presentation is automatically visible; `.Open(...)` is the controlled **modal** request, not a command to hide a persistent region. Resizing should not require setting both booleans to true. Preserve the values for when that side returns to modal placement. An outside gesture or cancel request must be written back through `OnOpenChanged`.
+
+## `DrawerStyle` reference
+
+`background` applies to the drawer surface. `scrim`, `shadow`, and `corner_radius` belong to modal presentation; inline drawers are flat and rectangular. `preferred_width`, `minimum_width`, and `minimum_content_width` define the responsive budget. `modal_content_reveal` reserves visible main content beside a modal drawer, and `edge_drag_width` defines its edge gesture region. Optional `motion` contains independent `DrawerMotion::open` / `close` animation specs.
+
+Content remains in the application tree; a responsive mode change is not a request to replace its stateful subtree. Keep the drawer declarations stable and update their inputs. Do not build a second copy of the same destination pane in a separate Dialog to emulate the modal mode.

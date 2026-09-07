@@ -36,3 +36,19 @@ Material and Flat themes can choose different sweep or segmented motion.
 - Theme style: `ProgressBarStyle` and `ProgressBarIndeterminateMotion`.
 
 Use [ProgressCircle](../progress-circle/) when a compact circular indicator fits the surrounding layout better.
+
+## Complete style surface
+
+All constructors are in `huxerui`, `<huxerui/view.h>`. `ProgressBar()` means unknown completion; `ProgressBar(0.0F)` means known zero completion. Supplying a value does not install a timer or change handler. Feed a fraction, not a percentage: 35 percent is `0.35F`.
+
+| `ProgressBarStyle` field | Effect |
+| --- | --- |
+| `width`, `height` | Preferred linear dimensions. |
+| `track_color`, `indicator_color` | Unfinished and completed/animated parts. |
+| `corner_radius`, `track_gap` | Rounded segment ends and separation. |
+| `stop_indicator_size` | Endpoint marker size; zero hides it. |
+| `indeterminate_motion` | `Sweep` for a moving segment or `Segmented` for the built-in multi-segment sequence. |
+| `indeterminate_fraction` | Moving width for Sweep; Segmented defines its own extents. |
+| `animation_duration` | Indeterminate cycle duration in seconds. |
+
+Material selects segmented motion, gaps, and an endpoint marker; Flat selects a simple sweep. Use the same component identity when switching from unknown to known progress. The task/request owns cancellation and errors; pair the indicator with status text and a separate Cancel action rather than encoding errors as negative progress.

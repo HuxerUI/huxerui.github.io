@@ -25,7 +25,7 @@ IconButton(images::more, "More actions")
     })
 ```
 
-Leaf items contain a callback; parent items contain `std::vector<MenuEntry>` children. Icons may be `ImageResource` or `ImageAsset`. `.Enabled(bool)` and `.Checked(bool)` add state without changing entry structure. `MenuSection` marks a logical boundary; the active theme decides whether and how to draw separators.
+Leaf items contain a callback; parent items contain `std::vector<MenuEntry>` children. Icons use `ImageVariant`, including `ImageResource`, `ImageAsset`, and `VectorAsset`. `.Enabled(bool)` and `.Checked(bool)` add state without changing entry structure. `MenuSection` marks a logical boundary; the active theme decides whether and how to draw separators.
 
 ## Size and place the menu
 
@@ -46,3 +46,24 @@ Checked, disabled, and expanded submenu state is exposed to assistive technology
 - `MenuEntry`, `MenuSection`, `MenuOptions`, `MenuStyle`, and `MenuSeparatorMode`.
 
 See [Popup](../popup/) for arbitrary anchored content.
+
+## State and command lifetime
+
+The menu takes a snapshot of its ordered entries when shown. `Checked(false)` opts into a visible unchecked state; omitting `Checked` means the entry has no check state. A checked entry does not automatically toggle application State. Its callback performs that change, and the next `Show` builds entries from the new value. `IconTint(Color)` overrides the theme tint for one item.
+
+Capture command inputs by value when callbacks outlive the event that opens the menu. Use domain identifiers rather than references to a temporary row or a vector element that might move. `Dismiss(id)` closes the matching root menu and its submenu chain and returns false for a stale request. There is no menu `Update` operation.
+
+`Show` needs the handle's anchor modifier on a mounted View; `ShowAt` takes a point in window DIPs rather than screen pixels. `MenuOptions` contains `placement`, `gap` (4 DIPs), `viewport_margin` (8 DIPs), `offset`, optional `width`, outside/cancel dismissal (both true), and `on_dismiss_request`. The request callback handles outside/cancel policy; it is not an action-selection event.
+
+## `MenuStyle` fields
+
+| Fields | Use |
+| --- | --- |
+| `background`, `foreground`, `icon_tint` | Surface, label, and icon colors. |
+| `item_indication` | Hover, press, focus, and disabled visuals. |
+| `minimum_width`, `minimum_item_height` | Natural menu/item sizing floor. |
+| `content_padding`, `item_padding`, `item_content_spacing`, `icon_size` | Surface inset and row composition. |
+| `separator_mode`, `separator_color`, `separator_thickness`, `separator_padding` | Section/item separator policy and geometry. |
+| `shadow`, `corner_radii`, `motion` | Surface outline treatment and optional transitions. |
+
+`MenuSeparatorMode::BetweenSections` respects logical `MenuSection` markers, `BetweenItems` separates adjacent items, and `None` paints none. Do not emulate a separator with a tall empty MenuItem: that adds an action-shaped row instead of a semantic boundary.

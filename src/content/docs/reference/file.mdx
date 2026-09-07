@@ -66,7 +66,7 @@ View OpenTextButton(State<std::string> content) {
 ```
 
 Resolve services and task scope during composition before capturing them in an event.
-Picker cancellation is represented by an empty optional. A returned `FileReference` preserves provider authority without inventing a local path.
+An empty optional means no file was delivered: cancellation, denial, failure, and an unsupported host are not distinguished by this result. A returned `FileReference` preserves provider authority without inventing a local path.
 
 ## Directories and access-bearing paths
 
@@ -107,3 +107,47 @@ View FileDropArea(State<std::string> status) {
 `Entered/Moved/Exited` report hover; Exited also occurs at physical drop and does not imply cancellation. Deferred `Dropped` delivers a complete batch after validation; `Failed` reports preparation failure without partial delivery. Handlers run on the UI thread and do not run after unmount. Copy FileReference values if retaining them beyond a handler.
 
 A drop does not read/import the content or grant write permission. Always provide an equivalent FilePicker button for touch, keyboard, accessibility, and unsupported hosts. Use [DragSource/DropTarget](/docs/reference/gesture/) for typed in-process transfers.
+
+## Path operations are not access grants
+
+File stores an absolute, lexically normalized path; `Path()` uses UTF-8 with forward slashes. Construction, `Child`, `Resolve`, `Parent`, and `ToUri` do not create/open an entry or grant permission. `Child(name)` accepts one nonempty segment, rejecting `.` and `..`; `Resolve(relative_path)` accepts multiple segments and can escape the base with `..`. Neither is a symbolic-link containment check for untrusted input.
+
+`Exists`, `IsFile`, and `IsDirectory` collapse query failures to false. Use `Stat`/`StatAsync` when an error category matters. Metadata is best-effort and can change before the next operation; an existence check is not protection from a race.
+
+## Read, write, and export contracts
+
+ReadBytes/ReadString return `FileResult<T>`; an empty file is successful empty data. Text reads validate UTF-8, strip one leading UTF-8 BOM, and preserve newlines. Binary data, UTF-16, or a legacy encoding should not be fed to ReadString and treated as an empty document on error.
+
+Write/append operations return bool, not FileResult. A write creates or truncates the target, requires an existing parent, and is not atomic. Failure/cancellation may leave partial output. Async inputs are owned by the Task; synchronous spans/views are borrowed only for the call. Prefer asynchronous operations from UI work, and use them for Web persistent paths where persistence requires the async path.
+
+`FilePicker::SaveFileAsync(source, options)` exports an **existing local file**; it does not return a writable destination path. Prepare the source first, then show the picker. The source remains in place. A false result is not enough to claim the user explicitly canceled.
+
+```cpp compile="file-export-text"
+#include <huxerui/huxerui.h>
+
+#include <memory>
+#include <string>
+
+using namespace huxerui;
+
+Task<void> ExportText(std::shared_ptr<FilePicker> picker, File prepared, std::string text,
+                      State<std::string> status) {
+  if (!picker->CanSaveFiles()) {
+    status = "Export is unavailable on this host";
+    co_return;
+  }
+  if (!co_await prepared.WriteStringAsync(text)) {
+    status = "Could not prepare the export";
+    co_return;
+  }
+  const bool exported = co_await picker->SaveFileAsync(prepared, {
+      .suggested_name = "notes.txt",
+      .filter = {.name = "Text", .extensions = {"txt"}, .content_types = {"text/plain"}},
+  });
+  status = exported ? "Exported" : "No export completed";
+}
+```
+
+The caller supplies an application-owned temporary File with an existing parent and launches this task through its TaskScope. Give concurrent exports different temporary paths and clean them up through their owning storage policy. Do not delete the prepared file before the picker finishes or assume a canceled write rolled back.
+
+`ImportToAsync` copies a provider file into local storage; `ReplaceWithAsync` writes an existing writable provider reference from a local source. These are distinct from picking a new destination. Keep the FileReference alive for as long as its provider grant or temporary ownership is needed.

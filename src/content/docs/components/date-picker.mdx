@@ -29,10 +29,29 @@ Construct with a date or `State<year_month_day>`. The date must be valid and wit
 
 `.DisabledDates(predicate)` rejects particular user choices, for example holidays. It does not automatically rewrite an already-controlled value; the application decides how to handle previously accepted dates that later become unavailable.
 
-`.OnChanged(handler)` proposes a date. Write it back to keep the field and popup in agreement. Use `.Validation(result)` for domain feedback independently of date availability.
+`.OnChanged(handler)` proposes a date. Write it back to keep the calendar selection in agreement. Use `.Validation(result)` for domain feedback independently of date availability.
 
 ## Locale and theme
 
-`.Label(StringVariant)` accepts literal or resource text. Locale controls date presentation; `DatePickerStyle` controls the field and calendar surface. Do not encode an application's display format as a different underlying date type.
+`.Label(StringVariant)` accepts literal or resource text. Locale controls date presentation; `DatePickerStyle` controls the calendar surface. Do not encode an application's display format as a different underlying date type.
 
 Use [TimePicker](/docs/components/time-picker/) for time-of-day, and combine both controlled values explicitly when a scheduling workflow needs them.
+
+## Embed a calendar or present one
+
+DatePicker is inline calendar content. Put it in a Dialog or BottomSheet yourself when the workflow needs an explicit opening action. For Cancel/Apply behavior, edit a draft date in the presentation's scope and copy it to the saved date only on Apply. Direct OnChanged write-back instead makes every accepted calendar choice immediate.
+
+`Range`, `Minimum`, and `Maximum` take valid `year_month_day` values, and use inclusive bounds. `DisabledDates` takes `bool(year_month_day)`; true means unavailable. Keep this predicate synchronous and inexpensive because calendar cells consult it during UI work. Store downloaded availability in State and let a recomposition use that snapshot.
+
+## `DatePickerStyle` fields
+
+| Fields | Effect |
+| --- | --- |
+| `background`, `border`, `corner_radii`, `padding` | Whole calendar surface. |
+| `foreground`, `secondary_foreground`, `disabled_foreground` | Main, supporting, and disabled text. |
+| `selected_background`, `selected_foreground`, `hover_background`, `selection_corner_radius` | Day state visuals. |
+| `title_style`, `weekday_style`, `day_style`, `label_style` | Typography by calendar role. |
+| `cell_size`, `column_spacing`, `row_spacing`, `header_height` | Calendar grid geometry. |
+| `label_spacing`, `validation_error`, `validation_text_style`, `validation_spacing` | External label/error layout. |
+
+Theme choice changes these values, not the calendar's data type or availability policy. Allow enough width for seven day columns; an arbitrarily narrow Frame is not a compact-month mode.

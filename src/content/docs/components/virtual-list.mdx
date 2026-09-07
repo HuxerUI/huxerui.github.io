@@ -40,3 +40,21 @@ VirtualList emits collection and realized item semantics without materializing o
 - Controller alignment: `ScrollAlignment::Start`, `Center`, or `End`.
 
 Use [`ScrollView`](/docs/components/scroll-view/) for a small heterogeneous document and [`VirtualGrid`](/docs/components/virtual-grid/) for multiple columns.
+
+## Constructor and configuration details
+
+`VirtualList(range, View(item))` stores the logical item source; the State-range form observes it. `VirtualList(count, View(std::size_t index))` is useful when data is already indexed elsewhere. Captured values must remain valid for deferred item creation. Constructors and methods are declared in `huxerui`, `<huxerui/view.h>`.
+
+| Method | Contract |
+| --- | --- |
+| `ScrollAxis(Axis)` | Vertical by default; Horizontal uses widths as item extents. |
+| `ItemExtent(float)` | Positive fixed extent for every item. |
+| `EstimatedItemExtent(float)` | Positive initial estimate for variable measured extents. |
+| `CacheExtent(float)` | Nonnegative extra realization distance around the viewport. |
+| `Controller(ScrollController)` | Connects stable metrics and scroll operations. |
+
+Give the list a finite viewport and avoid nesting it in an unbounded ScrollView on the same axis. Fixed extents must match the intended row layout; estimates are refined as rows are measured. `ScrollToItem(index, Start/Center/End)` targets logical indices, and variable measurement may refine the offset after the request. A newer scroll request or direct manipulation cancels that pending alignment.
+
+## Offscreen lifetime
+
+Virtualization can release item subtrees outside the realized/cache range. Stable keys preserve identity across compatible reconciliation, but are not an unlimited offscreen state store. Keep editable record data in the owning collection, not only in a row's UseState. Lifecycle-owned row work may stop when that row is released; application-wide work needs a longer-lived owner.
