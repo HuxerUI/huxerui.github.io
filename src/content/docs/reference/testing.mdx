@@ -1,0 +1,51 @@
+---
+title: UI testing API
+description: Query, interact with, and inspect a real Runtime without opening a native window.
+---
+
+Explicitly include `<huxerui/testing/ui_test.h>` and link `HuxerUI::testing`. Names are in `huxerui::testing`; the production umbrella header does not include this testing API. Start with the [complete test](/docs/tooling/testing-and-delivery/#test-a-controlled-editor).
+
+## UiTest and fixture ownership
+
+`UiTest(const Application&, UiTestOptions = {})` borrows an Application that must outlive it. Construction executes ordinary root hooks and commits one frame at virtual time zero. The fixture is neither copyable nor movable. Create, use, and destroy it on the same thread, and never reenter its operations from application callbacks.
+
+UiTestOptions supplies viewport (800 × 600 logical units by default), safe_area, ResourceConfiguration resources, optional PlatformResources resource_provider, initial ApplicationActivation, and maximum_callbacks_per_frame (10000). Resources are explicit: no provider means no packaged payloads, not an implicit filesystem search. Test resource configuration overrides the provider's locale/density.
+
+The adapter uses reference text measurement, not native shaping. It tests shared state, layout, input, semantics and render intent, not OS permissions, platform pixels, PlatformView descendants, or a screen reader. Application hooks are not sandboxed and can still perform real platform work.
+
+## Queries and selectors
+
+`Find(UiSelector)` returns UiNodeQuery for retained nodes; `FindSemantics(UiSemanticSelector)` returns UiSemanticQuery for the published accessibility tree. Query objects keep weak fixture access, re-resolve on each operation, and do not retain a node or pump frames.
+
+| Selector family | Factories |
+| --- | --- |
+| UiSelector | Text, Value, Key, Enabled, Focused, AllOf, Type&lt;T&gt; |
+| UiSemanticSelector | Identifier, Label, Value, Role, Enabled, Focused, Selected, Checked, AllOf |
+
+String matching is exact and case-sensitive. Keys preserve their alternative: signed 42, unsigned 42, and string "42" differ. Type supports Text, Button, IconButton, TextField, Checkbox, RadioButton, Switch, Slider, Image and Canvas, not arbitrary component function names. Semantic identifiers are distinct from View keys; secure values are excluded from value queries.
+
+Queries provide Exists, Count, One, and All. One requires exactly one result and returns an owning value copy: UiNodeInfo or SemanticNode. Find(selector) on a query scopes to strict descendants. Every ancestor scope must resolve uniquely, even when asking whether the final match Exists. Retained offscreen and overscan nodes can match; existence does not prove visibility or clickability.
+
+## Input and editing
+
+UiNodeQuery offers Tap, EnterText, ReplaceText, SetSelection, and Submit. Tap uses physical hit testing, not a semantic fallback; it can fail for covered/offscreen targets. Tap an editor before editing it: editing helpers require that unique target to own the active input session. Selection uses UTF-16 code units and preserves affinity. Submit performs the configured input action, not an unconditional Enter or submit event.
+
+UiTest provides TapAt, Drag and PressKey high-level helpers that pump their events. UiPointerOptions defaults to touch, pointer_id 1. UiDragOptions defaults to 0.2 seconds and 10 movement segments. Raw SendPointer, SendScroll, SendKey and SendTextInput do not pump; follow them with Pump before inspecting state. Raw pointer input requires complete Down/Move/Up or Cancel sequences.
+
+UiSemanticQuery::PerformSemanticAction dispatches through Runtime's accessibility path and pumps once. It tests semantic action handling separately from pointer geometry.
+
+## Deterministic time
+
+`Pump(duration = {})` advances virtual time once, drains the entry callback batch, then commits exactly one frame. Work posted during that batch waits for another Pump. No intermediate frames are replayed and no real worker is joined.
+
+`PumpUntil(predicate, UiPumpOptions = {})` checks immediately and then advances bounded virtual steps. The defaults are two seconds, 16 ms steps and at most 10000 frames. The predicate must only observe. A successful wait proves that predicate, not global idleness; external HTTP/workers need a separate wall-clock runner timeout.
+
+Now returns virtual seconds. SetWindowMetrics and UpdateResourceConfiguration change configuration but need a subsequent Pump before queries see a committed result.
+
+## Snapshots and failures
+
+CaptureSnapshot returns UiSnapshot with an owning ToString representation of canonical semantic/render structure. It is not JSON or a screenshot. It excludes platform handles, external texture pixels and PlatformView descendants; ordinary text and encoded image content are not anonymized. The test runner owns baseline files and approvals.
+
+UiTestFailure reports missing/ambiguous targets, unavailable actions and bounded-wait failures. Invalid arguments use invalid_argument; wrong-thread/reentrant operations use logic_error. Application exceptions preserve their type. A frame/input/configuration-processing exception invalidates the session; subsequent operations fail. Query mismatches and PumpUntil timeouts alone do not invalidate a healthy session. Queries fail after fixture destruction.
+
+See [Testing and delivery](/docs/tooling/testing-and-delivery/) for CMake integration and a runnable application test.

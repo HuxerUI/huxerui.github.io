@@ -31,7 +31,9 @@ Declared by `<huxerui/navigation.h>`.
 
 ## Motion
 
-`NavigationMotion` controls entering/covered offsets, scale, opacity, and push/pop specs. `NavigationStyle` contains optional motion and `Default()`.
+`PageTransition` has push, pop, and replace TransitionSpec values. Attach it to a page root with With; it overrides the entire inherited NavigationStyle::motion policy. Push/replace select the incoming page's policy; pop selects the departing page's. The selected policy is fixed for that operation.
+
+A default NavigationStyle has no motion; Default() supplies generic slides. An absent motion disables inherited animation unless a page declares its own PageTransition. PageTransition{} explicitly makes all operations immediate. Page interaction is disabled during an operation, while container Back and predictive cancellation remain available. See [Animation](/docs/guides/animation/#configure-navigation-motion).
 
 See the dedicated [navigation component pages](../../components/navigation-stack/) and [routing guide](../../guides/navigation-and-routing/).
 

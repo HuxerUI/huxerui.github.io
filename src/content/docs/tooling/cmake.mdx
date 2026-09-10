@@ -26,6 +26,7 @@ The public targets are:
 | --- | --- |
 | `HuxerUI::huxerui` | Shared HuxerUI where the platform package provides it; otherwise the platform's primary form. |
 | `HuxerUI::huxerui_static` | Explicit static linkage. |
+| `HuxerUI::testing` | Optional windowless testing library selected with COMPONENTS testing. |
 
 Web and iOS support the static library form only.
 Do not link implementation targets or include files from `src/`.
@@ -42,7 +43,7 @@ add_subdirectory(path/to/HuxerUI build/huxerui EXCLUDE_FROM_ALL)
 
 ## Define an application
 
-`huxerui_add_app` creates the platform-appropriate application target, links HuxerUI, enables scope code generation, and attaches resources:
+`huxerui_add_app` creates the platform-appropriate application target, links HuxerUI, enables composable code generation, and attaches resources:
 
 ```cmake
 huxerui_add_app(notes
@@ -89,6 +90,8 @@ target_include_directories(charts PUBLIC
 
 add_library(Charts::Charts ALIAS charts)
 ```
+
+Android library integration follows the application's reachable CMake target graph. Use huxerui_use_library and public target linkage so the generated Gradle integration can discover dependencies; do not maintain another hand-written Android list for the same libraries. Android loads only the required reachable shared application libraries. Ordinary implementation-only build graph changes do not require a second user configuration layer.
 
 The resource namespace belongs to generated C++ identifiers and must be a valid C++ identifier.
 Libraries without resources omit both resource arguments.

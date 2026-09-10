@@ -61,3 +61,9 @@ Up/Down navigate enabled popup choices; Home/End reach the enabled edges; Enter/
 | `indication`, `item_indication` | Trigger and choice interaction visuals. |
 
 Material and Flat provide independent field and popup styles. To fit a toolbar, override the relevant padding/minimums together; shrinking the label alone does not shrink the interactive rows.
+
+## Observe popup visibility
+
+OnExpandedChanged(bool) reports a successful opening or the start of closing. It does not report exit-animation completion or a canceled opening attempt. Initial mount and destruction do not emit it. Selecting another option emits closing before OnChanged.
+
+This is observation of the component's popup, not a second controlled Open property. Use it for surrounding UI policy; do not treat it as value selection or teardown cleanup.

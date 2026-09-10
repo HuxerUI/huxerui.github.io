@@ -16,7 +16,7 @@ Declared by `<huxerui/app.h>` and `<huxerui/root.h>`. The host implementation in
 
 ## Activation and lifecycle
 
-- `LaunchActivation`, `UrlActivation{Uri url}`, and `FileActivation{files}` form `ApplicationActivation`.
+- `LaunchActivation`, `UrlActivation{Uri url}`, `FileActivation{files}`, and `NotificationActivation{identifier, data}` form `ApplicationActivation`.
 - `ApplicationLifecycleState`: `Active`, `Inactive`, `Background`.
 - `UseApplication() -> ApplicationHandle`.
 - `StartupActivation()` returns the runtime's initial activation.
@@ -27,7 +27,7 @@ Declared by `<huxerui/app.h>` and `<huxerui/root.h>`. The host implementation in
 
 `RootHook` receives `RootContext&`. `RootContext::Provide(shared_ptr<Service>)` installs exactly one service per type; `Layers()` exposes `LayerController`; `RegisterPlatformModule` and `RegisterPlatformView` install typed platform factories. `UseService<Service>()` resolves an installed root service.
 
-The runtime installs built-in `FileSystem`, `FilePicker`, `Clipboard`, and `HttpClient` services when their platform capabilities are available.
+Resolve `FilePicker` and `HttpClient` with `UseService<T>()`. Access clipboard and directories directly through ApplicationHandle; they are not application-resolved root services.
 
 ## Adapter boundary
 
@@ -39,7 +39,7 @@ The runtime installs built-in `FileSystem`, `FilePicker`, `Clipboard`, and `Http
 
 | Surface | Intended caller | Lifetime and constraints |
 | --- | --- | --- |
-| `Application`, `AppOptions`, `UseApplication` | Application code | One immutable application declaration; handles are valid only inside its Runtime. |
+| `Application`, `AppOptions`, `UseApplication` | Application code | One immutable application declaration; captured handles remain safe after Runtime destruction; each operation defines its disconnected behavior. |
 | `RootHook`, `RootContext`, `UseService<T>` | Application extensions | Hooks run before root composition. `UseService<T>()` returns the installed `std::shared_ptr<T>` or throws `std::logic_error`. |
 | `PlatformAdapter`, `Runtime`, `FrameCommit` | Repository or custom platform hosts | UI-thread adapter boundary, not an ordinary component API. One Runtime belongs to one adapter and host view. |
 | `RunApplication` | Generated native entry | Uses the application declaration supplied by the platform shell. |
@@ -51,7 +51,7 @@ Application code should not instantiate `Runtime`, subclass `PlatformAdapter`, o
 
 `Permission` currently covers `Camera` and `Microphone`. `ApplicationHandle::CheckPermissionAsync` reads current authorization; `RequestPermissionAsync` requests it from a user-driven workflow. Both return `Task<PermissionStatus>`.
 
-Statuses are `NotDetermined`, `Granted`, `Denied`, `PermanentlyDenied`, `Restricted`, and `Unavailable`. Do not equate Denied with “can ask again”: some hosts cannot reliably distinguish that. Platform manifests/usage descriptions remain mandatory; the API cannot add them at runtime.
+Statuses are `NotDetermined`, `Granted`, `Denied`, `PermanentlyDenied`, `Restricted`, `Unavailable`, and `Provisional`. Provisional is reported only by capabilities with explicit provisional authorization, such as notifications. Do not equate Denied with “can ask again”: some hosts cannot reliably distinguish that. Platform manifests/usage descriptions remain mandatory; the API cannot add them at runtime.
 
 ```cpp compile="application-permission"
 #include <huxerui/huxerui.h>
@@ -76,6 +76,34 @@ View EnableCamera() {
 ```
 
 Request only when the user starts the feature. `OpenPermissionSettingsAsync(permission)` returns whether the settings launch was accepted, **not** whether permission became granted; check again on return. Unsupported hosts or missing app declarations can report Unavailable.
+
+## Clipboard and directories
+
+`Clipboard() noexcept` returns the same non-null `std::shared_ptr<huxerui::Clipboard>` on every call. Check `IsAvailable()` and the result of each read/write; operations are synchronous on the owning UI thread. A retained clipboard reports unavailable after Runtime destruction. The accessor itself does not need active composition.
+
+`Directories()` returns `const AppDirectories&` without I/O. It is valid while the handle or Runtime retains its service; copy paths for independent ownership. It throws `std::logic_error` when directories are unavailable. `CurrentDirectory()` queries the process working directory, not a cached application location, and throws `std::runtime_error` if that query fails. Both accessors work outside composition; captured directory values remain available after Runtime destruction.
+
+```cpp compile="application-clipboard"
+#include <huxerui/huxerui.h>
+
+using namespace huxerui;
+
+[[huxerui::composable]]
+View CopyTitle(std::string title) {
+  auto clipboard = UseApplication().Clipboard();
+  auto status = UseState(std::string{});
+  return Column {
+    Button("Copy title").With(Enabled(clipboard->IsAvailable())).OnClick([clipboard, title, status] {
+      status = clipboard->WriteText(title) ? "Copied" : "Clipboard unavailable";
+    }),
+    Text(status),
+  };
+}
+```
+
+## Local notifications
+
+`LocalNotifications()` captures the current composition Environment and returns a LocalNotificationHandle. Use it for system-delivered notifications rather than in-window feedback. See [Local notifications](/docs/guides/local-notifications/) for authorization, scheduling, activation, and required platform configuration; [System API](/docs/reference/system/) lists the contracts.
 
 ## System tray and quit
 

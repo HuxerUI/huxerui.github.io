@@ -53,19 +53,22 @@ export const components = [
 ];
 
 export const modules = [
-  { page: "data", headers: ["data.h"], symbols: ["Bytes", "Uri"] },
+  { page: "stream", headers: ["stream.h"], symbols: ["IoErrorCode", "IoError", "IoResult", "InputStream", "OutputStream", "AsyncInputStream", "AsyncOutputStream"] },
+  { page: "system", headers: ["system.h"], symbols: ["Permission", "PermissionStatus", "LocalNotification", "LocalNotificationHandle", "NotificationActivation", "LocalNotificationCapabilities", "LocalNotificationOperationStatus", "TemplateNotificationPresentation"] },
+  { page: "testing", headers: ["testing/ui_test.h"], symbols: ["UiTest", "UiTestOptions", "UiSelector", "UiSemanticSelector", "UiNodeQuery", "UiSemanticQuery", "UiSnapshot", "UiTestFailure"] },
+  { page: "data", headers: ["data.h"], symbols: ["Bytes", "Uri", "Result", "BufferReference"] },
   { page: "gesture", headers: ["gesture.h"], symbols: ["GestureSettings", "MultiTapGesture", "LongPressGesture", "DragGesture", "TransformGesture", "DragSource", "DropTarget"] },
-  { page: "animation", headers: ["animation.h"], symbols: ["Easing", "CubicBezierCurve", "AnimationSpec", "KeyframeSpec", "MotionController", "Transition", "SceneTransitionHandle"] },
+  { page: "animation", headers: ["animation.h"], symbols: ["Easing", "CubicBezierCurve", "AnimationSpec", "KeyframeSpec", "MotionController", "Transition", "SceneTransitionHandle", "TransitionSpec", "TransitionContext", "TransitionFrame", "SharedElement", "SharedBounds", "UseSharedTransition"] },
   { page: "app", headers: ["app.h", "root.h", "platform_adapter.h"], symbols: ["Application", "AppOptions", "ApplicationActivation", "ApplicationLifecycleState", "ApplicationHandle", "RootContext", "UseService", "ProcessMetrics", "PlatformAdapter", "Runtime"] },
   { page: "event", headers: ["event.h"], symbols: ["InteractionState", "InteractionEvent", "PointerEvent", "ScrollInputEvent", "KeyEvent", "BackEvent", "ViewEvents", "EventEmitter", "UseEvents"] },
   { page: "external-texture", headers: ["external_texture.h"], symbols: ["ExternalTexture"] },
-  { page: "file", headers: ["file.h", "file_drop.h"], symbols: ["FileType", "FileErrorCode", "FileResult", "File", "FileReference", "FilePickerFilter", "FilePicker", "AppDirectories", "FileSystem"] },
+  { page: "file", headers: ["file.h", "file_drop.h"], symbols: ["FileType", "File", "FileReference", "FilePickerFilter", "FilePicker", "AppDirectories"] },
   { page: "geometry", headers: ["color.h", "geometry.h"], symbols: ["Color", "Axis", "Point", "Size", "Rect", "CornerRadii", "Transform2D", "EdgeInsets", "Constraints"] },
-  { page: "http", headers: ["http.h"], symbols: ["HttpMethod", "HttpRequest", "HttpResponse", "HttpErrorCode", "HttpResult", "HttpClient", "HttpProgress", "HttpResponseStream", "HttpStreamReadResult"] },
+  { page: "http", headers: ["http.h"], symbols: ["HttpMethod", "HttpRequest", "HttpResponse", "HttpErrorCode", "HttpResult", "HttpClient", "HttpProgress", "HttpResponseStream"] },
   { page: "layout", headers: ["layout.h", "scroll.h", "virtual_layout.h"], symbols: ["MainAxisAlignment", "CrossAxisAlignment", "ViewNode", "LayoutContext", "LayoutResult", "ScrollAlignment", "ScrollController", "GridColumns", "VirtualViewport", "VirtualLayoutContext", "VirtualLayoutResult"] },
   { page: "lifecycle", headers: ["lifecycle.h"], symbols: ["Lifecycle"] },
   { page: "modifier", headers: ["modifier.h", "indication.h"], symbols: ["ViewModifier", "NodeExtension", "IndicationLayer", "RippleEffect", "Indication", "FocusRing", "Background", "Border", "Shadow", "Frame"] },
-  { page: "navigation", headers: ["navigation.h"], symbols: ["NavigationMotion", "NavigationStyle", "NavigationStack", "NavigationPath", "RouteNavigationController", "NavigationController", "UseNavigation", "UseRootNavigation"] },
+  { page: "navigation", headers: ["navigation.h"], symbols: ["PageTransition", "NavigationStyle", "NavigationStack", "NavigationPath", "RouteNavigationController", "NavigationController", "UseNavigation", "UseRootNavigation"] },
   { page: "paint", headers: ["paint.h", "render_scene.h"], symbols: ["ImageFit", "VisualFill", "TextRun", "PaintCommand", "PaintSequence", "PaintContext", "RenderNode", "RenderScene", "FrameCommit"] },
   { page: "platform-module", headers: ["platform_registry.h"], symbols: ["PlatformPayload", "PlatformEventEmitter", "PlatformRequestId", "PlatformChannel", "OpenPlatformModule"] },
   { page: "platform-view", headers: ["view.h"], symbols: ["PlatformView"] },
@@ -82,6 +85,9 @@ export const modules = [
 ];
 
 export const publicHeaders = [
+  { path: "stream.h", audience: "application", documentation: "reference/stream.mdx" },
+  { path: "system.h", audience: "application-and-platform-integration", documentation: "reference/system.mdx" },
+  { path: "testing/ui_test.h", audience: "testing", documentation: "reference/testing.mdx" },
   { path: "data.h", audience: "application", documentation: "reference/data.mdx" },
   { path: "gesture.h", audience: "application", documentation: "reference/gesture.mdx" },
   { path: "file_drop.h", audience: "application", documentation: "reference/file.mdx" },
@@ -138,10 +144,56 @@ export const publicHeaders = [
 ];
 
 export const platformHeaders = publicHeaders
-  .filter(({ path }) => path.includes("/"))
+  .filter(({ audience }) => audience === "platform-integration")
   .map(({ path }) => path);
 
-export const platformDeclarationContracts = [
+export const declarationContracts = [
+  {
+    header: "app.h",
+    declarations: [
+      "std::shared_ptr<huxerui::Clipboard> Clipboard() const noexcept;",
+      "const AppDirectories& Directories() const;",
+      "File CurrentDirectory() const;",
+      "LocalNotificationHandle LocalNotifications() const;",
+    ],
+  },
+  {
+    header: "stream.h",
+    declarations: [
+      "IoResult<std::size_t> Read(std::span<std::byte> buffer);",
+      "Task<IoResult<Bytes>> ReadAsync(std::size_t maximum_bytes);",
+      "Task<IoResult<void>> WriteAsync(Bytes data);",
+      "Task<IoResult<void>> CloseAsync();",
+    ],
+  },
+  {
+    header: "http.h",
+    declarations: [
+      "Task<HttpResult<HttpResponse>> SendAsync(HttpRequest request, std::function<void(HttpProgress)> progress = {}) const;",
+      "Task<HttpResult<HttpResponseStream>> SendStreamAsync(HttpRequest request, std::function<void(HttpProgress)> progress = {}) const;",
+      "AsyncInputStream& Body();",
+    ],
+  },
+  {
+    header: "resource.h",
+    declarations: [
+      "Bytes ReadBytes(bool cache = false) const;",
+      "std::string ReadString(bool cache = false) const;",
+      "InputStream OpenRead() const;",
+      "Task<AsyncInputStream> OpenReadAsync() const;",
+    ],
+  },
+  {
+    header: "navigation.h",
+    declarations: ["TransitionSpec push;", "TransitionSpec pop;", "TransitionSpec replace;"],
+  },
+  {
+    header: "system.h",
+    declarations: [
+      "Task<LocalNotificationOperationStatus> ShowAsync(LocalNotification notification) const;",
+      "Task<LocalNotificationOperationStatus> CancelAsync(std::string_view identifier) const;",
+    ],
+  },
   {
     header: "android/external_texture.h",
     declarations: [

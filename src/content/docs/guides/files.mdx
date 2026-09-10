@@ -3,7 +3,7 @@ title: Files
 description: Read and write files and present platform-native file pickers.
 ---
 
-`FileSystem` provides application directories and asynchronous file operations.
+`UseApplication()` provides application directories; `File` performs local path operations.
 `FilePicker` returns capability-bearing `FileReference` values instead of assuming every platform exposes a durable filesystem path.
 
 ## Open a user-selected file
@@ -53,13 +53,13 @@ If replacement is unavailable, offer `SaveFileAsync` and let the platform picker
 
 ## Work with application files
 
-`File` and `FileSystem` cover application-owned paths.
+Use `File` for application-owned paths.
 `AppDirectories` identifies platform-resolved executable (when available), data, cache, and temporary locations according to the current adapter.
-Obtain the installed services with `UseService<FileSystem>()` and `UseService<FilePicker>()`.
+Obtain directories with `UseApplication().Directories()` and the picker with `UseService<FilePicker>()`. A captured ApplicationHandle can query directories outside composition; path values themselves do not perform I/O.
 
 `File` offers synchronous operations for code that already runs off the UI thread and `Async` counterparts for component-owned work.
-Read, stat, and listing operations return `FileResult<T>`; mutation methods report success with `bool`.
-Inspect `Succeeded()` before taking `Value()`, and use `FileErrorCode` to choose a recoverable application response.
+Read, stat, and listing operations return `IoResult<T>`; mutation methods report success with `bool`.
+Inspect `Succeeded()` before taking `Value()`, and use `IoErrorCode` to choose a recoverable application response.
 
 Synchronous methods are appropriate only when the caller is already off the UI thread and the platform exposes a synchronous path.
 Component event handlers should use the `Async` forms through `TaskScope`; blocking the UI thread can stall rendering, input, and native picker completion.
@@ -67,6 +67,14 @@ Component event handlers should use the `Async` forms through `TaskScope`; block
 Treat data, cache, and temporary directories differently.
 User documents do not become durable merely because they were copied to cache, and temporary files may disappear between sessions.
 Use the data directory for application-owned persistent state and keep user-facing export in the picker workflow.
+
+## Incremental I/O
+
+For large files, open `File::OpenReadAsync()` or `FileReference::OpenReadAsync()` and await `ReadAsync(maximum_bytes)` on the returned stream. A successful empty buffer is EOF; a short nonempty chunk is not. The shared stream API also works with raw resources and HTTP bodies.
+
+To copy without retaining the entire document, open an async writer, await `CopyToAsync(writer, 64 * 1024)`, then await `writer.CloseAsync()`. Neither a successful write nor copy finalizes the destination. Preserve endpoint handles until their tasks finish, and allow only one pending operation per stream. Failure or cancellation can leave partial output.
+
+See the [complete file-copy example](/docs/reference/stream/#copy-a-file-with-bounded-memory).
 
 ## Filter and save
 
@@ -79,7 +87,7 @@ Map errors deliberately:
 
 | Result | Typical application response |
 | --- | --- |
-| Empty picker optional | No message; the user cancelled |
+| Empty picker optional | No file was delivered; do not infer whether this was cancellation, denial, failure, or lack of support |
 | `PermissionDenied` | Explain what operation needs permission and offer another file |
 | `TooLarge` | Keep the current document and report the accepted limit |
 | `InvalidEncoding` | Offer binary/import handling instead of displaying corrupt text |

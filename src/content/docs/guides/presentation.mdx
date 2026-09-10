@@ -25,7 +25,7 @@ An empty action callback on a standard alert uses the default dismissal behavior
 
 ## Capture the presenting environment
 
-Calling `Show` captures the current `Environment`, so theme and localized resources follow the presenting subtree even though the content is rendered outside the application layout tree. Handles return `LayerId` values for explicit updates or dismissal.
+Calling `UseDialog`, `UseToast`, or another presentation hook captures the current `Environment` in its returned handle. `Show` uses that captured environment, so theme and localized resources follow the presenting subtree even though the content is rendered outside the application layout tree. Handles return `LayerId` values for explicit updates or dismissal.
 
 Pass a view factory when content needs to compose after `Show` returns.
 Use the context-aware Dialog, BottomSheet, or Popup factory when content needs its own layer ID or `Dismiss()` operation.

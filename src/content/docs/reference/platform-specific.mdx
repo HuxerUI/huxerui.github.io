@@ -63,3 +63,11 @@ Install `windows::InstallInstallerSession` once in the installer's root hooks an
 Linux currently has no public PlatformView factory header; a GTK renderer does not imply that arbitrary GTK controls can be embedded through the shared component.
 
 PlatformAdapter and backend implementation machinery are not ordinary app APIs. Names in `huxerui::detail` remain internal even when templates mention them. See [platform capabilities](/docs/platforms/) for implementation status and validation limits.
+
+## Buffer references and notification data
+
+The Apple registry headers also expose HUXBufferReference (Swift BufferReference), with retained-owner construction, scoped withUnsafeBytes access and slice(offset:length:). It is a read-only view of live storage, not a frozen snapshot. Keep the native allocation valid and coordinate mutation independently.
+
+The iOS registry additionally exposes HUXGetLocalNotificationData(UNNotificationContent*) (Swift localNotificationData) for a Notification Content Extension to inspect the submitted payload. Validate the payload before using it; this is application data, not an authorization grant.
+
+Windows URL and local-notification registration live in the explicit Windows namespace of the shared `<huxerui/system.h>` header. See [System API](/docs/reference/system/#windows-registration).

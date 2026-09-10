@@ -16,11 +16,11 @@ Declared by `<huxerui/http.h>`.
 
 ## Errors and result
 
-`HttpErrorCode` is `Transport`, `Timeout`, or `Unsupported`. `HttpError` contains code and message. `HttpResult` constructs from response/error, reports `HasResponse`, and provides ref-qualified `Response()` plus lvalue `Error()` accessors; asking for the wrong alternative throws.
+`HttpErrorCode` is `Transport`, `Timeout`, or `Unsupported`. `HttpError` contains code and message. `HttpResult<T>` is `Result<T, HttpError>`: construct from a value/error or use `Success`/`Failure`, test `Succeeded()`, then access `Value()` or `Error()`. Asking for the wrong alternative throws `std::logic_error`. Successful responses include HTTP 4xx and 5xx.
 
 ## `HttpClient`
 
-Non-copyable root service. `Send(HttpRequest) const -> Task<HttpResult>`. Obtain it with `UseService<HttpClient>()`. Request cancellation follows the launched HuxerUI task execution.
+Non-copyable root service. `SendAsync(HttpRequest, progress = {}) const -> Task<HttpResult<HttpResponse>>`. Obtain it with `UseService<HttpClient>()`. Request cancellation follows the launched HuxerUI task execution.
 
 ## Complete request example
 
@@ -30,11 +30,11 @@ Non-copyable root service. `Send(HttpRequest) const -> Task<HttpResult>`. Obtain
 using namespace huxerui;
 
 Task<void> LoadStatus(std::shared_ptr<HttpClient> http, State<std::string> output) {
-  HttpResult result = co_await http->Send({
+  auto result = co_await http->SendAsync({
       .url = "https://example.com/status",
       .method = HttpMethod::Get,
   });
-  output = result.HasResponse() ? std::to_string(result.Response().status_code) : result.Error().message;
+  output = result.Succeeded() ? std::to_string(result.Value().status_code) : result.Error().message;
 }
 
 [[huxerui::composable]]
@@ -52,11 +52,11 @@ HTTP status codes are responses; transport, timeout, and unsupported-service fai
 
 ## Streaming and progress
 
-`Send(request, progress = {})` buffers the full response. `SendStream(request, progress = {})` returns `Task<HttpStreamResult>` after final headers, before body completion. Both progress callbacks and task continuations run on the owning UI thread; do not wrap HTTP in `RunWorker` or post its continuation again.
+`SendAsync(request, progress = {})` buffers the full response. `SendStreamAsync(request, progress = {})` returns `Task<HttpResult<HttpResponseStream>>` after final headers, before body completion. Both progress callbacks and task continuations run on the owning UI thread; do not wrap HTTP in `RunWorker` or post its continuation again.
 
 `HttpProgress` carries `kind` (Upload or Download), `transferred_bytes`, and optional `total_bytes`. A missing total is unknown, not zero; avoid inventing a percentage for compressed or otherwise ambiguous content.
 
-`HttpResponseStream` is move-only and owns the operation. `Url()`, `StatusCode()`, and `Headers()` inspect final response metadata. `Read()` produces `HttpStreamReadResult`: exactly one of `HasData()`, `IsComplete()`, and `HasError()` is true. Only one read may be pending. Reading after EOF/error/cancellation or using a moved-from stream is a logic error; destroying an unfinished stream cancels it.
+`HttpResponseStream` is move-only and owns the operation. `Url()`, `StatusCode()`, and `Headers()` inspect final response metadata. `Body()` returns its owned AsyncInputStream by reference. Await `Body().ReadAsync(maximum_bytes)` for `IoResult<Bytes>`; successful empty Bytes means EOF. Only one operation may be outstanding, including a task not yet awaited. Reads after EOF remain empty; failed/moved-from streams cannot be reused. Destroying an unfinished response cancels it.
 
 ```cpp compile="http-stream"
 #include <huxerui/huxerui.h>
@@ -68,34 +68,34 @@ HTTP status codes are responses; transport, timeout, and unsupported-service fai
 using namespace huxerui;
 
 Task<void> CountResponse(std::shared_ptr<HttpClient> http, State<std::string> status) {
-  auto opened = co_await http->SendStream({.url = "https://example.com/data"});
-  if (!opened.HasResponse()) {
+  auto opened = co_await http->SendStreamAsync({.url = "https://example.com/data"});
+  if (!opened.Succeeded()) {
     status = opened.Error().message;
     co_return;
   }
-  auto& stream = opened.Response();
+  auto& stream = opened.Value();
   if (stream.StatusCode() < 200 || stream.StatusCode() >= 300) {
     status = "Unexpected HTTP status";
     co_return;
   }
   std::size_t received = 0;
   while (true) {
-    auto read = co_await stream.Read();
-    if (read.HasData()) {
-      received += read.Data().size();
-      status = std::to_string(received) + " bytes";
-    } else if (read.HasError()) {
+    auto read = co_await stream.Body().ReadAsync(32 * 1024);
+    if (!read.Succeeded()) {
       status = read.Error().message;
       co_return;
-    } else {
+    }
+    if (read.Value().empty()) {
       status = "Complete: " + std::to_string(received) + " bytes";
       co_return;
     }
+    received += read.Value().size();
+    status = std::to_string(received) + " bytes";
   }
 }
 ```
 
-Launch this task from an event through `TaskScope`. Keeping `opened` alive keeps its referenced stream alive, so no ownership transfer is needed. Chunks are 1 byte through 64 KiB and do not preserve UTF-8, JSON, or record boundaries. Decode incrementally or collect bytes under an application size limit. Browser requests remain subject to CORS and server policy.
+Launch this task from an event through `TaskScope`. Keeping `opened` alive keeps its referenced stream alive, so no ownership transfer is needed. The caller chooses a positive maximum read size. Nonempty chunks can be shorter than that maximum and do not preserve UTF-8, JSON, or record boundaries. Decode incrementally or collect bytes under an application size limit. Browser requests remain subject to CORS and server policy.
 
 ## Validate requests and classify outcomes
 
@@ -103,7 +103,7 @@ HttpClient validates a declaration synchronously before returning a Task. The UR
 
 | Outcome | Application handling |
 | --- | --- |
-| `HasResponse()` with expected 2xx status | Consume/decode the body under application limits. |
+| `Succeeded()` with expected 2xx status | Consume/decode the body under application limits. |
 | Response with 4xx/5xx status | Handle protocol/application failure; a response is not necessarily success. |
 | `HttpErrorCode::Transport` | Connection, TLS, loading, or protocol failure before the requested result. |
 | `HttpErrorCode::Timeout` | The complete operation exceeded its deadline. |
@@ -112,9 +112,11 @@ HttpClient validates a declaration synchronously before returning a Task. The UR
 
 `timeout` covers redirects and streamed body consumption, not just opening the connection. Setting it to `std::nullopt` removes HuxerUI's deadline, not platform or network failures. The final response URL can differ after redirects; do not assume it is the original origin when applying application policy.
 
+Post-header body failures use IoError, including Timeout and Io, rather than HttpError. See [Streams](/docs/reference/stream/) for terminal failure and close/copy rules. A stream can be piped into a file writer with `CopyToAsync`; explicitly close the writer after success.
+
 ## Body and progress ownership
 
-HttpRequest owns a `Bytes` body; encode JSON or form data and supply the corresponding Content-Type yourself. Buffered response bodies occupy memory until released. Choose `SendStream` for large/unknown bodies, enforce an application byte limit, and stop reading when the response is not useful. Destroying the unfinished stream cancels its remaining work.
+HttpRequest owns a `Bytes` body; encode JSON or form data and supply the corresponding Content-Type yourself. Buffered response bodies occupy memory until released. Choose `SendStreamAsync` for large/unknown bodies, enforce an application byte limit, and stop reading when the response is not useful. Destroying the unfinished stream cancels its remaining work.
 
 Progress callbacks run on the UI thread. Keep them short, update only meaningful UI state, and do not perform synchronous disk writes in them. `total_bytes` is optional; transferred bytes are useful even when a percentage is not. Never infer a completed document from a progress value alone—wait for the buffered result or stream EOF.
 

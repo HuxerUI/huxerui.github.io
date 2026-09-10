@@ -1,18 +1,20 @@
 ---
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import { examples } from "../../data/examples";
+import { site } from "../../data/site";
+import sourceConfig from "../../../huxerui-source.json";
 ---
 
-<BaseLayout title="Examples" description="Run independent HuxerUI WebAssembly examples and inspect their C++ sources.">
+<BaseLayout title="Examples" description="Explore selected HuxerUI showcases: responsive interfaces, custom motion, rich text, and live graphics.">
   <div class="page-shell">
     <header class="page-hero">
       <div>
-        <div class="eyebrow">Independent C++ applications</div>
-        <h1>Examples you can run, inspect, and extend.</h1>
+        <div class="eyebrow">Selected C++ showcases</div>
+        <h1>See what HuxerUI can do.</h1>
       </div>
       <p>
-        Each preview is a separate WebAssembly application with its own URL and Runtime. Nothing is eagerly mounted as a hidden
-        multi-demo bundle.
+        Start with UI Gallery, then explore custom transitions, rich text, large collections, and live graphics. Each showcase runs
+        as a real C++ application compiled to WebAssembly.
       </p>
     </header>
     <section class="section" aria-label="Online examples">
@@ -25,6 +27,14 @@ import { examples } from "../../data/examples";
             <a class="card-link" href={`/examples/${example.slug}/`}>Open example</a>
           </article>
         ))}
+      </div>
+    </section>
+    <section class="section" aria-labelledby="learning-examples">
+      <h2 id="learning-examples">Looking for a focused learning example?</h2>
+      <p>Start with the documentation for short, explained examples. The source repository also includes focused programs for individual components and services.</p>
+      <div class="button-row">
+        <a class="button" href="/docs/get-started/first-application/">Build your first application</a>
+        <a class="button" href={`${site.repository}/tree/${sourceConfig.ref}/examples`}>Browse example sources</a>
       </div>
     </section>
   </div>

@@ -4,7 +4,7 @@ import path from "node:path";
 import {
   components,
   modules,
-  platformDeclarationContracts,
+  declarationContracts,
   platformHeaders,
   publicHeaders,
 } from "./api-coverage.mjs";
@@ -129,11 +129,11 @@ for (const header of platformHeaders) {
   }
 }
 
-for (const contract of platformDeclarationContracts) {
+for (const contract of declarationContracts) {
   const header = normalizeDeclaration(await readHeader(contract.header));
   for (const declaration of contract.declarations) {
     if (!header.includes(normalizeDeclaration(declaration))) {
-      failures.push(`Platform API signature changed in include/huxerui/${contract.header}: ${declaration}`);
+      failures.push(`Public API signature changed in include/huxerui/${contract.header}: ${declaration}`);
     }
   }
 }

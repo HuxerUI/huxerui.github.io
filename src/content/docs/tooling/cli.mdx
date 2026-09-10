@@ -10,7 +10,7 @@ It discovers the SDK, validates the current host, and delegates each build to th
 
 ```text
 huxerui create app <name> [--id <project-id>] [-p|--platform <platform-list>]
-huxerui create library <name> [--id <project-id>] [-p|--platform <platform-list>]
+huxerui create library <name> [--namespace <cpp-namespace>] [--target <public-cmake-target>] [-p|--platform <platform-list>]
 huxerui platform add <platform-list>
 huxerui doctor [platform-list]
 huxerui setup <platform-list> [--yes]
@@ -19,6 +19,8 @@ huxerui build [platform-list] [--device <id>] [--profile debug|release] [--gener
 huxerui run <platform> [--device <id>] [--profile debug|release] [--generator <name>]
 huxerui package <platform-list> [--device <id>] [--profile debug|release] [--generator <name>]
 huxerui open ios
+huxerui update [--check] [--version <version>] [--yes]
+huxerui mcpp build [--source <path>] [--release] [--locked] [--offline] [--verbose]
 huxerui --version
 ```
 
@@ -36,7 +38,7 @@ huxerui create app notes --id dev.example.notes --platform windows,android,web
 Create a reusable component library with the same shared-source model:
 
 ```bash
-huxerui create library rich_text --id dev.example.rich-text --platform windows,android
+huxerui create library rich_text --namespace rich_text --target RichText::RichText --platform windows,android
 ```
 
 Generated projects keep shared C++ under `src/`, resources under `resources/`, and host-specific integration under `platform/<id>/`.
@@ -127,6 +129,28 @@ huxerui open ios
 
 Use Xcode for signing, capabilities, device provisioning, and archive distribution; keep shared source and library ownership in the HuxerUI project.
 
+## Update an installed SDK
+
+```bash
+huxerui update --check
+huxerui update
+huxerui update --version 0.2.0 --yes
+```
+
+The update command operates on an installed SDK, not a source checkout. --check inspects availability without installing; --version selects a release and --yes skips confirmation. Without --version it resolves the current release. Keep active builds and tools out of the destination during replacement.
+
+On Windows the running CLI cannot replace itself directly: it starts an update worker and prints an update.log location. A successful initial exit means handoff, not completed installation. Inspect that log and rerun --version after the worker finishes. Handled publication failures restore the old SDK, but abrupt termination is not an atomic-update guarantee.
+
+## Standalone mcpp builds
+
+```bash
+huxerui mcpp build --source path/to/project --release --locked
+```
+
+This is a direct frontend for an installed mcpp executable and a project containing mcpp.toml. It forwards --release, --locked, --offline and --verbose to mcpp build in that directory. It does not generate platform shells, translate huxerui.toml, install mcpp, or run the CMake application workflow.
+
+The [stateless desktop example](https://github.com/HuxerUI/HuxerUI/tree/8db9f8d0cc7c61487feb315c53cd377b1a9de47e/examples/mcpp_demo) demonstrates linking public components. Composable transformation and packaged resources still need explicit mcpp integration; this frontend is not equivalent to huxerui build for a general application. Use the normal CMake/platform workflow unless this independent toolchain is intentional.
+
 ## Exit behavior
 
 Usage errors return exit code `2` and print the command synopsis hint.
@@ -139,4 +163,3 @@ A successful command returns `0`, making the CLI suitable for scripts and CI wit
 - [Installation](/docs/get-started/installation/)
 - [CMake integration](/docs/tooling/cmake/)
 - [Testing and delivery](/docs/tooling/testing-and-delivery/)
-

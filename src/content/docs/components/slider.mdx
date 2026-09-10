@@ -71,3 +71,30 @@ Left/Down decrease and Right/Up increase by the step, or by one percent of the r
 | `animation_duration` | Handle/state transition duration in seconds. |
 
 Material uses a handle-and-gap treatment with endpoint/tick details; Flat uses a compact round thumb. Width remains constrained by the parent. In a Row with a trailing value label, use `Grow` on the slider when it should receive the remaining width.
+
+## Adjustment lifecycle
+
+OnStarted(float) begins an adjustment at the displayed controlled value. OnChanged(float) proposes each new value; keep writing that value back. OnCommitted(float) ends an adjustment with its final proposal, not confirmation that the owner accepted it. OnCanceled() ends active pointer adjustment without rolling back earlier writes.
+
+Use live Changed events for preview and Committed for expensive application work. Each effective keyboard press/repeat or accessibility adjustment commits independently. Unmount does not guarantee a terminal event, so do not make cleanup depend on Canceled.
+
+```cpp compile="slider-commit"
+#include <huxerui/huxerui.h>
+
+using namespace huxerui;
+
+[[huxerui::composable]]
+View VolumeAdjustment() {
+  auto volume = UseState(0.5F);
+  auto status = UseState(std::string{"Ready"});
+  return Column {
+    Slider(volume)
+        .OnStarted([status](float) { status = "Adjusting"; })
+        .OnCommitted([status](float value) { status = "Requested volume: " + std::to_string(value); })
+        .OnCanceled([status] { status = "Adjustment canceled"; }),
+    Text(status),
+  };
+}
+```
+
+The State constructor handles Changed writeback. The final proposal may differ from a value transformed or rejected by an explicit owner handler.

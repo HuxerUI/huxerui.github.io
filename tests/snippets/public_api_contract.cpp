@@ -1,4 +1,5 @@
 #include <huxerui/huxerui.h>
+#include <huxerui/testing/ui_test.h>
 
 #if defined(__ANDROID__)
 #include <huxerui/android/external_texture.h>
@@ -102,8 +103,10 @@ static_assert(std::same_as<decltype(UseString(StringResource("app", "text"))), s
 static_assert(std::same_as<decltype(UseImage(ImageResource("app", "image"))), ImageAsset>);
 static_assert(std::same_as<decltype(UseRawResource(RawResource("app", "raw"))), RawAsset>);
 static_assert(requires(const RawAsset& asset) {
-  { asset.Bytes() };
-  { asset.AsStringView() } -> std::same_as<std::string_view>;
+  { asset.ReadBytes() } -> std::same_as<Bytes>;
+  { asset.OpenRead() } -> std::same_as<InputStream>;
+  { asset.OpenReadAsync() } -> std::same_as<Task<AsyncInputStream>>;
+  { asset.ReadString() } -> std::same_as<std::string>;
 });
 
 static_assert(Easing::Linear != Easing::EaseInOut);
@@ -140,11 +143,57 @@ static_assert(requires(RouteNavigationController<ContractRoute> controller, Cont
   { controller.Depth() } -> std::same_as<std::size_t>;
 });
 
+static_assert(requires(ApplicationHandle application) {
+  { application.Clipboard() } -> std::same_as<std::shared_ptr<Clipboard>>;
+  { application.Directories() } -> std::same_as<const AppDirectories&>;
+  { application.CurrentDirectory() } -> std::same_as<File>;
+  { application.LocalNotifications() } -> std::same_as<LocalNotificationHandle>;
+});
+static_assert(std::variant_size_v<ApplicationActivation> == 4);
+static_assert(std::same_as<decltype(std::declval<HttpClient>().SendStreamAsync(HttpRequest{})),
+                           Task<HttpResult<HttpResponseStream>>>);
+static_assert(requires(AsyncInputStream& input, AsyncOutputStream& output, File file) {
+  { input.ReadAsync(4096) } -> std::same_as<Task<IoResult<Bytes>>>;
+  { input.CopyToAsync(output, 4096) } -> std::same_as<Task<IoResult<std::uint64_t>>>;
+  { output.CloseAsync() } -> std::same_as<Task<IoResult<void>>>;
+  { file.OpenWriteAsync(FileWriteMode::Append) } -> std::same_as<Task<IoResult<AsyncOutputStream>>>;
+});
+static_assert(!std::copy_constructible<InputStream> && std::move_constructible<InputStream>);
+static_assert(!std::copy_constructible<AsyncInputStream> && std::move_constructible<AsyncInputStream>);
+static_assert(std::same_as<decltype(std::declval<HttpResponseStream&>().Body()), AsyncInputStream&>);
+static_assert(PubliclyConstructible<BufferReference, std::span<const std::byte>, std::shared_ptr<const void>>);
+static_assert(requires(const BufferReference& buffer) {
+  { buffer.AsBytes() } -> std::same_as<std::span<const std::byte>>;
+  { buffer.Slice(0, 0) } -> std::same_as<BufferReference>;
+});
+static_assert(requires(LocalNotificationHandle handle, LocalNotification notification) {
+  { handle.Capabilities() } -> std::same_as<LocalNotificationCapabilities>;
+  { handle.ShowAsync(notification) } -> std::same_as<Task<LocalNotificationOperationStatus>>;
+  { handle.CancelAsync("notice") } -> std::same_as<Task<LocalNotificationOperationStatus>>;
+});
+static_assert(requires(TransitionSpec spec, TransitionContext context) {
+  { spec.Evaluate(context) } -> std::same_as<TransitionFrame>;
+  { spec.Reversed() } -> std::same_as<TransitionSpec>;
+});
+static_assert(std::same_as<decltype(PageTransition{}.replace), TransitionSpec>);
+static_assert(PubliclyConstructible<SharedElement, int>);
+static_assert(PubliclyConstructible<SharedBounds, std::string>);
+static_assert(std::same_as<decltype(UseSharedTransition()), SharedTransitionHandle>);
+static_assert(!std::copy_constructible<testing::UiTest>);
+static_assert(requires(testing::UiTest& ui) {
+  { ui.Find(testing::UiSelector::Text("Save")) } -> std::same_as<testing::UiNodeQuery>;
+  { ui.FindSemantics(testing::UiSemanticSelector::Label("Save")) } -> std::same_as<testing::UiSemanticQuery>;
+  { ui.CaptureSnapshot() } -> std::same_as<testing::UiSnapshot>;
+});
+static_assert(requires(Slider slider, Pager pager) {
+  std::move(slider).OnStarted([](float) {}).OnCommitted([](float) {}).OnCanceled([] {});
+  std::move(pager).OnSettled([](std::size_t) {});
+});
 static_assert(HttpMethod::Get != HttpMethod::Post);
 static_assert(HttpErrorCode::Transport != HttpErrorCode::Timeout);
-static_assert(std::same_as<decltype(std::declval<HttpClient>().Send(HttpRequest{})), Task<HttpResult>>);
-static_assert(FileErrorCode::NotFound != FileErrorCode::Io);
-static_assert(std::same_as<decltype(std::declval<File>().ReadBytesAsync()), Task<FileResult<std::vector<std::byte>>>>);
+static_assert(std::same_as<decltype(std::declval<HttpClient>().SendAsync(HttpRequest{})), Task<HttpResult<HttpResponse>>>);
+static_assert(IoErrorCode::NotFound != IoErrorCode::Io);
+static_assert(std::same_as<decltype(std::declval<File>().ReadBytesAsync()), Task<IoResult<std::vector<std::byte>>>>);
 static_assert(std::same_as<decltype(Delay(std::chrono::duration<double>{0.0})), Task<void>>);
 static_assert(requires(TaskScope scope, Task<void> task, TaskHandle handle) {
   scope.Launch(std::move(task));

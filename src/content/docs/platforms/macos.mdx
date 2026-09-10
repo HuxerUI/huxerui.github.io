@@ -18,3 +18,9 @@ The adapter owns `NSWindow`/`NSView` lifecycle, AppKit input and `NSTextInputCli
 
 Build and runtime validation require macOS and Xcode command-line tools.
 The website's cross-platform contract checks do not substitute for AppKit accessibility, IME, NSView composition, signing, or device-scale validation.
+
+## System capability boundaries
+
+Local notifications use User Notifications for authorization, showing, scheduling, cancellation and primary activation. Default presentation is supported; template requests return Unavailable. Notification clicks enter OnActivation even when launching the process.
+
+See [Local notifications](/docs/guides/local-notifications/) for shared usage and platform configuration, and [System API](/docs/reference/system/) for exact contracts.

@@ -1,6 +1,6 @@
 ---
 title: Data values
-description: Byte buffers and immutable validated URI values shared by application services.
+description: Owned bytes, retained CPU buffers, domain results, and validated URI values.
 ---
 
 Declared by `<huxerui/data.h>` in namespace `huxerui`.
@@ -8,6 +8,36 @@ Declared by `<huxerui/data.h>` in namespace `huxerui`.
 ## Bytes
 
 `Bytes` is `std::vector<std::byte>`, an owning binary buffer. It is used by file reads, HTTP bodies, and platform payloads. It has no implied character encoding. Decode text with the service's text API or an explicit decoder; a network chunk need not end on a UTF-8 character boundary.
+
+## BufferReference
+
+`BufferReference(span, owner)` retains address-stable CPU memory without copying it. Nonempty storage requires a non-null owner; a default or empty reference is valid. AsBytes returns a borrowed read-only span. Slice(offset, size) retains a checked subrange with the same backing identity; out-of-range slices throw invalid_argument.
+
+```cpp compile="buffer-reference"
+#include <huxerui/data.h>
+#include <memory>
+
+huxerui::BufferReference MakeHeader() {
+  auto storage = std::make_shared<const huxerui::Bytes>(
+      huxerui::Bytes{std::byte{0x48}, std::byte{0x55}, std::byte{0x58}, std::byte{0x01}});
+  huxerui::BufferReference bytes(*storage, storage);
+  return bytes.Slice(0, 3);
+}
+```
+
+The returned reference owns a share of storage, but a span from AsBytes does not. Keep a BufferReference alive while a consumer uses its span. Wrapping mutable memory does not freeze it: coordinate producers and readers, never resize or unmap backing storage while references survive, and do not close an underlying platform image independently.
+
+Equality compares backing identity and range, not byte contents. Updating a producer buffer therefore does not automatically invalidate State; publish a sequence/event when new data is ready. Keep dimensions, stride and pixel format in your typed payload, not an assumed buffer layout.
+
+Use BufferReference for large in-process platform data. Use Bytes for durable snapshots or independent ownership. PlatformPayload can retain a buffer on supported bridges; its capability-free Encode path and notification data cannot serialize that lifetime. The Web bridge rejects BufferReference. See [PlatformModule](/docs/guides/platform-module/#retained-cpu-buffers).
+
+## Result
+
+`Result<T, ErrorT>` owns exactly one success value or error. Use Success(value)/Failure(error), or explicit value/error constructors when the types differ. `Result<void, ErrorT>::Success()` carries no payload. There is no implicit boolean or value conversion: test Succeeded().
+
+Value() and Error() have reference-qualified accessors. Lvalues borrow storage; an rvalue accessor permits ownership transfer when consuming a move-only value. Accessing the wrong branch throws logic_error. References cannot outlive the result's stored alternative. Exceptions from stored types are not converted to errors.
+
+IoResult and HttpResult specialize this shared contract for their error domains. A successful empty buffer, false boolean, or HTTP 404 remains a success alternative; interpret the payload separately.
 
 ## Uri
 

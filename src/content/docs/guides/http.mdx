@@ -4,18 +4,20 @@ description: Send asynchronous HTTP requests through the platform transport.
 ---
 
 `HttpClient` is an application service backed by the current platform transport.
-Requests are explicit value objects and return `Task<HttpResult>`.
+Requests are explicit value objects and return `Task<HttpResult<HttpResponse>>`.
 
 ## Send a request
 
 ```cpp fragment
 Task<void> LoadFeed(std::shared_ptr<HttpClient> http, State<std::string> output) {
-  HttpResult result = co_await http->Send({
+  auto result = co_await http->SendAsync({
       .url = "https://example.com/feed.json",
       .method = HttpMethod::Get,
   });
-  if (result.HasResponse()) {
-    output = result.Response().body;
+  if (result.Succeeded()) {
+    const auto& response = result.Value();
+    output = "HTTP " + std::to_string(response.status_code) + ": " +
+        std::to_string(response.body.size()) + " bytes";
   } else {
     output = result.Error().message;
   }
@@ -37,7 +39,7 @@ Cancellation follows the component that requested the data.
 ## Describe request intent
 
 Specify method, headers, body, and optional timeout in `HttpRequest`.
-Use `HttpMethod` for standard methods; the body is a `std::string`, so set the corresponding content type and encoding explicitly when sending text or arbitrary bytes.
+Use `HttpMethod` for standard methods; the body is owned `Bytes`, so set the corresponding content type and encoding explicitly when sending text or arbitrary bytes.
 
 The transport follows platform networking policy.
 Browser CORS, application transport security, Android network security, certificate trust, redirects, and proxy behavior remain platform concerns rather than shared-runtime bypasses.
@@ -45,10 +47,10 @@ Browser CORS, application transport security, Android network security, certific
 ## Separate responses from transport errors
 
 A response contains final URL, status code, headers, and body.
-HTTP status codes, including 4xx and 5xx, are valid responses and remain available through `Response()`.
-DNS, connection, timeout, cancellation, malformed request, and unavailable-transport failures use `HttpError`.
+HTTP status codes, including 4xx and 5xx, are valid responses and remain available through `Value()`.
+DNS, connection, timeout, and unavailable-transport failures before the requested result use `HttpError`. Invalid request declarations throw synchronously. Task cancellation suppresses completion; it is not a returned HTTP error.
 
-Inspect `HasResponse()` before accessing a response and preserve an error message appropriate for the user instead of displaying low-level transport diagnostics directly.
+Inspect `Succeeded()` before accessing a response and preserve an error message appropriate for the user instead of displaying low-level transport diagnostics directly.
 
 ## Decode at the application boundary
 
@@ -56,7 +58,7 @@ Treat `HttpResponse::body` as untrusted data.
 Check the status code and any required content type before decoding, validate the decoded shape, and translate it into an application model before updating UI state.
 Keep JSON, authentication, retry, and caching policy outside components that only present the result.
 
-Redirect handling is reflected in `final_url` when the platform transport supplies it.
+Redirect handling is reflected in `HttpResponse::url` when the platform transport supplies it.
 Do not use the original request origin as proof that the final response came from the same origin.
 Apply application limits before retaining large bodies, especially on mobile and Web.
 
@@ -83,9 +85,9 @@ See the [HTTP API](../../reference/http/) for exact request and result methods a
 
 ## Choose buffered or streaming delivery
 
-Use `Send` for bounded JSON or small assets. Use `SendStream` when processing a large response incrementally; inspect final status/headers first, then await one `Read()` at a time. Keep the stream alive until EOF, or let destruction cancel an unfinished response.
+Use `SendAsync` for bounded JSON or small assets. Use `SendStreamAsync` when processing a large response incrementally; inspect final status/headers first, then await one `Body().ReadAsync(maximum_bytes)` at a time. Keep the stream alive until EOF, or let destruction cancel an unfinished response.
 
-Failures before headers appear in `HttpStreamResult`; failures during the body appear in `HttpStreamReadResult`. An HTTP 404 remains a response, not a transport error. Chunks are binary fragments and can split characters or records.
+Failures before headers appear in `HttpResult<HttpResponseStream>`; failures during the body appear in `IoResult<Bytes>`. Test Succeeded() before Value(). An empty successful chunk is EOF, not failure. An HTTP 404 remains a response, not a transport error. Chunks are binary fragments and can split characters or records.
 
 The optional progress callback reports transferred bytes and a total only when meaningful. Display an indeterminate state when the total is unknown. Awaited HTTP and its progress already return to the UI thread; adding `RunWorker` or `TaskScope::Post` is unnecessary.
 

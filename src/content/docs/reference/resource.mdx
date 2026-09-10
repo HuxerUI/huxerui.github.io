@@ -27,7 +27,7 @@ Prefer `Text::Format(resource, ...)` for `Text`, `UseString(resource, ...)` for 
 
 ## `RawAsset`
 
-Factories: `FromBytes`, `CopyBytes`, and `FromSharedBytes`. Queries: `Bytes`, `AsStringView`, `ToString`, `MimeType`, `HasValue`, and handle equality.
+Factories: `FromBytes`, `CopyBytes`, and `FromSharedBytes`. Metadata: `MimeType`, `HasValue`, and equality. `ReadBytes(cache = false)` and `ReadString(cache = false)` return owned complete contents. `OpenRead()` returns InputStream; `OpenReadAsync()` returns `Task<AsyncInputStream>`.
 
 ## `ImageAsset`
 
@@ -35,7 +35,7 @@ Factories: `FromFile`, `FromEncoded`, and `CopyEncoded`, each with optional scal
 
 ## Resolution
 
-`UseRawResource`, `UseImage`, and `UseVectorImage` resolve generated IDs through the current resource configuration. `PlatformResources` is the adapter interface exposing `Configuration()` and synchronous immutable package `Read(path)`.
+`UseRawResource`, `UseImage`, and `UseVectorImage` resolve generated IDs through the current resource configuration. `PlatformResources` is the adapter interface exposing `Configuration()` and `OpenRead(package_path) -> std::optional<InputStream>`. The provider can open on a worker and must give each stream independent ownership; missing entries return nullopt, while valid empty entries return a stream that reaches EOF.
 
 ## Complete resource-consumer example
 
@@ -63,7 +63,11 @@ View InboxSummary(int unread_count) {
 
 `RawAsset::FromBytes` accepts owned Bytes, `CopyBytes` copies a borrowed span, and `FromSharedBytes(owner, data, size, mime_type)` keeps a supplied owner alive while referencing its immutable byte region. The pointer must remain valid within that owner's lifetime; shared ownership does not freeze a mutable producer buffer for you.
 
-`Bytes()` and `AsStringView()` borrow storage from the asset. Keep the asset alive while using those views. `ToString()` creates an owned string. Raw text conversion does not apply localization, decode an arbitrary character set, or turn binary data into validated UTF-8; use [File::ReadString](/docs/reference/file/#read-write-and-export-contracts) when file UTF-8 validation is the intended operation.
+`UseRawResource` resolves identity and metadata without reading the package payload. `ReadBytes(true)` or `ReadString(true)` retains a complete successful read in a cache shared by asset copies; false does not evict an existing cache. Complete reads can block. `OpenRead` and `OpenReadAsync` create independent cursors and do not populate that complete-content cache.
+
+Raw `ReadString()` preserves arbitrary bytes, BOMs and embedded nulls without encoding validation. Use [File::ReadString](/docs/reference/file/#read-write-and-export-contracts) when UTF-8 validation is intended. Default missing assets return empty complete reads, but opening a missing asset throws. Valid zero-length assets still have HasValue().
+
+Uncached package access requires a connected resource service. Memory-backed/cached data and already opened streams can survive Runtime destruction. Open failures follow the resource exception contract; later stream failures use IoResult. `OpenReadAsync()` returns `Task<AsyncInputStream>`, not `Task<IoResult<AsyncInputStream>>`. Use a scoped task and handle opening exceptions as well as read errors.
 
 `ImageAsset::FromFile` reads a local encoded raster file, `FromEncoded` takes owned encoded Bytes, and `CopyEncoded` copies a span. These are encoded PNG/JPEG data, not raw RGBA pixels. Scale is the logical density: intrinsic DIPs derive from pixel dimensions divided by scale. Resource selection and density handling should remain with ImageResource when using packaged variants.
 

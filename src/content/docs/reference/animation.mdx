@@ -36,11 +36,38 @@ Declared by `<huxerui/animation.h>`.
 
 ## Scene transitions
 
-- `FadeSceneTransition` and `CircularRevealSceneTransition` are built-in scene effects.
+- `TransitionSpec(effect, AnimationSpec, delay = 0)` describes a one-shot effect. Built-ins are FadeTransition, SlideTransition, ScaleFadeTransition, and CircularRevealTransition.
 - `SceneTransitionAnchor` tags retained scene content and is obtained from `SceneTransitionHandle::Anchor()`.
-- `UseSceneTransition() -> SceneTransitionHandle`; `Run` accepts a fade or circular reveal, and `RunAt` supplies the reveal origin.
+- `UseSceneTransition() -> SceneTransitionHandle`; `Run(TransitionSpec, mutation)` applies a synchronous state mutation. `RunAt(origin, spec, mutation)` supplies a window-local logical origin; `RunFromCurrentInteraction(spec, mutation)` uses the current synchronous pointer position or the activated control's center for keyboard/accessibility input. It does not require an Anchor and cannot be deferred beyond that interaction callback.
 
-Navigation and presentation motion structs reuse `AnimationSpec` but are declared in their owning headers.
+Navigation uses PageTransition from navigation.h with independent push/pop/replace TransitionSpec values. Presentation services retain their owning PresentationMotion contract; choosing a scene effect does not change Dialog or Popup layout.
+
+## Transition effects
+
+TransitionContext contains progress, container-local logical bounds, and optional origin. Spring progress can overshoot 0–1; custom effects must return valid finite output even then. TransitionFrame contains outgoing and incoming TransitionSample values plus TransitionOrder (IncomingAbove or OutgoingAbove).
+
+Each sample has a transform, opacity, optional post-transform clip, and optional fragments. A TransitionFragment selects a source_clip before its transform and opacity; fragments share the side's common transform and final clip. Empty fragments draw the original content once; nonempty fragments replace that drawing and add no layout or input nodes.
+
+| Effect | Configuration |
+| --- | --- |
+| FadeTransition | Crossfade with clamped opacity. |
+| SlideTransition | incoming_offset and outgoing_offset are fractions of container dimensions, not DIPs. |
+| ScaleFadeTransition | incoming_scale (0.92), outgoing_scale (1), and TransformOrigin pivot. |
+| CircularRevealTransition | Requires context.origin; a page has no implicit origin. Supply one in a custom page effect or use a scene RunAt. |
+
+TransitionSpec requires a copyable, equality-comparable effect with `TransitionFrame Evaluate(const TransitionContext&) const`. Optional `void Paint(PaintContext&, const TransitionContext&) const` records decoration above both sides. Neither method may mutate application state, call hooks, advance time, or start another transition. Output validation rejects invalid geometry atomically; effect exceptions propagate.
+
+Animation(), Delay(), IsImmediate(), Evaluate(), Paint(), and Reversed() inspect or sample the value. Reversed(animation) also replaces timing. Default specs finish immediately; repetition is unsupported and springs require positive damping. Runtime handles reduced motion. Specs share immutable effect data; they do not own mutable progress.
+
+## Shared-element and shared-bounds motion
+
+`SharedElement(key)` marks the same retained visual at two locations. `SharedBounds(key)` moves the bounds of different content while crossfading. Keys accept strings, integral values, or enums, preserving signed/unsigned alternatives. Pairing follows the active operation, not a global identifier registry.
+
+NavigationStack matches marks between participating pages using the page operation's progress, including predictive Back. For a local state change, obtain SharedTransitionHandle with UseSharedTransition, attach its Scope() modifier to one stable container, and invoke Run(animation, mutation). Only matched visuals animate; unmatched content immediately adopts the new layout. Input inside that local scope is disabled while motion runs.
+
+Both marks accept BoundsTransform(effect): a copyable, equality-comparable value with `Rect Evaluate(Rect from, Rect to, float progress) const`. It must preserve endpoint rectangles exactly and keep geometry valid during overshoot. It changes retained drawing, not intermediate text wrapping or layout.
+
+Missing, unrealized, partially ancestor-clipped, rotated/skewed, fragment-rendered, PlatformView and ExternalTexture content cannot be assumed to pair; normal drawing remains the fallback. Viewport/coordinate-space changes end an active local operation. A new Run starts from committed visuals, without a velocity-continuity guarantee. See the [complete local example](/docs/guides/animation/#animate-a-local-layout-change).
 
 ## Contract notes
 

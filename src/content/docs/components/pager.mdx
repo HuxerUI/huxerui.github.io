@@ -36,7 +36,7 @@ A completed drag proposes an adjacent page through `OnChanged(std::size_t)`; acc
 
 Give the pager useful bounded space, especially inside scrolling layouts. Retained offscreen pages preserve local state and are not automatically torn down.
 
-Use [IndexedPages](/docs/components/indexed-pages/) for instant non-swipe switching. Use [Tabs](/docs/components/tabs/) as a visible selector, sharing the same controlled index. [Run the Pager example](/examples/pager/).
+Use [IndexedPages](/docs/components/indexed-pages/) for instant non-swipe switching. Use [Tabs](/docs/components/tabs/) as a visible selector, sharing the same controlled index. [Read the Pager example source](https://github.com/HuxerUI/HuxerUI/tree/8db9f8d0cc7c61487feb315c53cd377b1a9de47e/examples/pager).
 
 ## Defaults and state ownership
 
@@ -45,3 +45,9 @@ Default orientation is Horizontal, `Reverse` is false, and direct dragging is en
 `OnChanged(void(std::size_t))` proposes one adjacent index after an accepted direct gesture. Keep page count and selected index consistent in the same recomposition. If the owner rejects a proposal, the controlled index remains authoritative. Assigning a distant index programmatically uses the built-in transition without synthesizing intermediate OnChanged events.
 
 Pager retains peer pages, so local edit state can survive paging and background work can remain alive. It has no per-page lazy-load callback, route history, or exposed PagerStyle. A screen-sized pager should normally occupy a bounded content region; a nested vertical page scroller can then own that page's content scrolling.
+
+## Settled pages
+
+OnSettled(std::size_t) reports the displayed index after paging or rebound and the final layout settle. It also covers programmatic transitions and can repeat an index; initial mount and stationary recomposition do not emit it.
+
+Use OnChanged for controlled selection and OnSettled for work that needs a settled visible page. Do not feed Settled back into selection merely to synchronize Tabs: they should already share the same State. The event is a layout/motion observation, not proof that async content on that page finished loading.

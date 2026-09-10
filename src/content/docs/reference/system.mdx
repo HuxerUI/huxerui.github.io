@@ -1,0 +1,64 @@
+---
+title: System capabilities API
+description: Permission states, local notifications, and explicit Windows application registration.
+---
+
+Declared by `<huxerui/system.h>` in `huxerui`; Windows entry functions are in `huxerui::windows`. Shared declarations are available on every platform, but an available C++ type does not establish platform support.
+
+## Authorization and capabilities
+
+`Permission` contains Camera and Microphone, requested through ApplicationHandle. `PermissionStatus` contains NotDetermined, Granted, Denied, PermanentlyDenied, Restricted, Unavailable, and Provisional. Notifications use their own authorization methods and can report Provisional for quiet trial delivery; they are not another Permission enumerator.
+
+`LocalNotificationCapabilities` reports five independent booleans: `can_show`, `can_schedule`, `can_cancel`, `can_activate`, and `can_use_templates`. Check the operation you intend to offer. Capabilities do not grant permission, prove a template exists, or guarantee visibility.
+
+## LocalNotification
+
+| Field | Meaning |
+| --- | --- |
+| `identifier` | Stable nonempty application-owned UTF-8 identifier used for replacement, cancellation, and activation. |
+| `title`, `body` | StringVariant values resolved in the handle's captured Environment at submission. At least one must resolve to nonempty text. |
+| `presentation` | LocalNotificationPresentation: DefaultNotificationPresentation or TemplateNotificationPresentation with an identifier declared by the platform shell. |
+| `data` | PlatformPayload snapshot delivered to a template and returned in primary activation. Default is Null. |
+
+Identifiers and resolved text must be valid UTF-8 without embedded nulls. Data may contain scalars, owned bytes, lists, and objects; FileReference, ExternalTexture, and BufferReference are rejected recursively. Encoded HUXP data is limited to 64 KiB. Treat persisted notification data as untrusted input, not protected storage.
+
+A template is platform-owned notification UI, not a HuxerUI View or a shared layout schema. Unsupported identifiers return Unavailable, without default-presentation fallback.
+
+## LocalNotificationHandle
+
+Obtain `UseApplication().LocalNotifications()` during composition and capture it into UI-thread events or tasks. It retains the effective Environment for localized submission. Authorization requests and notification mutations preserve submission order within a Runtime; authorization queries are independent.
+
+| Method | Return and behavior |
+| --- | --- |
+| `Capabilities()` | Independent LocalNotificationCapabilities snapshot. |
+| `CheckAuthorizationAsync()` | Task of PermissionStatus, without a system prompt. |
+| `RequestAuthorizationAsync()` | Task of PermissionStatus after an allowed prompt or current-state query. |
+| `ShowAsync(notification)` | Task of LocalNotificationOperationStatus; replaces both pending and delivered entries with this identifier. |
+| `ScheduleAsync(notification, delivery_time)` | One-shot request at an absolute future system-clock time; replaces a pending schedule, not an already delivered notification. |
+| `CancelAsync(identifier)` | Cancels pending and removes delivered content; absence is an accepted no-op when cancellation is supported. |
+
+LocalNotificationOperationStatus is Accepted, Unauthorized, Unavailable, or Failed. Accepted means the system accepted the transition, not that the notification appeared. Scheduling is best effort, not an exact alarm or a guarantee across device restarts. Scheduled strings are not relocalized after acceptance.
+
+Invalid identifiers, text, payloads, or a nonfuture delivery time throw `std::invalid_argument`. Supported operational failures return Failed. Retained handles remain safe after Runtime destruction but expose no capabilities and Unavailable results. Destroying a Runtime does not retract notifications already accepted by the OS.
+
+## NotificationActivation
+
+`NotificationActivation { identifier, data }` is an ApplicationActivation alternative for the primary notification interaction. It enters `OnActivation`, including when the interaction launches the process. Dismissals and custom actions are not represented. Validate identifiers, data shape, and authorization before routing to a document or account.
+
+See the [complete notification workflow](/docs/guides/local-notifications/).
+
+## Windows registration
+
+Call `windows::RegisterLocalNotifications(app_id, display_name, activator_clsid, template_provider = {})` on the application entry thread before RunApplication on every launch, including a notification launch. Use a stable application ID and non-null braced GUID; development builds should own separate identities. Registration creates current-user identity/shortcut data and survives exit. It does not require Windows App SDK, MSIX, administrator rights, or CMake notification metadata.
+
+`UnregisterLocalNotifications(app_id, activator_clsid)` explicitly cleans up the current executable's owned identity and notifications before removal or relocation. Do not call it at ordinary exit or while the notification host is running. It does not clean other users or applications; cleanup is not transactional. Windows 7 compatibility builds do not support notification registration.
+
+`LocalNotificationTemplateProvider` receives the template identifier, resolved title/body, and data synchronously on the UI thread and returns optional UTF-8 ToastGeneric XML. Return nullopt for an unknown template. Escape dynamic XML, do not block or retain borrowed arguments, and keep image paths available for delivery. The final XML including framework activation data must fit 5 KiB. The framework owns launch attributes; DTDs, external entities, custom actions/input/header elements are unsupported. Malformed output or callback exceptions produce Failed. A replacement notification is not an in-place progress update.
+
+## Windows URL schemes
+
+`windows::RegisterUrlScheme(scheme, display_name)` registers the current executable for the current user, normally before RunApplication. Supply a bare ASCII scheme of 2–255 characters: an initial letter followed by letters, digits, plus, minus, or dot. It does not override another executable's ownership or the user's default-app choice.
+
+`UnregisterUrlScheme(scheme)` removes matching current-user registration before removal/relocation; absence is a no-op. Registration persists across ordinary exit and also works in the Windows 7 compatibility backend. Invalid arguments throw invalid_argument; ownership/native failures throw runtime_error. Validate every delivered URL independently of registration.
+
+[Activation](/docs/guides/lifecycle-and-activation/) explains how to route the resulting requests.

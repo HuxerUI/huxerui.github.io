@@ -50,7 +50,7 @@ Route values carry stable destination identity and parameters, not retained `Vie
 
 ## Retain page state and motion
 
-The stack retains covered pages and their local state. `NavigationStyle` and `NavigationMotion` define push/pop offsets, scale, opacity, timing, and whether motion is enabled.
+The stack retains covered pages and their local state. `NavigationStyle` provides inherited motion; a PageTransition on the page root defines push/pop/replace effects and timing.
 
 Pages keep the semantics declared by their child views rather than deriving labels from route values.
 Use labelled controls for push and pop actions, and keep route identity separate from user-facing labels.
@@ -83,6 +83,8 @@ Route equality is destination identity for reconciliation. Put stable identifier
 
 ## Transition fields and page work
 
-`NavigationStyle::motion` is optional. Its `NavigationMotion` defines `entering_offset_fraction`, `covered_offset_fraction`, `entering_scale`, `covered_scale`, `entering_opacity`, `covered_opacity`, and independent `push` / `pop` AnimationSpecs. Offsets are fractions of page size, not DIPs. Set motion to `std::nullopt` to disable it rather than setting every field to a guessed neutral value.
+`NavigationStyle::motion` is an optional PageTransition. Each push/pop/replace field is a TransitionSpec. A PageTransition attached to the page root overrides the complete inherited policy; it is not a partial field merge. PageTransition{} makes all three operations immediate. Push and replace use the incoming page; pop uses the departing page. See [navigation motion](/docs/guides/animation/#configure-navigation-motion) for a complete declaration.
+
+SharedElement and SharedBounds marks inside participating pages follow that operation automatically. They preserve visual continuity without creating another navigation stack or global registry. Use distinct stable keys and prepare assets before the operation. Page content does not accept interaction during motion; Back and predictive cancellation are handled by the container.
 
 Covered page retention preserves local State; it does not imply that every external producer or task pauses. Tie expensive work to application-visible destination policy when it must stop offscreen. Browser history integration uses [BrowserNavigationStack](/docs/reference/navigation/), not serialization of factory captures.

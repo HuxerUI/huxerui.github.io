@@ -33,7 +33,7 @@ Do not use it to copy one UI state value into another, launch work during every 
 ## Handle cold and warm activation
 
 `StartupActivation()` is the immutable activation that created the current Runtime.
-`OnActivation(...)` receives only later requests delivered to that Runtime.
+`OnActivation(...)` receives activation events delivered to that Runtime. URL/file startup is represented by StartupActivation; notification interactions use OnActivation even when they launched the process, so install the listener in the initial application tree.
 This split prevents a startup URL or file from being replayed merely because a component recomposed.
 
 The following application presents the startup reason and replaces it when a later URL or file activation arrives:
@@ -54,8 +54,10 @@ std::string DescribeActivation(const ApplicationActivation& activation) {
           return std::string{"Ordinary launch"};
         } else if constexpr (std::is_same_v<Value, UrlActivation>) {
           return "URL: " + value.url.ToString();
-        } else {
+        } else if constexpr (std::is_same_v<Value, FileActivation>) {
           return value.files.empty() ? std::string{"No files"} : "File: " + value.files.front().Name();
+        } else {
+          return "Notification: " + value.identifier;
         }
       },
       activation
@@ -89,10 +91,17 @@ const Application application{App};
 - `LaunchActivation` for an ordinary start.
 - `UrlActivation` with the platform-delivered `Uri`; use `ToString()` for display or serialization.
 - `FileActivation` with one or more capability-bearing `FileReference` values.
+- `NotificationActivation` with a stable identifier and submitted PlatformPayload data.
 
 Treat the variant as an input to application policy.
 For example, parse a URL into a typed `NavigationPath`, or launch a scoped task that reads a `FileReference` and updates controlled document state.
 Do not retain Android intents, Apple URLs, Win32 command-line handles, or other platform objects in shared UI.
+
+## Notification-driven activation
+
+Notification clicks arrive through `OnActivation` with `NotificationActivation`, including clicks that launch the process. Inspect the variant explicitly, validate its data, then change the same application-owned navigation path used by other entry points. Notification data is a submitted snapshot, not current authorization or trusted live state. Dismissals and custom action buttons do not enter this contract.
+
+See [Local notifications](/docs/guides/local-notifications/#handle-notification-activation) for a complete listener and [System API](/docs/reference/system/#windows-registration) for Windows registration. Register URL schemes with `windows::RegisterUrlScheme` from `<huxerui/system.h>` when your Windows entry owns that integration; no hand-written example registry helper is required.
 
 ## Route an activation once
 
@@ -115,7 +124,7 @@ In `OnActivation`, replace or extend that same path according to application pol
 If the platform repeats an equivalent request, deduplicate it in application state when opening it twice would be harmful; HuxerUI does not guess whether repeated activations are meaningful.
 
 File contents are asynchronous.
-Capture the `FileReference` in a task launched by `UseTaskScope()`, handle `FileResult` failure explicitly, and let scope unmount cancel the work.
+Capture the `FileReference` in a task launched by `UseTaskScope()`, handle `IoResult` failure explicitly, and let scope unmount cancel the work.
 The [Files guide](/docs/guides/files/) covers that ownership path.
 
 ## Read a file delivered by activation

@@ -21,6 +21,73 @@ For UI behavior, test controlled outputs rather than implementation details:
 
 Platform adapters still require integration tests on their real host because native text input, accessibility, clipboard, windows, and graphics services cannot be proven by a shared unit test alone.
 
+## Test a controlled editor
+
+Use a separate test executable with `<huxerui/testing/ui_test.h>`. The fixture runs the real shared Runtime without an OS window. The application root owns its scope, so this example needs no composable annotation.
+
+```cpp compile="ui-test-editor"
+#include <huxerui/huxerui.h>
+#include <huxerui/testing/ui_test.h>
+#include <stdexcept>
+
+using namespace huxerui;
+using namespace huxerui::testing;
+
+View EditorApp() {
+  auto value = UseState(TextEditingValue::FromText(""));
+  return Column {
+    TextField(value).Key("editor"),
+    Text(value->text).Key("preview"),
+  }.With(Padding(16.0F));
+}
+
+int main() {
+  const Application application{EditorApp, {.show_debug_overlay = false}};
+  UiTest ui(application, {.viewport = {390.0F, 844.0F}});
+  auto editor = ui.Find(UiSelector::Key("editor"));
+  editor.Tap();
+  editor.ReplaceText("Ada");
+  const auto preview = ui.Find(UiSelector::AllOf(UiSelector::Key("preview"), UiSelector::Text("Ada")));
+  if (!preview.Exists()) {
+    throw std::runtime_error("The controlled editor did not update its preview");
+  }
+}
+```
+
+Save this translation unit as `editor_test.cpp` and use:
+
+```cmake
+cmake_minimum_required(VERSION 3.20)
+project(editor_tests LANGUAGES CXX)
+
+find_package(HuxerUI CONFIG REQUIRED COMPONENTS testing)
+add_executable(editor_test editor_test.cpp)
+target_compile_features(editor_test PRIVATE cxx_std_20)
+target_link_libraries(editor_test PRIVATE HuxerUI::testing)
+
+enable_testing()
+add_test(NAME editor_test COMMAND editor_test)
+```
+
+Configure with your installed SDK and compatible host toolchain, build, then run CTest. Source consumers enable HUXERUI_BUILD_TESTING_LIBRARY. Request `COMPONENTS testing static` or `testing shared` only when explicitly selecting an available core form. Reusable annotated functions still need the usual codegen integration; keep the test main separate from the application's generated platform entry.
+
+## Test transitions, semantics, and responsive state
+
+High-level editing and pointer helpers pump their input automatically. Raw input and direct configuration changes require an explicit Pump before inspecting results. To test animation, advance virtual time rather than sleeping:
+
+```cpp fragment
+const auto before = ui.CaptureSnapshot();
+ui.Pump(std::chrono::milliseconds(100));
+const auto during = ui.CaptureSnapshot();
+ui.PumpUntil([&] { return ui.Find(UiSelector::Text("Done")).Exists(); });
+```
+
+The fixture's virtual timeout does not wait for real workers or HTTP. Supply controlled services where possible and give the test runner a separate wall-clock timeout. Use FindSemantics and UiSemanticSelector to verify accessible labels, roles, state, and actions independently from physical hit testing.
+
+Queries re-resolve after each frame. One and actions require unique targets; scope repeated labels under a stable parent key. Exists can find offscreen retained nodes and does not guarantee Tap will succeed. Snapshot strings represent structure/render intent, not pixels; store and approve baselines through your existing test runner.
+
+Resources must be supplied through UiTestOptions::resource_provider. The reference text profile is deterministic but does not reproduce platform shaping, bidi, typography, or complex grapheme behavior. Native platform services still require host tests. See [UI testing API](/docs/reference/testing/) for precise query, time, ownership, and failure contracts.
+
 ## Diagnose before building
 
 Run the non-mutating environment check in CI and on a new workstation:

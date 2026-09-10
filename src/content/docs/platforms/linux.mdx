@@ -29,3 +29,9 @@ The pinned revision has no public Linux PlatformView factory or repository-owned
 ## Verification boundary
 
 Linux application runtime behavior requires the matching GTK desktop environment. The website's Web and public-header checks do not certify Linux IME, display-server integration, graphics drivers, tray behavior, or assistive technology.
+
+## System capability boundaries
+
+Official Linux SDK binaries require glibc 2.38 or later alongside the documented GTK and system dependencies. Builds on Ubuntu 24.04 do not establish validation on every distribution meeting that baseline. The shared local-notification capability is currently unavailable.
+
+See [Local notifications](/docs/guides/local-notifications/) for shared usage and platform configuration, and [System API](/docs/reference/system/) for exact contracts.

@@ -81,3 +81,13 @@ Keep the returned request identity if you need to cancel. Closing a channel affe
 - Use [ExternalTexture](/docs/guides/external-texture/) for changing pixels without platform-control input.
 
 Test missing registration, exact options types, teardown during work, cancellation, late events, and thread delivery. See the [registry and channel reference](/docs/reference/platform-module/) for individual contracts.
+
+## Retained CPU buffers
+
+Use BufferReference in a typed PlatformPayload for large CPU data that can share an address-stable lifetime. It is not an immutable snapshot: wait for readers before reusing producer storage, and publish frame sequence separately from buffer identity. Bytes remains the correct choice for serialized or durable data.
+
+Android uses HuxerUIBufferReference.wrap with a direct ByteBuffer. The current position-to-limit range is retained, and withBuffer exposes a read-only view only for that synchronous callback. Close wrappers you own; payloads and slices keep independent shares. A final-release callback is not a frame-completion signal and may run on any final releasing thread.
+
+Apple exposes HUXBufferReference (Swift BufferReference) with a retained owner and scoped unsafe-byte access. Windows/Linux C++ factories can receive BufferReference directly. Web payload bridges reject it; do not simulate zero-copy by encoding a large buffer to JSON.
+
+See [BufferReference](/docs/reference/data/#bufferreference) for construction, slicing and equality, and the [buffer analysis source](https://github.com/HuxerUI/HuxerUI/tree/8db9f8d0cc7c61487feb315c53cd377b1a9de47e/examples/buffer_reference) for a real platform producer.

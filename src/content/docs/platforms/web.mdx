@@ -20,3 +20,9 @@ Use `<huxerui/web/navigation.h>` for `BrowserNavigationStack`, which synchronize
 Browser security policy governs network origins, file access, clipboard permission, autoplay, and external resources. A Web build cannot rely on native filesystem paths or unrestricted synchronous I/O.
 
 Website CI builds every listed Web example at the pinned revision, but browser permissions and assistive-technology behavior still require environment-specific testing.
+
+## System capability boundaries
+
+Local notifications and BufferReference payload bridging are currently unavailable. Use in-app feedback and owned Bytes respectively. Shared streams still cover supported browser files and Fetch response bodies; browser persistence requires the async write/close path.
+
+See [Local notifications](/docs/guides/local-notifications/) for shared usage and platform configuration, and [System API](/docs/reference/system/) for exact contracts.

@@ -57,7 +57,7 @@ Declared by `<huxerui/text.h>`, `<huxerui/text_input.h>`, `<huxerui/validation.h
 
 ## Clipboard
 
-`TextEditingAction` is `Cut`, `Copy`, `Paste`, or `SelectAll`. `TextSelectionMenuLabels` supplies localized labels. `Clipboard` is obtained with `UseService<Clipboard>()`. On the UI thread, check `IsAvailable()`, use `ReadText()` for an optional string, and `WriteText(text)` for a success flag. Invalid UTF-8 is rejected. An unavailable or disconnected service fails safely. The Web service is unavailable; browser-owned TextField clipboard operations are a separate path.
+`TextEditingAction` is `Cut`, `Copy`, `Paste`, or `SelectAll`. `TextSelectionMenuLabels` supplies localized labels. `Clipboard` is obtained with `UseApplication().Clipboard()`. On the UI thread, check `IsAvailable()`, use `ReadText()` for an optional string, and `WriteText(text)` for a success flag. Invalid UTF-8 is rejected. An unavailable or disconnected service fails safely. The Web service is unavailable; browser-owned TextField clipboard operations are a separate path.
 
 ## Complete controlled TextField example
 

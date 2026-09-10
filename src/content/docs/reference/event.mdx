@@ -73,3 +73,11 @@ Capture State and scoped EventEmitter handles by value. They are handles, not de
 InteractionState is the current enabled/hovered/pressed/focused/focus-visible snapshot. InteractionEvent's `press_id` pairs Press with its Release or Cancel; it distinguishes sequences, not selected state or a persistent pointer identifier. Cancel must end pressed feedback without triggering the normal activation action. Use Indication for these visuals rather than maintaining separate State booleans in every button.
 
 Pointer capture and gesture recognition are different from observing raw input. Prefer the built-in Click path for an action and [gesture modifiers](/docs/reference/gesture/) for taps, drags, or transforms. This keeps disabled state, cancellation, keyboard activation, and semantics consistent.
+
+## Component operation boundaries
+
+SliderEvents::Started(float), Changed(float), Committed(float) and Canceled() distinguish adjustment lifetime from value proposals. Cancel does not roll back owner State, and unmount need not emit a terminal event.
+
+PagerEvents::Settled(std::size_t) observes the final displayed index after motion/rebound/layout, including programmatic changes and repeated indices, but not initial mount. SelectEvents::ExpandedChanged(bool) reports successful open/start-of-close, with close before selection Changed. These events share ordinary typed dispatch; fluent OnStarted/OnCommitted/OnCanceled, OnSettled and OnExpandedChanged are convenience methods.
+
+See [Slider](/docs/components/slider/#adjustment-lifecycle), [Pager](/docs/components/pager/#settled-pages), and [Select](/docs/components/select/#observe-popup-visibility) for owner behavior.

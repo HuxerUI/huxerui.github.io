@@ -10,8 +10,8 @@ const reviewedMoves = new Map([
     "dsl/events-and-interaction.mdx:std::move(query)",
     "transfers the event payload into the operation that owns the search",
   ],
-  ["reference/file.mdx:std::move(text)", "extracts the owned value from an rvalue FileResult"],
-  ["guides/files.mdx:std::move(text)", "extracts the owned value from an rvalue FileResult"],
+  ["reference/file.mdx:std::move(text)", "extracts the owned value from an rvalue IoResult"],
+  ["guides/files.mdx:std::move(text)", "extracts the owned value from an rvalue IoResult"],
   [
     "guides/lifecycle-and-activation.mdx:std::move(subscription)",
     "transfers the subscription into the cleanup that owns it",

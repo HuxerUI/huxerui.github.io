@@ -20,3 +20,9 @@ Register HWND-backed views with `<huxerui/windows/platform_registry.h>`. Windows
 
 The backend exposes the shared semantic tree through Windows UI Automation.
 Validate custom chrome, DPI transitions, IME placement, HWND slicing, and assistive technology on the Windows versions your application supports.
+
+## System capability boundaries
+
+Local notifications require explicit windows::RegisterLocalNotifications before RunApplication, with a stable app ID and CLSID. URL integration similarly uses windows::RegisterUrlScheme. Both are application-entry responsibilities, not hidden CMake metadata. Notification clicks enter OnActivation, including process-launch clicks. Windows 7 compatibility does not provide notifications.
+
+See [Local notifications](/docs/guides/local-notifications/) for shared usage and platform configuration, and [System API](/docs/reference/system/) for exact contracts.

@@ -2,7 +2,7 @@ import { readdir, readFile } from "node:fs/promises";
 import path from "node:path";
 import { execFileSync } from "node:child_process";
 
-import { components, modules, platformDeclarationContracts, publicHeaders } from "./api-coverage.mjs";
+import { components, modules, declarationContracts, publicHeaders } from "./api-coverage.mjs";
 import { loadSourceConfig } from "./source-config.mjs";
 
 const candidateArgument = process.argv[2] ?? process.env.HUXERUI_SOURCE_DIR;
@@ -77,7 +77,7 @@ for (const module of modules) {
     }
   }
 }
-for (const contract of platformDeclarationContracts) {
+for (const contract of declarationContracts) {
   const header = normalizeDeclaration(await readCandidateHeader(contract.header));
   for (const declaration of contract.declarations) {
     if (!header.includes(normalizeDeclaration(declaration))) {

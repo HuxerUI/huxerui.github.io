@@ -89,10 +89,11 @@ Use `Image(vector_resource)` for normal display or `UseVectorImage(resource)` wh
 
 ```cpp fragment
 RawAsset defaults = UseRawResource(app::raw::defaults);
-std::string_view json = defaults.AsStringView();
+// In an event or worker: complete reads can block.
+std::string json = defaults.ReadString();
 ```
 
-Use `Bytes()` for binary data and `ToString()` when an owned string is required.
+Use `ReadBytes()` for owned binary data. `UseRawResource` does not read payload bytes; defer large reads to work owned by a TaskScope. `OpenReadAsync()` provides incremental consumption, and `ReadString(true)` explicitly retains a complete shared cache. See [RawAsset](/docs/reference/resource/#rawasset) for lifetime and failure rules.
 `ImageAsset` and `RawAsset` also provide factories for runtime bytes or files that are not part of the packaged application resources.
 
 ## Follow locale and display changes

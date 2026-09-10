@@ -5,7 +5,7 @@ sidebar:
   order: 1
 ---
 
-Include `<huxerui/huxerui.h>` for the complete cross-platform API. Link `HuxerUI::huxerui` for the shared library or `HuxerUI::huxerui_static` for static linkage. Platform-specific integration headers remain explicit includes.
+Include `<huxerui/huxerui.h>` for the complete cross-platform API. Link `HuxerUI::huxerui` for the shared library or `HuxerUI::huxerui_static` for static linkage. Platform-specific integration headers and `<huxerui/testing/ui_test.h>` remain explicit includes; tests link the separate HuxerUI::testing target.
 
 The **Application** audience is ordinary cross-platform UI code. **Extension** means custom layout, retained behavior, painting, or root-service work. **Platform integration** connects native objects or producers. **Adapter** is reserved for a platform shell implementation and should not appear in ordinary application code.
 
@@ -41,6 +41,9 @@ The **Application** audience is ordinary cross-platform UI code. **Extension** m
 | `resource.h` | Application and adapter | [Resources](./resource/) |
 | `file.h`, `file_drop.h` | Application | [Files](./file/) |
 | `http.h` | Application | [HTTP](./http/) |
+| `stream.h` | Application | [Streams](./stream/) |
+| `system.h` | Application and platform integration | [System capabilities](./system/) |
+| `testing/ui_test.h` | Application testing | [UI testing](./testing/) |
 | `semantics.h` | Application and extension | [Semantics](./semantics/) |
 
 ## Graphics and integration

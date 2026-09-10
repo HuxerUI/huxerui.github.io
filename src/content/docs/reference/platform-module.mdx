@@ -70,3 +70,9 @@ Direct PlatformView events run synchronously on the UI thread and may return an 
 Keep payload serialization at a cross-language boundary. Do not wrap direct C++ service options or controlled view properties in payloads merely to use the registry.
 
 See [PlatformModule guide](/docs/guides/platform-module/), [PlatformView API](/docs/reference/platform-view/), and [platform-specific interfaces](/docs/reference/platform-specific/).
+
+## Buffer payloads
+
+PlatformPayloadKind::BufferReference, the BufferReference constructor overload, and AsBufferReference retain CPU storage rather than encoding its bytes. Typed ToPayload/FromPayload paths support the same value. The bridge must explicitly support this retained capability; Web rejects it. Encode remains a capability-free serialization operation and cannot persist buffers, FileReference or ExternalTexture.
+
+Keep producer memory address-stable and synchronize access. See [data ownership](/docs/reference/data/#bufferreference) and [platform buffer integration](/docs/guides/platform-module/#retained-cpu-buffers).

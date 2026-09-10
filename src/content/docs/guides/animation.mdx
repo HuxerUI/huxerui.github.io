@@ -41,10 +41,127 @@ Application code should not update `State` on every display frame.
 
 ## Run a scene transition
 
-`UseSceneTransition()` returns a handle whose `Anchor()` modifier tags retained scene content and whose `Run` or `RunAt` method applies a mutation with a fade or circular reveal. Navigation and presentation services consume their own theme motion structures.
+`UseSceneTransition()` returns a handle whose `Anchor()` modifier tags retained scene content and whose `Run` or `RunAt` method applies a synchronous mutation with a TransitionSpec. Use FadeTransition for crossfade or CircularRevealTransition with an explicit origin. Navigation uses the same effect descriptions through PageTransition.
 
 Scene transitions capture the current visual state around a declared mutation.
 They are appropriate for theme changes and other whole-scene changes; use ordinary `Transition` for a component that remains in the same scene.
+
+The mutation is synchronous; complete asynchronous loading before starting it. This example changes the theme using the activating control as the reveal origin:
+
+```cpp compile="scene-theme-transition"
+#include <huxerui/huxerui.h>
+
+using namespace huxerui;
+
+[[huxerui::composable]]
+View ThemeSwitcher() {
+  auto dark = UseState(false);
+  auto scene = UseSceneTransition();
+  const auto theme = dark ? FlatDarkThemeSpec() : FlatLightThemeSpec();
+  return FlatTheme(theme, Column {
+    Text("Appearance", TextRole::Title),
+    Button("Switch theme").OnClick([dark, scene] {
+      scene.RunFromCurrentInteraction(
+          TransitionSpec{CircularRevealTransition{}, TweenSpec{.duration = 0.4}},
+          [dark] { dark = !dark; });
+    }),
+  }.With(Padding(24.0F), Spacing(12.0F), Background(theme.colors.background)));
+}
+```
+
+RunFromCurrentInteraction supports pointer, keyboard, and accessibility activation but must run before that event callback returns. Use RunAt with a window-local Point when supplying a stored origin later. Anchor supplies geometry for Run; it does not limit the transition to that subtree. See SharedTransition below for local-only changes.
+
+## Configure navigation motion
+
+Put PageTransition on the destination's root, including a transparent Scope or Environment boundary. Configure all three operations explicitly when overriding the theme:
+
+```cpp compile="page-transition"
+#include <huxerui/huxerui.h>
+
+using namespace huxerui;
+
+View Details() {
+  const TransitionSpec enter{
+      SlideTransition{.incoming_offset = {0.0F, 1.0F}, .outgoing_offset = {0.0F, -0.15F}},
+      TweenSpec{.duration = 0.3, .easing = Easing::EaseOut}
+  };
+  return Column {
+    Text("Details", TextRole::Title),
+    Text("The page owns its enter, return, and replacement effects."),
+  }.With(PageTransition{
+      .push = enter,
+      .pop = enter.Reversed(TweenSpec{.duration = 0.22}),
+      .replace = TransitionSpec{FadeTransition{}, TweenSpec{.duration = 0.18}},
+  });
+}
+```
+
+Push/replace select the incoming page policy; pop selects the departing page policy. Unspecified fields finish immediately, rather than falling back individually to the theme. The policy is frozen for each operation. Page controls cannot interact during motion, but stack-level Back and predictive cancellation remain available.
+
+## Author a custom effect
+
+An effect is a small immutable value, not a subclass or another animation controller. Evaluate both sides from one TransitionContext and keep geometry valid during spring overshoot:
+
+```cpp compile="custom-transition"
+#include <huxerui/huxerui.h>
+#include <algorithm>
+
+using namespace huxerui;
+
+struct LiftAndFade {
+  float distance = 20.0F;
+
+  TransitionFrame Evaluate(const TransitionContext& context) const {
+    auto frame = FadeTransition{}.Evaluate(context);
+    const float progress = std::clamp(context.progress, 0.0F, 1.0F);
+    frame.incoming.transform.translate_y = distance * (1.0F - progress);
+    return frame;
+  }
+
+  bool operator==(const LiftAndFade&) const = default;
+};
+
+TransitionSpec DialogPageEffect() {
+  return {LiftAndFade{}, TweenSpec{.duration = 0.24}, 0.02};
+}
+```
+
+Optional Paint records decoration above both sides. Use TransitionSample fragments for sliced visuals without duplicating mounted content. Neither Evaluate nor Paint may mutate State, call composition hooks, or schedule animations. See [Transition effects](/docs/reference/animation/#transition-effects) and the [Transition Studio](/examples/transition/) for more elaborate effects.
+
+## Animate a local layout change
+
+SharedElement keeps the same visual moving between two bounds. SharedBounds is for different contents that should move and crossfade. For local changes, attach the handle's Scope to a stable container and perform the change through Run:
+
+```cpp compile="local-shared-transition"
+#include <huxerui/huxerui.h>
+
+using namespace huxerui;
+
+[[huxerui::composable]]
+View ExpandingCard() {
+  auto expanded = UseState(false);
+  auto shared = UseSharedTransition();
+  const bool is_expanded = expanded;
+  return Column {
+    Button(is_expanded ? "Collapse" : "Expand").OnClick([expanded, shared] {
+      shared.Run(TweenSpec{.duration = 0.35}, [expanded] { expanded = !expanded; });
+    }),
+    Stack {
+      Text(is_expanded ? "A longer description of the selected item." : "Summary")
+          .With(
+              Frame{.width = is_expanded ? 280.0F : 160.0F, .height = is_expanded ? 120.0F : 60.0F},
+              SharedBounds("summary")
+          ),
+    }.With(shared.Scope()),
+  }.With(Spacing(12.0F));
+}
+```
+
+The toggle stays outside the scope, so it remains available during motion. Attach each scope to at most one mounted View. Matched visuals animate without intermediate layout; unmarked content immediately adopts the new state.
+
+In NavigationStack, SharedElement/SharedBounds match between pages automatically; no local scope is required. Prefer SharedElement for a cover image that does not change and SharedBounds for a summary that expands into different text. Text scales/crossfades rather than reflowing at every intermediate size. Missing or unsuitable content uses ordinary drawing, not a broken placeholder.
+
+For a custom travel path, BoundsTransform accepts a pure Rect-to-Rect evaluator with progress. Preserve both endpoints and handle finite overshoot. Prepare images, scroll position, and realized content before starting; PlatformView and ExternalTexture are not captured shared visuals. See [Shared transitions](/examples/shared_transition/) for navigation and local demonstrations.
 
 ## Respect reduced motion
 

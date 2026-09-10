@@ -177,6 +177,7 @@ export default defineConfig({
             { label: "Resources and localization", link: "/docs/guides/resources-and-localization/" },
             { label: "Accessibility", link: "/docs/guides/accessibility/" },
             { label: "Lifecycle and activation", link: "/docs/guides/lifecycle-and-activation/" },
+            { label: "Local notifications", link: "/docs/guides/local-notifications/" },
             { label: "Tasks", link: "/docs/guides/tasks/" },
             { label: "Gestures and drag-and-drop", link: "/docs/guides/gestures/" },
             { label: "HTTP", link: "/docs/guides/http/" },

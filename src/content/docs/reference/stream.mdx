@@ -1,0 +1,73 @@
+---
+title: Streams API
+description: Read, write, and copy incremental byte streams with explicit completion and ownership.
+---
+
+Declared by `<huxerui/stream.h>` in `huxerui`. Files, provider references, raw resources, and HTTP bodies use the same byte-stream operations; they differ in how a stream is opened and what authority it retains.
+
+## Results and errors
+
+`IoResult<T>` is `Result<T, IoError>`. Test `Succeeded()` before `Value()` or `Error()`; accessing the other alternative throws `std::logic_error`. `IoResult<void>` represents completion without a payload. Empty successful input means EOF; task cancellation suppresses result delivery and is neither EOF nor an error result.
+
+`IoError` contains a stable `code` and diagnostic `message`. `IoErrorCode` includes `NotFound`, `PermissionDenied`, `NotDirectory`, `IsDirectory`, `TooLarge`, `InvalidEncoding`, `Unsupported`, `Io`, `AlreadyExists`, `Timeout`, and `NoSpace`. Sources report only applicable categories. Do not parse messages or assume a failure rolled back an already written prefix.
+
+## Choose and open a stream
+
+| Source | Synchronous opening | Asynchronous opening |
+| --- | --- | --- |
+| File | `OpenRead()` / `OpenWrite(mode)` return IoResult | `OpenReadAsync()` / `OpenWriteAsync(mode)` return Task of IoResult |
+| FileReference | Not exposed | `OpenReadAsync()` / `OpenWriteAsync()` return Task of IoResult |
+| RawAsset | `OpenRead()` returns InputStream | `OpenReadAsync()` returns Task of AsyncInputStream |
+| HTTP response | Not exposed | `HttpResponseStream::Body()` borrows an already opened AsyncInputStream |
+
+RawAsset opening uses resource exceptions; its later stream operations use IoResult. File opening can succeed even if a later read fails. Provider references retain access rather than manufacturing local paths. All four stream types are move-only and have no public default constructor: obtain them from a source instead of constructing internal state.
+
+## InputStream and OutputStream
+
+`InputStream::Read(std::span<std::byte>)` returns the valid byte count in the buffer's prefix. Supply a nonempty scratch buffer. A short read is not EOF; zero is. Further reads after EOF return zero. `CopyTo(OutputStream&, scratch)` copies from the current position through EOF and returns a total byte count without closing either endpoint.
+
+`OutputStream::Write(std::span<const std::byte>)` accepts the entire range on success; an empty write is valid. `Close()` finalizes output and is idempotent after success. A failed write or close makes that stream unusable. Destruction releases or aborts it but is not a successful close. Calls run on the calling thread and can block.
+
+## AsyncInputStream and AsyncOutputStream
+
+`ReadAsync(maximum_bytes)` returns a Task yielding owned Bytes, with a positive maximum chosen by the caller. `WriteAsync(Bytes)` retains its argument until completion. `CopyToAsync(destination, maximum_read_size)` transfers bounded chunks and yields the copied byte count. It does not close either endpoint; await `CloseAsync()` on the writer after a successful copy.
+
+Each stream permits one outstanding operation. The slot is reserved when the operation method returns its Task, not only when awaited; an unstarted Task must be destroyed before another operation can begin. Copy reserves both endpoints. Keep handles alive while operations run. Invalid sizes throw `std::invalid_argument`; overlapping operations, moved-from values, or reusing failed streams throw `std::logic_error`.
+
+Cancellation requests underlying cancellation and suppresses completion, but a platform operation may finish before releasing its resources. No operation promises rollback. Async continuations follow their Task execution context; async does not imply a dedicated worker thread.
+
+## Copy a file with bounded memory
+
+```cpp compile="stream-file-copy"
+#include <huxerui/huxerui.h>
+
+using namespace huxerui;
+
+Task<void> CopyDocument(File source, File destination, State<std::string> status) {
+  auto input = co_await source.OpenReadAsync();
+  if (!input.Succeeded()) {
+    status = input.Error().message;
+    co_return;
+  }
+  auto output = co_await destination.OpenWriteAsync();
+  if (!output.Succeeded()) {
+    status = output.Error().message;
+    co_return;
+  }
+  auto copied = co_await input.Value().CopyToAsync(output.Value(), 64 * 1024);
+  if (!copied.Succeeded()) {
+    status = copied.Error().message;
+    co_return;
+  }
+  auto closed = co_await output.Value().CloseAsync();
+  status = closed.Succeeded() ? "Copy complete" : closed.Error().message;
+}
+```
+
+Launch from an owning TaskScope. Source and destination must be distinct files, including through aliases; opening the destination truncates it. Its parent must exist. Use an application-owned temporary destination when incomplete output must not replace a user's document. Successful close completes the destination's contract, not a universal transaction or power-loss guarantee.
+
+## Decode after reading
+
+Streams operate on bytes: chunks can split UTF-8 characters, JSON tokens, or records. Use an incremental decoder or collect a bounded amount before decoding. Raw resources preserve bytes; File's complete `ReadString` operation additionally validates UTF-8. A byte count is not a character count.
+
+See [Files](/docs/guides/files/), [HTTP](/docs/guides/http/), and [RawAsset](/docs/reference/resource/#rawasset) for source-specific policy.

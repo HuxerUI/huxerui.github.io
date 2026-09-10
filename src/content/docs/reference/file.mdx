@@ -11,15 +11,21 @@ Declared by `<huxerui/file.h>`.
 
 - `FileType`: `File`, `Directory`, `Other`.
 - `FileInfo`: type, byte size, optional modification time.
-- `FileErrorCode`: `NotFound`, `PermissionDenied`, `NotDirectory`, `IsDirectory`, `TooLarge`, `InvalidEncoding`, `Unsupported`, `Io`.
-- `FileError`: code and message.
-- `FileResult<T>`: construct from value/error; `Succeeded`, ref-qualified `Value`, and `Error` accessors.
+- `IoErrorCode`: `NotFound`, `PermissionDenied`, `NotDirectory`, `IsDirectory`, `TooLarge`, `InvalidEncoding`, `Unsupported`, `Io`, `AlreadyExists`, `Timeout`, `NoSpace`.
+- `IoError`: code and message.
+- `IoResult<T>`: construct from value/error; `Succeeded`, ref-qualified `Value`, and `Error` accessors.
 
 ## `File`
 
 Construct from UTF-8 path/string view or parent plus child. Path queries: `Path`, `Name`, `Stem`, `Extension`, `ParentPath`, `Parent`, `Child`, and `Resolve`. Status queries: `Exists`, `IsFile`, `IsDirectory`, synchronous/async `Stat`.
 
 I/O methods have synchronous and `Async` forms: read bytes/string; write and append bytes/string; list children; create one/all directories; delete or recursively delete; copy; and move. Copy/move accept `overwrite = false`. Async methods return `Task`.
+
+## Incremental file access
+
+`File::OpenRead()` returns `IoResult<InputStream>`; `OpenReadAsync()` returns `Task<IoResult<AsyncInputStream>>`. Writers use `OpenWrite(mode)` or `OpenWriteAsync(mode)`, with `FileWriteMode::Truncate` by default or `Append`. Opening a writer can create the file but not missing parent directories.
+
+FileReference offers async read/write opening through its provider. Opening a writer replaces existing contents and requires writable ordinary-file access; it does not turn a read-only picker grant into a writable grant. Await `CloseAsync()` to finish output, especially for browser persistence and provider-backed staging. See [Streams](/docs/reference/stream/) for EOF, operation ordering, and partial failures.
 
 ## `FileReference`
 
@@ -29,9 +35,11 @@ Capability for a selected or activated file. Metadata: `Name`, optional `Size`, 
 
 `FilePickerFilter` contains name, extensions, and content types. `SaveFileOptions` contains suggested name and filter. Capability queries are `CanOpenFiles` and `CanSaveFiles`; operations are `OpenFileAsync`, `OpenFilesAsync`, and `SaveFileAsync`.
 
-## `FileSystem`
+## Application directories
 
-`AppDirectories` contains optional executable directory plus required data, cache, and temporary directories. `FileSystem::Directories()` returns them; `CurrentDirectory()` resolves process working directory. Obtain `FileSystem` and `FilePicker` with `UseService<T>()`.
+`UseApplication().Directories()` returns `AppDirectories`: an optional executable directory and data, cache, and temporary directories. `UseApplication().CurrentDirectory()` queries the process working directory at the time of the call. These paths do not create entries or grant access. Capture the ApplicationHandle during composition; its directory accessors can also run outside composition. Obtain the picker separately with `UseService<FilePicker>()`.
+
+Directory values are captured at initialization and can outlive the Runtime; the returned reference requires the handle or service to stay alive. Copy a File when retaining one path. Missing directory support throws `std::logic_error`; failure to query the working directory throws `std::runtime_error`.
 
 ## Complete picker example
 
@@ -72,7 +80,7 @@ An empty optional means no file was delivered: cancellation, denial, failure, an
 
 `FilePicker::CanOpenDirectories(writable = false)` checks the requested kind of directory access; `OpenDirectoryAsync(writable = false)` returns an optional `FileReference`. User cancellation is empty, not a directory with an empty path.
 
-`FileReference::Type()` describes the captured entry kind. For a directory, `ListChildrenAsync()`, `CreateDirectoryAsync(name)`, and `CopyFileFromAsync(source, name, overwrite = false)` operate through its retained provider grant. `CopyDirectoryContentsToAsync(destination, overwrite = false)` accepts a File or FileReference destination and returns `FileResult<DirectoryCopySummary>`. This is not a transaction: failure/cancellation can leave already copied output; success counts are meaningful only after successful completion.
+`FileReference::Type()` describes the captured entry kind. For a directory, `ListChildrenAsync()`, `CreateDirectoryAsync(name)`, and `CopyFileFromAsync(source, name, overwrite = false)` operate through its retained provider grant. `CopyDirectoryContentsToAsync(destination, overwrite = false)` accepts a File or FileReference destination and returns `IoResult<DirectoryCopySummary>`. This is not a transaction: failure/cancellation can leave already copied output; success counts are meaningful only after successful completion.
 
 `AsFile()` returns an optional local File when the provider has a known path. It neither imports data nor transfers the reference's grant. Keep the FileReference alive while using a path that depends on its access/temporary-file ownership. Android document URIs and browser handles do not become local paths. `File::ToUri()` converts a local path to a URI; it does not manufacture provider authority.
 
@@ -96,7 +104,7 @@ View FileDropArea(State<std::string> status) {
       .On<FileDropEvents::Dropped>([status](const std::vector<FileReference>& files, const FileDropEvent&) {
         status = "Received " + std::to_string(files.size()) + " files";
       })
-      .On<FileDropEvents::Failed>([status](const FileError& error, const FileDropEvent&) {
+      .On<FileDropEvents::Failed>([status](const IoError& error, const FileDropEvent&) {
         status = error.message;
       });
 }
@@ -116,9 +124,9 @@ File stores an absolute, lexically normalized path; `Path()` uses UTF-8 with for
 
 ## Read, write, and export contracts
 
-ReadBytes/ReadString return `FileResult<T>`; an empty file is successful empty data. Text reads validate UTF-8, strip one leading UTF-8 BOM, and preserve newlines. Binary data, UTF-16, or a legacy encoding should not be fed to ReadString and treated as an empty document on error.
+ReadBytes/ReadString return `IoResult<T>`; an empty file is successful empty data. Text reads validate UTF-8, strip one leading UTF-8 BOM, and preserve newlines. Binary data, UTF-16, or a legacy encoding should not be fed to ReadString and treated as an empty document on error.
 
-Write/append operations return bool, not FileResult. A write creates or truncates the target, requires an existing parent, and is not atomic. Failure/cancellation may leave partial output. Async inputs are owned by the Task; synchronous spans/views are borrowed only for the call. Prefer asynchronous operations from UI work, and use them for Web persistent paths where persistence requires the async path.
+Write/append operations return bool, not IoResult. A write creates or truncates the target, requires an existing parent, and is not atomic. Failure/cancellation may leave partial output. Async inputs are owned by the Task; synchronous spans/views are borrowed only for the call. Prefer asynchronous operations from UI work, and use them for Web persistent paths where persistence requires the async path.
 
 `FilePicker::SaveFileAsync(source, options)` exports an **existing local file**; it does not return a writable destination path. Prepare the source first, then show the picker. The source remains in place. A false result is not enough to claim the user explicitly canceled.
 

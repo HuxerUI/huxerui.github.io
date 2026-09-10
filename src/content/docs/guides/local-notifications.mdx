@@ -1,0 +1,138 @@
+---
+title: Local notifications
+description: Request authorization, submit system notifications, and handle clicks through application activation.
+---
+
+Use local notifications for system-delivered information that may remain relevant outside the current window. Use [Toast or SnackBar](/docs/guides/presentation/) for feedback inside the running UI. These APIs do not provide remote push registration or a background execution service.
+
+## Ask in context and show a notification
+
+Obtain the handle during composition, request authorization after a user action, and inspect both capabilities and operation results:
+
+```cpp compile="local-notification"
+#include <huxerui/huxerui.h>
+
+using namespace huxerui;
+
+Task<void> NotifyReady(LocalNotificationHandle notifications, State<std::string> status) {
+  if (!notifications.Capabilities().can_show) {
+    status = "Notifications are unavailable";
+    co_return;
+  }
+  const auto permission = co_await notifications.RequestAuthorizationAsync();
+  if (permission != PermissionStatus::Granted && permission != PermissionStatus::Provisional) {
+    status = "Notification permission was not granted";
+    co_return;
+  }
+  const auto result = co_await notifications.ShowAsync({
+      .identifier = "export-ready",
+      .title = "Export ready",
+      .body = "Your document is ready to open.",
+  });
+  switch (result) {
+    case LocalNotificationOperationStatus::Accepted: status = "Submitted to the system"; break;
+    case LocalNotificationOperationStatus::Unauthorized: status = "Permission is no longer available"; break;
+    case LocalNotificationOperationStatus::Unavailable: status = "Notification setup is unavailable"; break;
+    case LocalNotificationOperationStatus::Failed: status = "Could not submit the notification"; break;
+  }
+}
+
+[[huxerui::composable]]
+View NotifyButton() {
+  auto notifications = UseApplication().LocalNotifications();
+  auto tasks = UseTaskScope();
+  auto status = UseState(std::string{});
+  return Column {
+    Button("Notify when ready").OnClick([notifications, tasks, status] {
+      tasks.Launch(NotifyReady(notifications, status));
+    }),
+    Text(status),
+  }.With(Spacing(8.0F));
+}
+```
+
+The shared code compiles on all platforms, but native shell configuration below is required for real delivery. Accepted deliberately does not say “shown”: focus modes, permissions, and system policy can suppress a banner. Recheck after a permission/settings change rather than caching authorization indefinitely.
+
+## Schedule and cancel
+
+Use a stable business identifier for each logical notification. Reusing it with ShowAsync replaces pending and delivered content; ScheduleAsync replaces the pending request only. Choose a different identifier when both notifications should coexist.
+
+```cpp compile="notification-reminder"
+#include <huxerui/huxerui.h>
+#include <chrono>
+
+using namespace huxerui;
+
+Task<LocalNotificationOperationStatus> RemindLater(LocalNotificationHandle notifications) {
+  if (!notifications.Capabilities().can_schedule) {
+    co_return LocalNotificationOperationStatus::Unavailable;
+  }
+  co_return co_await notifications.ScheduleAsync(
+      {.identifier = "review-reminder", .title = "Review your draft", .body = "Your notes are waiting."},
+      std::chrono::system_clock::now() + std::chrono::minutes(15));
+}
+
+Task<LocalNotificationOperationStatus> CancelReminder(LocalNotificationHandle notifications) {
+  co_return co_await notifications.CancelAsync("review-reminder");
+}
+```
+
+These tasks should be launched from an owning TaskScope after authorization. Scheduling uses an absolute system-clock time, not a local calendar recurrence. The accepted request can outlive the process, but exact timing and survival across device restart are not guaranteed. Canceling the submitting Task is not the same as CancelAsync: an already accepted notification can remain.
+
+## Handle notification activation
+
+Install the listener in the initial application tree. Notification clicks use OnActivation even when they start the process; do not rely only on StartupActivation.
+
+```cpp compile="notification-activation"
+#include <huxerui/huxerui.h>
+
+using namespace huxerui;
+
+[[huxerui::composable]]
+View NotificationInbox() {
+  auto application = UseApplication();
+  auto message = UseState(std::string{"No notification opened"});
+  application.OnActivation([message](const ApplicationActivation& activation) {
+    if (const auto* notification = std::get_if<NotificationActivation>(&activation)) {
+      if (notification->identifier == "export-ready") {
+        message = "Open the current export from application storage";
+      }
+    }
+  });
+  return Text(message);
+}
+```
+
+For deep links, submit an owned PlatformPayload object containing your document identifier, then validate it before changing a typed NavigationPath. Do not embed a FileReference, external texture, retained buffer, secret, or assumption that the user's session is still authorized. The returned data is the old submitted snapshot. Only the primary interaction is represented, not dismissal or custom buttons.
+
+## Configure the platform shell
+
+| Platform | Required setup and limits |
+| --- | --- |
+| Windows | Call RegisterLocalNotifications before RunApplication with an application-owned ID, display name, and stable CLSID. Default notifications, scheduling, cancellation and activation are supported after configuration; an optional XML provider enables templates. Windows 7 compatibility mode is unavailable. |
+| macOS | Use the User Notifications authorization flow. Default presentation, scheduling, cancellation and primary activation are available; templates are unavailable. |
+| Android | Create a notification channel on API 26+, declare notification permission for API 33+, and supply channel ID and small-icon manifest metadata. Durable scheduling needs the explicit non-exported HuxerUILocalNotificationReceiver declaration. |
+| iOS | Use User Notifications authorization. An embedded Notification Content Extension can provide a template category; expanded presentation belongs to the extension, not the HuxerUI component tree. |
+| Linux / Web | The current local-notification host capability is unavailable. Show an in-app alternative rather than pretending the system accepted delivery. |
+
+For a Windows application with an application-owned entry function, register before entering the event loop. Replace the sample ID and GUID with stable values owned by your product:
+
+```cpp compile="notification-windows-entry"
+#include <huxerui/huxerui.h>
+
+#if defined(_WIN32)
+int StartDesktopApplication() {
+  huxerui::windows::RegisterLocalNotifications(
+      "Example.Notes", "Example Notes", "{9c4cfa32-15bf-4ae5-8d49-cc855ff7c4f2}");
+  return huxerui::RunApplication();
+}
+#endif
+```
+
+Call this from your entry point instead of calling RunApplication directly; do not add a second entry point when a platform shell already owns one. Registration failures throw and should be reported as startup/setup failures. Keep registration across ordinary exit so later notification clicks can reopen the executable.
+
+On Android the metadata keys are `org.huxerui.local_notification.channel_id` and `org.huxerui.local_notification.small_icon`. The application creates the named channel; configuration is not permission. Scheduling is inexact and does not promise survival across reboot. On API 24+, an Application implementing HuxerUILocalNotificationLayoutProvider can return fresh RemoteViews for supported template identifiers.
+
+On iOS the extension declares UNNotificationExtensionCategory and can retrieve submitted data with HUXGetLocalNotificationData from the iOS platform registry header. Ordinary banners remain system-controlled. On Windows use a TemplateNotificationPresentation only when your LocalNotificationTemplateProvider supports that identifier; actions and in-place progress updates are not implemented.
+
+Use the maintained [platform example](https://github.com/HuxerUI/HuxerUI/tree/8db9f8d0cc7c61487feb315c53cd377b1a9de47e/examples/local_notification) for shell files and source, and the [System API](/docs/reference/system/) for validation, limits, and registration cleanup. Platform notifications cannot be faithfully demonstrated by an in-browser mock.

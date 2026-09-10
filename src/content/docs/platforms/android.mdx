@@ -19,3 +19,9 @@ Android defaults to safe-area content. Choose `WindowContentMode::EdgeToEdge` to
 PlatformView factories are declared by `<huxerui/android/platform_registry.h>`. External texture sources use `<huxerui/android/external_texture.h>`. JNI work must run on the UI thread and respect Java reference lifetime.
 
 Android behavior must still be validated on devices or emulators for API level, density, system-bar mode, IME resize policy, accessibility service, document provider, and network security configuration.
+
+## System capability boundaries
+
+Local notifications require application channel/icon metadata, a channel on API 26+, and notification permission for API 33+. Durable scheduling needs the explicit non-exported receiver; custom RemoteViews templates need an application layout provider on API 24+. Permissions and channel policy can suppress accepted delivery.
+
+See [Local notifications](/docs/guides/local-notifications/) for shared usage and platform configuration, and [System API](/docs/reference/system/) for exact contracts.

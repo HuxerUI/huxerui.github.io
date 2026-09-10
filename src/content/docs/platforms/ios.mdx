@@ -18,3 +18,9 @@ Platform views are registered through `<huxerui/ios/platform_registry.h>`. Exter
 
 Build and device validation require macOS with Xcode; non-macOS hosts can edit shared code but cannot validate the iOS adapter.
 The website's cross-platform contract checks do not verify UIKit accessibility, keyboard behavior, UIView composition, signing, or device safe-area behavior.
+
+## System capability boundaries
+
+Local notifications use User Notifications. An embedded Notification Content Extension owns template UI; HUXGetLocalNotificationData reads its submitted payload. Clicks enter OnActivation even when launching the process. This does not supply remote push registration.
+
+See [Local notifications](/docs/guides/local-notifications/) for shared usage and platform configuration, and [System API](/docs/reference/system/) for exact contracts.

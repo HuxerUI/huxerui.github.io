@@ -39,15 +39,7 @@ Before the first tagged SDK release, the page presents an explicit unpublished s
 
 ## Interactive examples
 
-The Pages deployment configures HuxerUI with Emscripten and builds these independent examples:
-
-- UI Gallery
-- Canvas
-- Tabs
-- Navigation
-- Theme
-- Image
-- Presentation
+The Pages deployment builds the curated showcases selected by `huxerui-source.json`, with presentation metadata in `src/data/examples.ts`. Keep the two catalogs aligned. Prefer examples that demonstrate distinct framework capabilities through a complete interactive experience; basic component and service examples belong in the documentation and linked source repository, not additional online demo pages.
 
 `scripts/stage-web-examples.mjs` copies each HTML, ES module, Wasm binary, and optional resource payload into its own ignored `public/demos/<name>` directory.
 Each example route lazy-loads only its selected application.
