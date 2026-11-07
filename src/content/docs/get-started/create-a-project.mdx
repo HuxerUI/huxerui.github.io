@@ -7,7 +7,7 @@ sidebar:
 
 The CLI creates one application project with shared C++ source and source-controlled platform shells.
 
-## Create an application
+## Create a CMake application
 
 ```bash
 huxerui create app hello_huxer --id dev.example.hello --platform windows,web,android
@@ -63,3 +63,7 @@ The generated shell links the correct HuxerUI library form for its platform and 
 ## Next
 
 Open the generated `src/app.cpp`, then follow [First application](/docs/get-started/first-application/) to replace its initial `Text` with a stateful interface.
+
+## Choose a desktop module project
+
+Use `huxerui create app hello_modules --build mcpp` to create an import-based desktop application. Build/run it with mcpp; omit --platform because that workflow has no mobile/Web platform shells. See [C++ Modules and mcpp](/docs/tooling/cpp-modules-and-mcpp/) for templates, source layout and resources.

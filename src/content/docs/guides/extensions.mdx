@@ -88,11 +88,11 @@ const Application application{App};
 ```
 
 The layout must not retain child references across reconciliation.
-Runtime continues to own keyed identity, clipping, hit testing, scrolling, and mounted-node lifetime.
+UiWindow continues to own keyed identity, clipping, hit testing, scrolling, and mounted-node lifetime.
 Prefer `Row`, `Column`, `Stack`, and `Flow` when their composition already expresses the policy.
 
 Derive from `VirtualLayout<Derived>` only for a genuinely different visible-range algorithm over a large or unbounded data set.
-Its policy decides what range is needed and where realized items are placed; Runtime owns realization and cleanup.
+Its policy decides what range is needed and where realized items are placed; UiWindow owns realization and cleanup.
 Try `VirtualList` or `VirtualGrid` first, and use stable semantic keys when data can reorder.
 
 ## Retain node-local behavior with `NodeExtension`
@@ -129,7 +129,7 @@ Construction starts retained state, while `Update` applies new declarative confi
 `OnFrame` returns whether another frame is needed; when retained state changes visible output, call protected `InvalidatePaint(...)` before returning.
 Paint through `PaintBehindContent` or `PaintAboveContent` instead of mutating the component tree.
 
-Do not retain a raw `ViewNode*`, request frames through a platform callback, or add a concrete-extension branch to Runtime.
+Do not retain a raw `ViewNode*`, request frames through a platform callback, or add a concrete-extension branch to UiWindow.
 Implement only the `NodeExtension` capabilities the behavior owns, and invalidate semantics separately when semantic output changes.
 
 Here is a complete paint-only retained modifier. Ordinary application borders should use `Border`; this deliberately small example illustrates extension lifetime without another scheduler or node wrapper:
@@ -199,7 +199,7 @@ Use an Environment key for typed hierarchical configuration that descendants rea
 Use Theme when the value is visual policy shared by themed components.
 These are propagation mechanisms, not owners of mutable services or substitutes for explicit required arguments.
 
-Use a root service for a per-window capability with one authoritative retained owner:
+Use a window service for a per-window capability with one authoritative retained owner:
 
 This complete installation keeps the last applied document text for the window lifetime. Editors own their draft State and explicitly apply it to the service; this in-memory example does not claim to save a file:
 
@@ -217,7 +217,7 @@ struct DocumentSession {
 
 AppOptions Options() {
   AppOptions options;
-  options.root_hooks.push_back([](RootContext& root) {
+  options.window_hooks.push_back([](WindowContext& root) {
     root.Provide(std::make_shared<DocumentSession>());
   });
   return options;
@@ -244,12 +244,12 @@ View App() {
 const Application application{App, Options()};
 ```
 
-Choose a root service only when lifetime follows the Runtime/window and multiple scopes need coordinated operations.
+Choose a window service when lifetime follows one UiWindow and multiple scopes need coordinated operations.
 Ordinary state, theme values, and component configuration remain in composition or Environment.
 
-`Provide` rejects a null service and a second provider of the same service type. `UseService<T>()` fails if that exact type is not installed; it does not search derived classes or construct a missing service. In a single local form, prefer UseState and pass the value explicitly—root installation is useful only when the service really owns window-wide coordination.
+`Provide` rejects a null service and a second provider of the same service type. `UseService<T>()` fails if that exact type is not installed; it does not search derived classes or construct a missing service. In a single local form, prefer UseState and pass the value explicitly—window installation is useful only when the service really owns window-wide coordination.
 
-A service field is not automatically observable: an already-open second editor does not refresh merely because `saved_text` changed. Use an explicit observation contract when a real document service needs live updates; do not manufacture State cells through internal constructors during root installation.
+A service field is not automatically observable: an already-open second editor does not refresh merely because `saved_text` changed. Use an explicit observation contract when a real document service needs live updates; an application-owned model can hold ordinary State values created in application_hooks, shared across windows. A window model can also hold State, while its owner controls when that model is released.
 
 ## Extend rendering or the platform boundary
 
@@ -261,7 +261,7 @@ Native integration has three distinct boundaries:
 
 | Need | Boundary | Owner |
 | --- | --- | --- |
-| Call an SDK service without embedding a control | `PlatformModule` | platform module instance for the Runtime |
+| Call an SDK service without embedding a control | `PlatformModule` | platform module instance for its declared application or window host |
 | Place an actual platform control in HuxerUI layout | `PlatformView` | platform view controller and adapter |
 | Present producer-owned GPU or media content | `ExternalTexture` | producer plus platform texture surface |
 

@@ -97,4 +97,4 @@ Do not retain a PaintContext beyond the callback, append to a finished one, or m
 
 ## Platform-renderer boundary
 
-RenderScene, RenderNode, RenderFrame, and FrameCommit are integration contracts, not values an application edits to move a component. Their borrowed pointers cannot be cached across Runtime frame construction. A renderer must handle every command variant, preserve clipping/transform balance, and respect group opacity and child ordering. Adding a PaintCommand therefore requires every renderer to implement it; ordinary application custom drawing should stay with Canvas, paths, and existing commands.
+RenderScene, RenderNode, RenderFrame, and FrameCommit are integration contracts, not values an application edits to move a component. Their borrowed pointers cannot be cached across UiWindow frame construction. A renderer must handle every command variant, preserve clipping/transform balance, and respect group opacity and child ordering. Adding a PaintCommand therefore requires every renderer to implement it; ordinary application custom drawing should stay with Canvas, paths, and existing commands.

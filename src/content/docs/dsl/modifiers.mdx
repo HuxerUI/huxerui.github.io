@@ -33,7 +33,7 @@ Text("Ready")
 ```cpp fragment
 Row {
   Text("Name"),
-  TextField(name).With(Grow()),
+  TextField(name).OnChanged([name](const TextEditingValue& next) { name = next; }).With(Grow()),
 }.With(
     Spacing(12.0F),
     CrossAlign(CrossAxisAlignment::Center)

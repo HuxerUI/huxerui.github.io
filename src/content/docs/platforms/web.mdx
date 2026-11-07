@@ -12,7 +12,7 @@ huxerui setup web
 huxerui run web
 ```
 
-The browser adapter owns animation-frame scheduling, canvas presentation, DOM input and IME conversion, HTTP through browser networking, file capabilities, activation, and visibility lifecycle.
+The browser UiWindow owns animation-frame scheduling, canvas presentation, DOM input and IME conversion, HTTP through browser networking, file capabilities, activation, and visibility lifecycle.
 The pinned revision does not yet project the shared semantic tree into an accessible DOM tree; the render canvas and hidden text-input element are marked `aria-hidden`.
 
 Use `<huxerui/web/navigation.h>` for `BrowserNavigationStack`, which synchronizes a typed `NavigationPath<Route>` with URL and browser back/forward history through an application codec. DOM-backed platform views are registered with `<huxerui/web/platform_registry.h>`; browser external texture sources use `<huxerui/web/external_texture.h>`.
@@ -26,3 +26,9 @@ Website CI builds every listed Web example at the pinned revision, but browser p
 Local notifications and BufferReference payload bridging are currently unavailable. Use in-app feedback and owned Bytes respectively. Shared streams still cover supported browser files and Fetch response bodies; browser persistence requires the async write/close path.
 
 See [Local notifications](/docs/guides/local-notifications/) for shared usage and platform configuration, and [System API](/docs/reference/system/) for exact contracts.
+
+## Application and window ownership
+
+The application Runtime shares services, ordinary tasks and observable State across its UI attachments. Each UiWindow owns composition, focus, layers and presentation. The browser backend does not expose programmatic native OpenWindow; separate demo sessions are independent applications. See [Application and windows](/docs/guides/application-and-windows/).
+
+System-theme preference is window-local and observed through UseSystemThemeBrightness. Custom font families retain application-supplied static data; test fallback and platform text scaling with localized content. Native runtime/device validation remains separate from website contract checks.

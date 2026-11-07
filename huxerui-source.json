@@ -1,6 +1,6 @@
 {
   "repository": "https://github.com/HuxerUI/HuxerUI.git",
-  "ref": "8db9f8d0cc7c61487feb315c53cd377b1a9de47e",
+  "ref": "56eb5ab225997cffc83ce8f2736d1fd52c530b70",
   "webExamples": [
     "ui_gallery",
     "transition",
@@ -10,7 +10,7 @@
     "streaming_text",
     "virtual_grid",
     "navigation",
-    "presentation",
+    "dock_layout",
     "external_texture"
   ]
 }

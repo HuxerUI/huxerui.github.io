@@ -7,15 +7,14 @@ sidebar:
 
 Include `<huxerui/huxerui.h>` for the complete cross-platform API. Link `HuxerUI::huxerui` for the shared library or `HuxerUI::huxerui_static` for static linkage. Platform-specific integration headers and `<huxerui/testing/ui_test.h>` remain explicit includes; tests link the separate HuxerUI::testing target.
 
-The **Application** audience is ordinary cross-platform UI code. **Extension** means custom layout, retained behavior, painting, or root-service work. **Platform integration** connects native objects or producers. **Adapter** is reserved for a platform shell implementation and should not appear in ordinary application code.
+The **Application** audience is ordinary cross-platform UI code. **Extension** means custom layout, retained behavior, painting, or application/window-service work. **Platform integration** connects native objects or producers. **Host integration** is reserved for a platform Runtime/UiWindow implementation and should not appear in ordinary application code.
 
 ## Application and composition
 
 | Header | Audience | Reference |
 | --- | --- | --- |
 | `huxerui.h` | Application umbrella | This index |
-| `app.h` | Application; adapter boundary is isolated on the reference page | [Application and root services](./app/) |
-| `root.h` | Extension | [Application and root services](./app/) |
+| `app.h` | Application; host boundary is isolated on the reference page | [Application and services](./app/) |
 | `view.h` | Application and extension | [View and components](./view/) |
 | `state.h` | Application | [State and environment](./state-and-environment/) |
 | `environment.h` | Application and extension | [State and environment](./state-and-environment/) |
@@ -30,15 +29,15 @@ The **Application** audience is ordinary cross-platform UI code. **Extension** m
 | `layer.h` | Extension | [Presentation and layers](./presentation/) |
 | `theme.h` | Application and extension | [Theme](./theme/) |
 | `animation.h` | Application | [Animation](./animation/) |
-| `window.h` | Application; adapter boundary is isolated on the reference page | [Window](./window/) |
+| `window.h` | Application; host boundary is isolated on the reference page | [Window](./window/) |
 
 ## Content and services
 
 | Header | Audience | Reference |
 | --- | --- | --- |
-| `text.h`, `text_input.h`, `clipboard.h` | Application and adapter | [Text and input](./text-and-input/) |
+| `text.h`, `text_input.h`, `clipboard.h` | Application and host integration | [Text and input](./text-and-input/) |
 | `validation.h` | Application | [Text and input](./text-and-input/) |
-| `resource.h` | Application and adapter | [Resources](./resource/) |
+| `resource.h` | Application and host integration | [Resources](./resource/) |
 | `file.h`, `file_drop.h` | Application | [Files](./file/) |
 | `http.h` | Application | [HTTP](./http/) |
 | `stream.h` | Application | [Streams](./stream/) |
@@ -53,8 +52,8 @@ The **Application** audience is ordinary cross-platform UI code. **Extension** m
 | `color.h` | Application | [Color and geometry](./geometry/) |
 | `geometry.h` | Application and extension | [Color and geometry](./geometry/) |
 | `vector.h` | Application and extension | [Path and vector](./vector/) |
-| `paint.h` | Extension and adapter | [Paint and render scene](./paint/) |
-| `render_scene.h` | Adapter | [Paint and render scene](./paint/) |
+| `paint.h` | Extension and host integration | [Paint and render scene](./paint/) |
+| `render_scene.h` | Host integration | [Paint and render scene](./paint/) |
 | `platform_registry.h` | Application and platform integration | [PlatformModule](./platform-module/) |
 | `external_texture.h` | Application consumer | [ExternalTexture](./external-texture/) |
 | `android/*`, `ios/*`, `macos/*`, `windows/*`, `linux/*`, `web/*` | Platform integration | [Platform-specific API](./platform-specific/) |
@@ -65,8 +64,7 @@ The **Application** audience is ordinary cross-platform UI code. **Extension** m
 | --- | --- | --- |
 | `data.h` | Application | [Bytes and Uri](./data/) |
 | `gesture.h` | Application and extension | [Gestures](./gesture/) |
-| `platform_adapter.h` | Adapter | [Platform boundary](./app/#adapter-boundary) |
 
 ## Internal implementation
 
-Names in `huxerui::detail`, Runtime collaboration types not documented on these pages, and repository platform-backend classes are not application or extension API. Public adapter contracts such as `PlatformAdapter`, `RenderScene`, and text-service interfaces are documented only on their owning boundary pages rather than mixed into component guidance.
+Names in `huxerui::detail`, Runtime collaboration types not documented on these pages, and repository platform-backend classes are not application or extension API. Public host contracts such as `Runtime`, `UiWindow`, `RenderScene`, and text-service interfaces are documented only on their owning boundary pages rather than mixed into component guidance.

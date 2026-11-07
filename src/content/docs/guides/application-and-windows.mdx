@@ -1,0 +1,123 @@
+---
+title: Application and windows
+description: Share observable application models while keeping each window's UI and presentation independent.
+---
+
+An application can keep documents, services and asynchronous work alive across several windows. Each window has its own composition tree, focus, navigation, layers and local Environment. Choose the owner before installing a service or launching work.
+
+| Owner | Good fit | Ends when |
+| --- | --- | --- |
+| ApplicationHook | Shared State models, service registration, activation policy, tray | Application shuts down |
+| WindowHook | A window presenter or window-local coordination service | That window retires |
+| Composable scope | Local editor draft, navigation selection, transient task | Scope unmounts |
+
+## Share a model across windows
+
+Construct application-owned State during an ApplicationHook or later application-thread work. State is a shared observable cell; passing the model to another window does not clone it.
+
+```cpp compile="multi-window-model"
+#include <huxerui/huxerui.h>
+#include <memory>
+#include <optional>
+
+using namespace huxerui;
+
+struct DocumentModel {
+  State<int> revision{0};
+};
+
+[[huxerui::composable]]
+View DocumentPanel(std::shared_ptr<DocumentModel> document) {
+  auto local = UseState(0);
+  return Column {
+    Text::Format("Document revision: {}", document->revision),
+    Button("Edit document").OnClick([document] { ++document->revision; }),
+    Text::Format("Local clicks: {}", local),
+    Button("Local action").OnClick([local] { ++local; }),
+  }.With(Spacing(12.0F));
+}
+
+View App() {
+  auto application = UseApplication();
+  auto document = UseService<DocumentModel>();
+  auto secondary = UseState(std::optional<WindowHandle>{});
+  const std::optional<WindowHandle>& current = secondary;
+  const bool open = current && current->IsOpen();
+  return Column {
+    DocumentPanel(document),
+    Button(open ? "Activate inspector" : "Open inspector")
+        .With(Enabled(application.SupportsMultipleWindows()))
+        .OnClick([application, document, secondary] {
+          const std::optional<WindowHandle>& window = secondary;
+          if (window && window->IsOpen()) {
+            window->Activate();
+          } else {
+            secondary = application.OpenWindow([document] {
+              return DocumentPanel(document).With(Padding(24.0F));
+            }, {.title = "Inspector", .initial_size = {420.0F, 300.0F}});
+          }
+        }),
+  }.With(Padding(24.0F), Spacing(16.0F));
+}
+
+const Application application{
+    App,
+    {.application_hooks = {[](ApplicationContext& context) {
+      context.Provide(std::make_shared<DocumentModel>());
+    }}},
+};
+```
+
+Both panels observe one revision, but each DocumentPanel owns a distinct local counter. Closing the inspector unmounts its tree; reopening creates fresh local State. The shared model remains until application shutdown.
+
+## Window handles and configuration
+
+UseWindow returns the current window's handle. IsOpen is observable during composition; hidden or minimized windows remain open. Captured handles never target a replacement window after their original window closes.
+
+OpenWindow is a side effect: invoke it from an event or later application work, outside composition and installation. The factory runs in the new window, with a new root Environment. Apply an explicit theme or resource policy inside it when needed; the opening window's local providers are not inherited.
+
+Windows, macOS and Linux implement programmatic top-level window creation in the current revision. Android, iOS and Web do not expose equivalent programmatic creation through this API. Query SupportsMultipleWindows and offer an in-window alternative. An externally attached mobile scene is not proof of OpenWindow support.
+
+## Close, hide and quit
+
+WindowHandle::Close consults that window's OnCloseRequest policy. Hide keeps the window alive, including its local State. ApplicationHandle::Quit requests application shutdown.
+
+By default, closing the last framework-owned desktop window quits. Set AppOptions::quit_on_last_window_closed to false only when application-level policy provides a way to open another window or quit, such as a tray menu. An application with no initial window is not automatically terminated by this option.
+
+## Put services at the right scope
+
+```cpp compile="window-service-installation"
+#include <huxerui/huxerui.h>
+#include <memory>
+
+using namespace huxerui;
+
+struct InspectorSession {
+  State<bool> show_details{false};
+};
+
+void InstallInspector(WindowContext& context) {
+  context.Provide(std::make_shared<InspectorSession>());
+}
+
+View InspectorContent() {
+  auto session = UseService<InspectorSession>();
+  return Checkbox("Show details", session->show_details)
+      .OnChanged([session](bool next) { session->show_details = next; });
+}
+
+const Application application{
+    InspectorContent,
+    {.window_hooks = {InstallInspector}},
+};
+```
+
+Each window receives a different InspectorSession. A type cannot be installed at both scopes. Do not store a borrowed WindowContext or LayerController beyond the owning window's lifetime.
+
+## Application work without a window
+
+UseApplicationTaskScope returns a task owner that survives UI retirement. ApplicationContext::OnActivation can update a shared route/document model or launch work through this scope without depending on a mounted component.
+
+State reads and writes remain on the application thread. RunWorker receives ordinary input snapshots and returns a result to that thread. Retaining State, a task scope or an application handle does not revive a stopped application.
+
+Continue with [Lifecycle and activation](/docs/guides/lifecycle-and-activation/), [Tasks](/docs/guides/tasks/), and [Window API](/docs/reference/window/). The [desktop example source](https://github.com/HuxerUI/HuxerUI/tree/56eb5ab225997cffc83ce8f2736d1fd52c530b70/examples/multi_window) demonstrates real native windows.

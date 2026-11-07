@@ -1,57 +1,66 @@
 ---
-title: Application and root services API
-description: Application declaration, activation, lifecycle state, root hooks, and adapter boundary.
+title: Application and services API
+description: Application installation, shared services, activation, lifetime, and window creation.
 sidebar:
   order: 7
 ---
 
-Declared by `<huxerui/app.h>` and `<huxerui/root.h>`. The host implementation interface is isolated in `<huxerui/platform_adapter.h>`.
+Declared by `<huxerui/app.h>`; window installation and WindowHandle are declared by `<huxerui/window.h>`. See [Application and windows](/docs/guides/application-and-windows/) for a complete shared-model example.
 
 ## Application declaration
 
-- `RootFactory` is `View (*)()`.
-- `Application(root_factory, AppOptions = {})` stores an immutable root and options.
-- `AppOptions` contains `WindowOptions window`, `ViewportBreakpoints`, debug-overlay default, and `std::vector<RootHook> root_hooks`.
-- `RunApplication()` launches the application declaration supplied by the generated platform entry.
+`RootFactory` is `View (*)()`. `Application(root_factory, AppOptions = {})` retains the immutable declaration used by RunApplication. The declaration must outlive the application Runtime. A window's root already owns a composition scope; do not annotate the app root.
+
+| AppOptions field | Contract |
+| --- | --- |
+| `window` | WindowOptions for the initial window. |
+| `viewport_breakpoints` | Width thresholds for responsive composition. |
+| `show_debug_overlay` | Defaults on in debug builds and off in release builds; applies to each UI window. |
+| `quit_on_last_window_closed` | Defaults true for framework-owned desktop windows. Hidden windows still count; an initially windowless application does not immediately quit. |
+| `application_hooks` | ApplicationHook callbacks installed once, in declaration order, before windows or queued application work. |
+| `window_hooks` | WindowHook callbacks installed before each UiWindow first composes. |
+
+RunApplication enters the platform shell. Creating an Application value alone does not create a window or start an event loop.
+
+## ApplicationContext and ApplicationHook
+
+An ApplicationHook receives a borrowed ApplicationContext on the application thread. Do not retain it. `Provide<Service>(shared_ptr<Service>)` installs a non-null service under its exact C++ type. Duplicate types and installation after freeze throw logic_error.
+
+`RegisterPlatformModule<Module>(name, factory)` and its options overload install lazy factories accepting Runtime& or UiWindow&. `RegisterPlatformView<Properties[, Controller]>` installs factories prepared for their actual mounting window. The catalog freezes after application installation; registration does not construct a module or platform view.
+
+`OnActivation(function<void(ApplicationActivation)>)` installs the single application-level activation policy. `OnLifecycleChanged(function<void(ApplicationLifecycleState)>)` installs an application-lifetime observer. These handlers can work without a composed window. See [Lifecycle and activation](/docs/guides/lifecycle-and-activation/) for startup handling and queued delivery.
+
+## WindowContext and WindowHook
+
+A WindowHook receives a borrowed WindowContext for one UiWindow. `Provide<Service>` installs a window-local service; `Layers()` borrows its LayerController. A service type cannot be installed both at application and window scope. Factory registration belongs to ApplicationContext.
+
+Use a window service for presentation coordination or per-window editor policy. Use an application service for a shared document model, networking client, or a capability needed while no window is attached.
+
+## UseService and UseApplication
+
+`UseService<Service>()` returns the installed shared_ptr for the exact type or throws logic_error. It finds application services first, then services from the current window Environment. It does not construct missing services or search derived types.
+
+Frozen application services can be acquired without composition, including from another thread without a window execution context. That does not make their methods or State thread-safe. Window services require their original live window context.
+
+`UseApplication() -> ApplicationHandle` works in application hooks, ordinary application-thread callbacks, events, tasks and composition. A captured handle keeps access to its original application service, not a replacement Runtime after shutdown. Calling without a valid application context or from the wrong thread throws logic_error.
 
 ## Activation and lifecycle
 
-- `LaunchActivation`, `UrlActivation{Uri url}`, `FileActivation{files}`, and `NotificationActivation{identifier, data}` form `ApplicationActivation`.
-- `ApplicationLifecycleState`: `Active`, `Inactive`, `Background`.
-- `UseApplication() -> ApplicationHandle`.
-- `StartupActivation()` returns the runtime's initial activation.
-- `LifecycleState()` reads observable current state.
-- `OnLifecycleChange(handler, dependencies...)` and `OnActivation(handler, dependencies...)` register scoped listeners.
+`ApplicationActivation` is LaunchActivation, UrlActivation, FileActivation, or NotificationActivation. `StartupActivation()` returns `const optional<ApplicationActivation>&`: background-only startup may have no initial activation. Later input does not replace that value.
 
-## Root services
+`LifecycleState()` observes aggregate Active, Inactive or Background state. `OnLifecycleChanged(handler, dependencies...)` observes distinct transitions while the declaring composition Lifecycle is mounted and does not replay the initial state. Use ApplicationContext observers when the policy must outlive every window. WindowHandle has a separate WindowLifecycleState and observer.
 
-`RootHook` receives `RootContext&`. `RootContext::Provide(shared_ptr<Service>)` installs exactly one service per type; `Layers()` exposes `LayerController`; `RegisterPlatformModule` and `RegisterPlatformView` install typed platform factories. `UseService<Service>()` resolves an installed root service.
+## Create and control windows
 
-Resolve `FilePicker` and `HttpClient` with `UseService<T>()`. Access clipboard and directories directly through ApplicationHandle; they are not application-resolved root services.
+`SupportsMultipleWindows()` queries programmatic top-level window support. `OpenWindow(ViewFactory, WindowOptions = {})` creates and presents a separately composed window sharing application services and State. Call it on the original application thread, outside composition and installation.
 
-## Adapter boundary
+The factory executes later with a fresh root Environment. Options and local theme/locale do not inherit from the caller. Copy required values into the factory; captured references do not gain ownership. Discarding the WindowHandle leaves the window open. Success does not guarantee the first frame has rendered.
 
-`PlatformAdapter` is the platform implementation interface for frame scheduling, time, text layout, rendering, input services, resources, activation, lifecycle, files, HTTP, process metrics, system UI, and platform integration. Applications do not subclass it.
-
-`Runtime` owns composition, reconciliation, layout, interaction, semantics, animation, layers, and `RenderScene` generation for one adapter. Its public methods support platform hosts and focused framework extensions. `ProcessMetrics` carries cumulative CPU time, memory footprint, and processor count.
-
-## API boundary and lifetime
-
-| Surface | Intended caller | Lifetime and constraints |
-| --- | --- | --- |
-| `Application`, `AppOptions`, `UseApplication` | Application code | One immutable application declaration; captured handles remain safe after Runtime destruction; each operation defines its disconnected behavior. |
-| `RootHook`, `RootContext`, `UseService<T>` | Application extensions | Hooks run before root composition. `UseService<T>()` returns the installed `std::shared_ptr<T>` or throws `std::logic_error`. |
-| `PlatformAdapter`, `Runtime`, `FrameCommit` | Repository or custom platform hosts | UI-thread adapter boundary, not an ordinary component API. One Runtime belongs to one adapter and host view. |
-| `RunApplication` | Generated native entry | Uses the application declaration supplied by the platform shell. |
-
-Empty lifecycle/activation handlers and duplicate or empty service installation are rejected with `std::invalid_argument` or `std::logic_error`.
-Application code should not instantiate `Runtime`, subclass `PlatformAdapter`, or depend on `huxerui::detail`.
+Invalid configuration throws invalid_argument, invalid thread/lifetime throws logic_error, and unsupported or failed native creation throws runtime_error. `Quit()` requests whole-application termination; `WindowHandle::Close()` requests only that window's close path.
 
 ## Permission requests
 
-`Permission` currently covers `Camera` and `Microphone`. `ApplicationHandle::CheckPermissionAsync` reads current authorization; `RequestPermissionAsync` requests it from a user-driven workflow. Both return `Task<PermissionStatus>`.
-
-Statuses are `NotDetermined`, `Granted`, `Denied`, `PermanentlyDenied`, `Restricted`, `Unavailable`, and `Provisional`. Provisional is reported only by capabilities with explicit provisional authorization, such as notifications. Do not equate Denied with “can ask again”: some hosts cannot reliably distinguish that. Platform manifests/usage descriptions remain mandatory; the API cannot add them at runtime.
+Permission covers Camera and Microphone. CheckPermissionAsync and RequestPermissionAsync return Task of PermissionStatus. States are NotDetermined, Granted, Denied, PermanentlyDenied, Restricted, Unavailable and Provisional; notifications use their separate authorization methods and can report Provisional.
 
 ```cpp compile="application-permission"
 #include <huxerui/huxerui.h>
@@ -75,40 +84,37 @@ View EnableCamera() {
 }
 ```
 
-Request only when the user starts the feature. `OpenPermissionSettingsAsync(permission)` returns whether the settings launch was accepted, **not** whether permission became granted; check again on return. Unsupported hosts or missing app declarations can report Unavailable.
+Request/settings methods capture the original native presentation endpoint when called. An expired endpoint does not borrow a replacement window. Some hosts can present without a UiWindow; unavailable hosts return Unavailable. Required Android manifests and Apple usage descriptions remain application configuration.
+
+OpenPermissionSettingsAsync returns whether opening settings was accepted, not whether permission was granted. Recheck on return.
 
 ## Clipboard and directories
 
-`Clipboard() noexcept` returns the same non-null `std::shared_ptr<huxerui::Clipboard>` on every call. Check `IsAvailable()` and the result of each read/write; operations are synchronous on the owning UI thread. A retained clipboard reports unavailable after Runtime destruction. The accessor itself does not need active composition.
-
-`Directories()` returns `const AppDirectories&` without I/O. It is valid while the handle or Runtime retains its service; copy paths for independent ownership. It throws `std::logic_error` when directories are unavailable. `CurrentDirectory()` queries the process working directory, not a cached application location, and throws `std::runtime_error` if that query fails. Both accessors work outside composition; captured directory values remain available after Runtime destruction.
+Clipboard returns the same non-null `shared_ptr<Clipboard>` each time. Query IsAvailable and inspect each operation's result. Methods run synchronously on the application thread; retained clipboard objects report unavailable after shutdown.
 
 ```cpp compile="application-clipboard"
 #include <huxerui/huxerui.h>
 
 using namespace huxerui;
 
-[[huxerui::composable]]
 View CopyTitle(std::string title) {
   auto clipboard = UseApplication().Clipboard();
-  auto status = UseState(std::string{});
-  return Column {
-    Button("Copy title").With(Enabled(clipboard->IsAvailable())).OnClick([clipboard, title, status] {
-      status = clipboard->WriteText(title) ? "Copied" : "Clipboard unavailable";
-    }),
-    Text(status),
-  };
+  return Button("Copy title").With(Enabled(clipboard->IsAvailable())).OnClick([clipboard, title] {
+    clipboard->WriteText(title);
+  });
 }
 ```
 
-## Local notifications
+Directories returns a borrowed AppDirectories captured at initialization; copy File values for independent ownership. Unavailable directories throw logic_error. CurrentDirectory queries the process working directory and throws runtime_error on failure. Captured directory values remain usable as paths after Runtime shutdown; paths do not grant filesystem access.
 
-`LocalNotifications()` captures the current composition Environment and returns a LocalNotificationHandle. Use it for system-delivered notifications rather than in-window feedback. See [Local notifications](/docs/guides/local-notifications/) for authorization, scheduling, activation, and required platform configuration; [System API](/docs/reference/system/) lists the contracts.
+## Notifications and tray
 
-## System tray and quit
+LocalNotifications returns an application service handle without capturing a composition Environment. Text resolution follows the resource context of each submission. See [System capabilities](/docs/reference/system/) and [Local notifications](/docs/guides/local-notifications/).
 
-`ApplicationHandle::SystemTray()` returns a composition-owned `SystemTrayHandle`. `IsAvailable()` is observable; `Show(icon, SystemTrayOptions)` supplies a tooltip and platform menu. The image must resolve to an ImageAsset. There is at most one active tray presentation per Runtime.
+SystemTray returns the shared application tray handle without requiring composition. Show replaces the shared presentation; Hide removes it. OnActivate installs one committed application handler, normally in an ApplicationHook. There is no dependency-list overload. Keep callbacks application-owned and use an explicit Quit action for a tray-only workflow.
 
-Use `Lifecycle` to show/hide and `OnActivate(handler, dependencies...)` for primary activation. Hiding only affects the owning handle's presentation. Keep commands in ordinary application policy; closing a window is not necessarily the same operation as `ApplicationHandle::Quit()`.
+## Platform implementation boundary
 
-A tray is a platform capability, not a portable substitute for mobile background execution. See [window and system UI](/docs/guides/window-and-system-ui/) for a lifecycle example.
+Runtime owns application services, ordinary timers, dispatch and the frozen factory catalog. UiWindow owns composition, retained nodes, layout, input, semantics, animation, layers and RenderScene generation. Each platform derives these bases to implement genuine native operations. These are host implementation contracts, not objects an ordinary component constructs or subclasses.
+
+ProcessMetrics contains cumulative CPU time, memory footprint and processor count. Shared application and UI work uses one application thread. See [extension points](/docs/guides/extensions/) before choosing a lower-level integration boundary.

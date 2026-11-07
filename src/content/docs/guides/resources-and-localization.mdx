@@ -105,3 +105,23 @@ Application code should consume typed IDs instead of querying platform resource 
 The same resource package contract is used by desktop bundles, Android assets, iOS bundles, and Web output.
 
 See [Image](/docs/components/image/), [Text](/docs/components/text/), and the [Resource API](/docs/reference/resource/).
+
+## Resolve resources outside composition
+
+Application services, notification producers and task continuations can use `UseService<Resources>()`. GetString, GetImage, GetVectorImage and GetRawResource resolve immediate values on the original application thread without adding composition subscriptions.
+
+```cpp compile="resource-service-context"
+#include <huxerui/huxerui.h>
+
+using namespace huxerui;
+
+std::string ExportHeading(StringResource key) {
+  auto resources = UseService<Resources>();
+  const auto configuration = resources->Configuration();
+  return resources->GetString(key, configuration);
+}
+```
+
+An explicit ResourceConfiguration preserves a chosen locale/density snapshot. Without one, a window callback/task follows its original effective window/local Locale; application-only work uses application defaults. A captured Resources object rejects a stopped or different application.
+
+Keep UseString for reactive localized UI and Text::Format for immediate nonlocalized formatting. StringVariant::Format stores deferred localized arguments for services or APIs that resolve later. A plain resource ID can still construct Text/Image directly; acquiring Resources does not make early asset resolution necessary.

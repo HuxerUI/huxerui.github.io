@@ -58,6 +58,7 @@ for (const document of await collectDocuments(docsRoot)) {
     }
     const compileMatch = metadata.match(/(?:^|\s)compile="([a-z0-9_-]+)"(?:\s|$)/);
     const isFragment = /(?:^|\s)fragment(?:\s|$)/.test(metadata);
+    const isModule = /(?:^|\s)module(?:\s|$)/.test(metadata);
     if (Boolean(compileMatch) === isFragment) {
       failures.push(`${relative} C++ block ${blockIndex} must be classified as exactly one of fragment or compile=\"id\"`);
       continue;
@@ -73,10 +74,13 @@ for (const document of await collectDocuments(docsRoot)) {
       continue;
     }
     identifiers.add(identifier);
-    if (!source.includes("#include <huxerui/")) {
+    if (!isModule && !source.includes("#include <huxerui/")) {
       failures.push(`${relative} compiled example ${identifier} must be a visible, self-contained translation unit`);
     }
-    examples.push({ identifier, document: relative, block: blockIndex, source });
+    if (isModule && !/^import huxerui;$/m.test(source)) {
+      failures.push(`${relative} module example ${identifier} must import huxerui`);
+    }
+    examples.push({ identifier, document: relative, block: blockIndex, kind: isModule ? "module" : "header", source });
   }
 }
 
@@ -99,7 +103,10 @@ if (failures.length > 0) {
 await rm(outputRoot, { recursive: true, force: true });
 await mkdir(outputRoot, { recursive: true });
 for (const example of examples) {
-  await writeFile(path.join(outputRoot, `${example.identifier}.cpp`), example.source, "utf8");
+  const directory = example.kind === "module" ? path.join(outputRoot, "modules") : outputRoot;
+  await mkdir(directory, { recursive: true });
+  const extension = example.kind === "module" && /^export module /m.test(example.source) ? ".cppm" : ".cpp";
+  await writeFile(path.join(directory, `${example.identifier}${extension}`), example.source, "utf8");
 }
 await writeFile(
   path.join(outputRoot, "manifest.json"),
@@ -108,5 +115,5 @@ await writeFile(
 );
 
 console.log(
-  `Classified ${fragmentCount} fragments, extracted ${examples.length} complete C++ examples, and reviewed ${reviewedMoves.size} ownership transfers.`,
+  `Classified ${fragmentCount} fragments, extracted ${examples.length} complete C++ examples (${examples.filter(({ kind }) => kind === "module").length} module units), and reviewed ${reviewedMoves.size} ownership transfers.`,
 );

@@ -89,6 +89,7 @@ View VolumeAdjustment() {
   auto status = UseState(std::string{"Ready"});
   return Column {
     Slider(volume)
+        .OnChanged([volume](float next) { volume = next; })
         .OnStarted([status](float) { status = "Adjusting"; })
         .OnCommitted([status](float value) { status = "Requested volume: " + std::to_string(value); })
         .OnCanceled([status] { status = "Adjustment canceled"; }),

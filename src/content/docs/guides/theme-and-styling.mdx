@@ -55,3 +55,39 @@ Dialog, BottomSheet, Menu, Popup, Toast, and navigation transitions resolve thro
 This lets a Material, Flat, or application theme change placement and motion as well as color without changing call sites.
 
 See the [Theme API](../../reference/theme/), [Modifiers](/docs/dsl/modifiers/), and [Presentation](/docs/guides/presentation/).
+
+## Follow the host's light or dark preference
+
+UseSystemThemeBrightness belongs to the current window. Application policy can choose System, Light or Dark; that policy does not require a new framework theme enum.
+
+```cpp compile="system-theme-policy"
+#include <huxerui/huxerui.h>
+
+using namespace huxerui;
+
+enum class AppearanceChoice { System, Light, Dark };
+
+[[huxerui::composable]]
+View AppearanceSettings() {
+  auto choice = UseState(AppearanceChoice::System);
+  const AppearanceChoice selected = choice;
+  const auto system = UseSystemThemeBrightness();
+  const bool dark = selected == AppearanceChoice::Dark ||
+      (selected == AppearanceChoice::System && system == ThemeBrightness::Dark);
+  const auto spec = dark ? MaterialDarkThemeSpec() : MaterialLightThemeSpec();
+  return MaterialTheme(spec, Column {
+    Text("Appearance", TextRole::Title),
+    Row {
+      Button("System").OnClick([choice] { choice = AppearanceChoice::System; }),
+      Button("Light").OnClick([choice] { choice = AppearanceChoice::Light; }),
+      Button("Dark").OnClick([choice] { choice = AppearanceChoice::Dark; }),
+    }.With(Spacing(8.0F)),
+  }.With(Padding(24.0F), Spacing(16.0F), Background(spec.colors.background)));
+}
+```
+
+A system change recomposes subscribed scopes. The explicit Light/Dark choice remains authoritative until the user selects System again. ThemeSpec::brightness describes the chosen theme, not a request to change the OS.
+
+Theme updates refresh open dialogs, sheets and transient presentation without recreating their controlled contents. A detached provider retains its last resolved palette. Use [scene transitions](/docs/guides/animation/#run-a-scene-transition) when the product wants an animated theme mutation; system-following policy itself does not start a scene animation.
+
+Set TypographyScheme::family to a packaged FontFamily when the product owns its font. See [Fonts and typography](/docs/guides/fonts-and-typography/); changing only family should not replace role sizes or explicit per-view font choices.

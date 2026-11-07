@@ -17,6 +17,9 @@ hero:
 ---
 
 import { Card, CardGrid } from "@astrojs/starlight/components";
+import DocumentationVersion from "../../components/DocumentationVersion.astro";
+
+<DocumentationVersion />
 
 ## Start with the language of the UI
 
@@ -58,7 +61,7 @@ View Counter() {
     [Open the API reference](/docs/reference/)
   </Card>
   <Card title="Extend HuxerUI" icon="puzzle">
-    Choose among component functions, custom layouts, virtual layouts, retained node behavior, root services, and platform integration.
+    Choose among component functions, custom layouts, virtual layouts, retained node behavior, application/window services, and platform integration.
     [Choose an extension point](/docs/guides/extensions/)
   </Card>
   <Card title="Tooling and delivery" icon="setting">
@@ -69,8 +72,8 @@ View Counter() {
 
 ## One shared application model
 
-The shared runtime owns state observation, recomposition, reconciliation, layout, interaction, text editing, animation, accessibility semantics, and retained rendering.
-Platform adapters connect that model to Windows, macOS, Linux, Web, Android, and iOS services.
+The application owns shared services, State models and ordinary asynchronous work. Each window owns its composition, layout, focus, navigation and presentation while observing the same application model.
+Platform hosts connect these shared contracts to Windows, macOS, Linux, Web, Android and iOS. Start with [application and window ownership](/docs/guides/application-and-windows/) when building beyond one window.
 
 Use the guides for application-facing contracts.
 The framework repository's architecture notes describe implementation decisions and are intentionally not duplicated here.

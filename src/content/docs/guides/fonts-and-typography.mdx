@@ -1,0 +1,80 @@
+---
+title: Fonts and typography
+description: Package an application font family, preserve native fallback, and apply it through theme typography.
+---
+
+Use a named font when the product depends on an installed family. Package custom font bytes when the application owns its typography. A FontFamily describes a family; Font adds the requested size, weight and slant.
+
+## Choose the source
+
+| Factory | Input and lifetime |
+| --- | --- |
+| `FontFamily::Named(name)` | Installed family request; missing faces may use platform fallback. |
+| `FontFamily::FromResources(resources)` | RawResource keys read through the current application's Resources service; application thread, without requiring composition. |
+| `FontFamily::FromFiles(files)` | Synchronous immutable snapshot of complete files; may run on a worker. |
+| `FontFamily::FromBytes(buffers)` | Owned font data; validates metadata without a Runtime and may run on a worker. |
+
+Custom families accept static, single-face OpenType/TrueType files from the same family and width, with distinct weight/slant combinations. Do not assume a collection, variable font or WOFF web asset is accepted. Unsupported or malformed data throws invalid_argument. Native decoding can still fail later and use fallback.
+
+Copies share immutable font data; changing the source file does not change an existing family. Metadata validation does not pre-register a global system font.
+
+## Package a font
+
+Place licensed TTF/OTF files in the application's raw resources and regenerate its resource header through the ordinary resource build:
+
+```text
+resources/
+  raw/
+    brand_regular.ttf
+    brand_bold.ttf
+```
+
+With those keys installed, load the family in application initialization and provide it through a shared service:
+
+```cpp fragment
+void InstallFonts(ApplicationContext& context) {
+  auto family = FontFamily::FromResources({
+      app::raw::brand_regular_ttf,
+      app::raw::brand_bold_ttf,
+  });
+  context.Provide(std::make_shared<FontFamily>(family));
+}
+```
+
+The resource namespace comes from your project configuration. Use the names in its generated header. The first load can synchronously read and validate data; avoid repeatedly loading files during composition. FromResources caches within the resource service.
+
+## Apply a family through Theme
+
+This complete component accepts an already-loaded family, so it can also use a family loaded from bytes or files:
+
+```cpp compile="theme-font-family"
+#include <huxerui/huxerui.h>
+
+using namespace huxerui;
+
+View BrandedContent(FontFamily family) {
+  auto theme = FlatLightThemeSpec();
+  theme.typography.family = family;
+  return FlatTheme(theme, Column {
+    Text("A shared typographic voice", TextRole::Title),
+    Text("Body text keeps the theme's role size."),
+    Button("Continue"),
+  }.With(Padding(24.0F), Spacing(12.0F)));
+}
+
+Font EmphasizedLabel(FontFamily family) {
+  return Font::FromFamily(family, 16.0F).WithWeight(FontWeight::Bold);
+}
+```
+
+TypographyScheme::family changes theme-derived fonts without replacing role sizes or component emphasis. An explicitly supplied TextStyle/Font remains explicit. Use MaterialTheme(spec, content) with a Material spec when keeping Material component recipes.
+
+## Size, weight and fallback
+
+Font::FromResource, FromFile and FromBytes are conveniences for one supplied face. Use a FontFamily containing multiple faces when the UI requests regular, bold and italic variants. WithFamily preserves the existing size, weight and slant.
+
+Font sizes are baseline logical units. Platform text scaling may change measured geometry without changing Font::Size; device pixel density is separate. Test wrapping, minimum control sizes and accessibility text scaling with real localized content.
+
+FontFamilyKind includes System, Monospace, Named and Custom. Family equality for custom data compares complete face bytes independently of file paths and input order. No API promises identical shaping or fallback across all backends; Web Canvas has additional mixed-direction and cross-run shaping limits.
+
+See [Text and input API](/docs/reference/text-and-input/), [Resources](/docs/guides/resources-and-localization/), and [Theme and styling](/docs/guides/theme-and-styling/).

@@ -105,3 +105,9 @@ Check `CanOpenDirectories(writable)`, then await `OpenDirectoryAsync(writable)`.
 Use `AsFile()` only when a path-based integration really needs a local path. Retain the original FileReference for the duration of grant-dependent path access. Provider names are display metadata, not trusted path fragments.
 
 For OS drag reception, use [FileDropTarget](/docs/reference/file/#external-file-drops) and the same FileReference processing code as your picker/activation handlers. Keep a picker button available for users who cannot drag.
+
+## Receive files from platform libraries
+
+Android HuxerUIFileReference.fromUri and iOS HUXFileReference.copy(from:) bridge provider-owned input into retained read-only file capabilities. They can block or copy, so invoke them while access is valid on an allowed background thread.
+
+These factories do not grant write access, preserve an expired provider URL or turn a document URI into a native path. Keep the returned capability alive and forward it through PlatformPayload. See [Android URI import](/docs/platforms/android/#import-an-externally-supplied-uri) and [iOS provider copies](/docs/platforms/ios/#copy-a-provider-file-safely).

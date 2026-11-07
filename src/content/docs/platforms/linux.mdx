@@ -35,3 +35,9 @@ Linux application runtime behavior requires the matching GTK desktop environment
 Official Linux SDK binaries require glibc 2.38 or later alongside the documented GTK and system dependencies. Builds on Ubuntu 24.04 do not establish validation on every distribution meeting that baseline. The shared local-notification capability is currently unavailable.
 
 See [Local notifications](/docs/guides/local-notifications/) for shared usage and platform configuration, and [System API](/docs/reference/system/) for exact contracts.
+
+## Application and window ownership
+
+The application Runtime shares services, ordinary tasks and observable State across its UI attachments. Each UiWindow owns composition, focus, layers and presentation. This desktop backend implements OpenWindow; each created window has independent UI state and a fresh root Environment. See [Application and windows](/docs/guides/application-and-windows/).
+
+System-theme preference is window-local and observed through UseSystemThemeBrightness. Custom font families retain application-supplied static data; test fallback and platform text scaling with localized content. Native runtime/device validation remains separate from website contract checks.

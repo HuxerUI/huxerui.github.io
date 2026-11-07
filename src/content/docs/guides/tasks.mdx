@@ -84,3 +84,72 @@ Await `RunWorker(function, arguments...)` for non-UI synchronous computation. It
 Use `WorkerSequence` only when related operations must run serially, such as a decoder or ordered file transformation. It gives ordering rather than permanent thread affinity. Its leading stop token makes active cancellation cooperative.
 
 `TaskScope::Post` is reserved for callbacks from external threads. HTTP, Files, Delay, and RunWorker continuations already execute in the correct task context. See the [worker example](/docs/reference/task/#cpu-work-and-external-callbacks).
+
+## Keep application work alive across windows
+
+UseApplicationTaskScope belongs to the original Runtime and runs without UI frames. Obtain it during application installation or ordinary application-thread work. Its tasks survive window retirement and are canceled during application shutdown. It grants no background execution entitlement.
+
+```cpp compile="application-task-scope"
+#include <huxerui/huxerui.h>
+#include <memory>
+
+using namespace huxerui;
+
+struct SyncModel {
+  State<std::string> status{std::string{"Waiting"}};
+};
+
+void InstallSync(ApplicationContext& context) {
+  auto model = std::make_shared<SyncModel>();
+  context.Provide(model);
+  UseApplicationTaskScope().Launch([model]() -> Task<void> {
+    co_await Delay(std::chrono::milliseconds(200));
+    model->status = "Application task completed";
+  });
+}
+```
+
+UseTaskScope remains the right owner for work useful only while a component is mounted. Neither scope permits State access from worker code. TaskScope::Post queues external callbacks and drops delivery after that scope closes; HuxerUI awaitables already restore their execution context.
+
+## Adapt a callback API
+
+AwaitCallback retains a starter and supplies a copyable CallbackCompletion. This example wraps a library's single-read contract instead of introducing another UI dispatcher:
+
+```cpp compile="callback-task-adapter"
+#include <huxerui/huxerui.h>
+#include <exception>
+#include <functional>
+#include <memory>
+
+using namespace huxerui;
+
+struct SensorApi {
+  virtual ~SensorApi() = default;
+  virtual std::function<void()> Read(
+      std::function<void(int)> success,
+      std::function<void(std::exception_ptr)> failure) = 0;
+};
+
+Task<int> ReadSensor(std::shared_ptr<SensorApi> sensor) {
+  return AwaitCallback<int>([sensor](CallbackCompletion<int> completion) {
+    return sensor->Read(
+        [completion](int value) { completion.Complete(value); },
+        [completion](std::exception_ptr error) { completion.Fail(error); });
+  });
+}
+
+Task<void> ShowReading(std::shared_ptr<SensorApi> sensor, State<std::string> label) {
+  try {
+    const int reading = co_await ReadSensor(sensor);
+    label = std::to_string(reading);
+  } catch (const std::exception& error) {
+    label = error.what();
+  }
+}
+```
+
+The library supplies the actual SensorApi implementation. Its returned cancellation action must not throw. The starter runs once when the lazy Task is awaited and must not block. Complete/Fail may run from another thread; the awaiting task resumes through its owning dispatcher and context, never inline before the starter returns.
+
+Only the first completion/failure wins. Canceling a pending task invokes the cancellation action at most once and suppresses continuation; late callbacks are ignored. Cancellation after submission but before queued resumption can still suppress application code without invoking that action. Cancellation is not an unconditional cleanup callback.
+
+Capture owned inputs. If startup throws after partially starting native work, clean it up in the adapter. If the native host closes while a task is still live, settle it with a suitable result or Fail; otherwise it can wait forever. See [Tasks API](/docs/reference/task/) for precise terminal and threading rules.

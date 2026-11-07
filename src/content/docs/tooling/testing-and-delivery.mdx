@@ -23,7 +23,7 @@ Platform adapters still require integration tests on their real host because nat
 
 ## Test a controlled editor
 
-Use a separate test executable with `<huxerui/testing/ui_test.h>`. The fixture runs the real shared Runtime without an OS window. The application root owns its scope, so this example needs no composable annotation.
+Use a separate test executable with `<huxerui/testing/ui_test.h>`. The fixture runs the application Runtime and real shared UiWindow without an OS window. The application root owns its scope, so this example needs no composable annotation.
 
 ```cpp compile="ui-test-editor"
 #include <huxerui/huxerui.h>
@@ -36,7 +36,7 @@ using namespace huxerui::testing;
 View EditorApp() {
   auto value = UseState(TextEditingValue::FromText(""));
   return Column {
-    TextField(value).Key("editor"),
+    TextField(value).OnChanged([value](TextEditingValue next) { value = next; }).Key("editor"),
     Text(value->text).Key("preview"),
   }.With(Padding(16.0F));
 }
@@ -87,6 +87,52 @@ The fixture's virtual timeout does not wait for real workers or HTTP. Supply con
 Queries re-resolve after each frame. One and actions require unique targets; scope repeated labels under a stable parent key. Exists can find offscreen retained nodes and does not guarantee Tap will succeed. Snapshot strings represent structure/render intent, not pixels; store and approve baselines through your existing test runner.
 
 Resources must be supplied through UiTestOptions::resource_provider. The reference text profile is deterministic but does not reproduce platform shaping, bidi, typography, or complex grapheme behavior. Native platform services still require host tests. See [UI testing API](/docs/reference/testing/) for precise query, time, ownership, and failure contracts.
+
+## Verify lifecycle and structural changes
+
+```cpp compile="ui-test-window-lifecycle"
+#include <huxerui/huxerui.h>
+#include <huxerui/testing/ui_test.h>
+#include <stdexcept>
+
+using namespace huxerui;
+using namespace huxerui::testing;
+
+View VisibilityApp() {
+  const auto window = UseWindow();
+  return Text(window.LifecycleState() == WindowLifecycleState::Background ? "Paused" : "Visible");
+}
+
+int main() {
+  const Application application{VisibilityApp, {.show_debug_overlay = false}};
+  UiTest ui(application);
+  ui.UpdateWindowLifecycleState(WindowLifecycleState::Active);
+  ui.Pump();
+  const auto before = ui.CaptureSnapshot();
+  ui.UpdateWindowLifecycleState(WindowLifecycleState::Background);
+  ui.Pump();
+  if (!ui.Find(UiSelector::Text("Paused")).Exists()) {
+    throw std::runtime_error("Window lifecycle did not update the UI");
+  }
+  const auto after = ui.CaptureSnapshot();
+  if (after == before || after.Diff(before).empty()) {
+    throw std::runtime_error("Snapshot did not report the structural change");
+  }
+}
+```
+
+The windowless fixture starts in Background. Establish Active before capturing the baseline, then inject the transition being tested. This injects one window's lifecycle only. For application-wide lifecycle, native attachment replacement and OS behavior, use the corresponding host integration tests.
+
+Use ScrollUntil to find a virtual item through real scrolling and PumpAndSettle for finite animation:
+
+```cpp fragment
+auto list = ui.Find(UiSelector::Key("messages"));
+auto row = list.ScrollUntil(UiSelector::Key("message.100"), {.step = {0.0F, 240.0F}});
+row.Tap();
+ui.PumpAndSettle({.timeout = std::chrono::seconds(1)});
+```
+
+A bounded failure should be fixed by controlling the test input or animation, not by adding sleeps. Snapshots compare shared structure and drawing intent; they do not verify native pixels, PlatformView descendants or external texture content.
 
 ## Diagnose before building
 
@@ -156,9 +202,20 @@ Before changing the pin, audit a candidate checkout without editing the website 
 npm run audit:revision -- /path/to/HuxerUI
 ```
 
-The audit reports added or removed public headers, explicit contract drift, missing or changed configured examples, and reference pages affected by public-header changes.
-Review those pages, update the explicit contracts in `scripts/api-coverage.mjs`, then change the revision and run the complete website checks.
+The audit reports added or removed public headers, owner-qualified member/signature drift, missing or changed configured examples, and reference pages affected by header changes. scripts/api-review.json records the exact reviewed header contents, so additions inside an existing header also require review. A header hash difference is a review signal, not proof of a breaking API change.
+Review those pages and the public contracts, update scripts/api-coverage.mjs, then pin the new revision. After the content is reviewed, record that explicit review and run the complete checks:
+
+```bash
+npm run audit:revision -- /path/to/HuxerUI --record-header-review
+npm run check
+npm run build
+npm run check:links
+```
+
+The record command requires the candidate to match the configured pin and the existing signatures/examples to be valid. It does not write documentation or establish that compiled examples passed. Source links, Web artifacts and API contracts must all use that same revision.
 A clean audit does not replace API review: signature contracts and compiled examples are the checks that expose a changed overload, enum, or usage pattern.
+
+Module examples are marked `module` alongside their compile ID and extracted as real module/entry units. The MSVC validation profile compiles the pinned framework module and import std. The C++20 header profile and Web examples remain separate checks. CI requires the module profile before deployment.
 
 The site intentionally remains single-version.
 Do not add a second documentation tree when advancing the pin; update the manual and its validation contract together.

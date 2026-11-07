@@ -1,0 +1,80 @@
+---
+title: DockLayout
+description: Build an application-owned workspace with movable tabs, resizable regions and retained panel state.
+---
+
+DockLayout presents panels from a controlled DockTree. Users can select, close, resize and dock panels; DockEvents::Changed proposes the next complete tree. The application supplies the accepted value on the next composition.
+
+## Declare panels separately from placement
+
+```cpp compile="controlled-dock-layout"
+#include <huxerui/huxerui.h>
+
+using namespace huxerui;
+
+[[huxerui::composable]]
+View NotesPanel() {
+  auto draft = UseState(TextEditingValue::FromText("A retained draft"));
+  return TextField(draft)
+      .OnChanged([draft](TextEditingValue next) { draft = next; })
+      .With(Padding(12.0F));
+}
+
+[[huxerui::composable]]
+View Workspace() {
+  auto tree = UseState(DockTree::Split(Axis::Horizontal, {
+    DockTree::Tabs({"project"}).With(Frame{.width = 180.0F, .min_width = 120.0F}),
+    DockTree::Tabs({"notes", "output"}, "notes").With(Grow{1.0F}),
+  }));
+  return DockLayout({
+      DockItem("project", "Project", Text("Files and folders")).Closable(false),
+      DockItem("notes", "Notes", NotesPanel()),
+      DockItem("output", "Output", Text("Build output")),
+  }, tree)
+      .OnChanged([tree](DockTree next) { tree = next; })
+      .With(Frame{.height = 440.0F});
+}
+```
+
+Panel IDs connect declarations to placement. They must be nonempty and unique. A tree ID without a DockItem declaration is invalid. Titles accept StringVariant, including generated StringResource values.
+
+A declaration can remain while its ID is absent from the tree. Keeping that DockItem retains compatible mounted content and local State through tab switches, moves and tree removal. Removing the declaration unmounts its content. Choose explicitly whether closing means hiding a panel or destroying its editor state.
+
+## DockTree values
+
+| Operation | Result |
+| --- | --- |
+| `Tabs(panel_ids, selected = {})` | A nonempty group; an empty selection chooses its first panel. |
+| `Split(axis, children)` | At least two nonempty regions with no repeated panel IDs. |
+| `With(Frame, Grow)` | Region sizing; other View modifiers are not accepted. |
+| `Select(id)` | A new tree selecting an existing panel. |
+| `Remove(id)` | A new tree without that panel; absent IDs are a no-op. Empty groups disappear and single-child splits collapse. |
+| `Dock(panel, target, placement)` | Inserts or moves a panel relative to an existing target and selects it in the destination. |
+
+DockPlacement is TabBefore, TabAfter, Left, Right, Top or Bottom. Edge placement creates a new split beside the target group. It transfers that region's sizing to the new split and starts its children with equal growth.
+
+Empty, Contains, Panels, Selected, SplitAxis and Children inspect the value. GetFrame and GetGrow inspect region sizing. Returned spans, references and string views borrow from the source tree; retain the tree or copy the needed data.
+
+## Controlled updates and state
+
+OnChanged receives a DockTree for tab selection, closing, separator resizing and completed docking. Canceled or stale drags do not commit a second application state. Keep one authoritative `State<DockTree>`, rather than mirroring individual tab selections elsewhere.
+
+For programmatic changes:
+
+```cpp fragment
+tree = tree->Dock("search", "notes", DockPlacement::TabBefore);
+tree = tree->Select("notes");
+tree = tree->Remove("output");
+```
+
+The search panel must already have a declaration when the proposed tree is composed. DockItem::Closable(false) disables the user's close button/menu action; it does not forbid application code from removing the panel from the tree.
+
+Invalid IDs, invalid split structure or inconsistent declarations throw invalid_argument. Use stable business IDs instead of tab indices.
+
+## Theme, navigation and platform boundaries
+
+DockLayout composes themed tabs, split regions and ordinary panel Views. Theme-derived Tabs styling follows the surrounding Theme; panel content remains normal UI with its own layout, focus and semantics.
+
+Docking stays inside this workspace. Use [application windows](/docs/guides/application-and-windows/) for a new native window and NavigationStack for document/page history. PlatformView and ExternalTexture retain their own composition restrictions inside a panel.
+
+[Run the workspace example](/examples/dock_layout/) or start with [SplitLayout](/docs/components/split-layout/) for a simpler resizable arrangement.

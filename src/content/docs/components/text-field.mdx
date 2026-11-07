@@ -105,6 +105,18 @@ All methods below configure the returned declaration; call them before general `
 
 Assign `TextEditingValue::FromText(new_text)` when intentionally replacing a document or resetting a field. For ordinary OnChanged proposals, assign the full received value so UTF-16 selection, affinity, and composition survive. `OnSubmitted(void())` carries no text argument: read your controlled value in the handler. Keyboard type and capitalization are platform hints, not validators.
 
+## Software keyboard policy
+
+`TextInputConfiguration::keyboard_policy` defaults to `SoftwareKeyboardPolicy::Automatic`, which requests the keyboard when an editable session starts and when the user taps an already-focused editor. Use Manual when your application provides a separate keyboard action:
+
+```cpp fragment
+TextField(value)
+    .InputConfiguration({.keyboard_policy = SoftwareKeyboardPolicy::Manual})
+    .OnChanged([value](const TextEditingValue& next) { value = next; })
+```
+
+Call `UseWindow().ShowKeyboard()` or `HideKeyboard()` from an application action after focusing the editor. Hiding preserves focus and the editing session; clearing focus is a different operation. Requests remain subject to platform and hardware keyboard behavior. See [Keyboard visibility](/docs/guides/window-and-system-ui/#control-keyboard-visibility) for a complete component.
+
 ## Style fields by responsibility
 
 | `TextFieldStyle` fields | Effect |

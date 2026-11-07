@@ -9,12 +9,20 @@ Declared by `<huxerui/text.h>`, `<huxerui/text_input.h>`, `<huxerui/validation.h
 
 ## Fonts and styles
 
-- `FontFamilyKind`: `System`, `Monospace`, or `Named`.
+- `FontFamilyKind`: `System`, `Monospace`, `Named`, or `Custom`.
 - `FontWeight`: `Thin`, `ExtraLight`, `Light`, `Regular`, `Medium`, `SemiBold`, `Bold`, `ExtraBold`, or `Black`.
 - `FontSlant`: `Normal` or `Italic`.
 - `Font`: `System(size)`, named/fallback family construction, and fluent size/weight/slant updates; equality compares descriptor values.
 - `TextDecoration`: `None`, `Underline`, `StrikeThrough` flags; bitwise `|`, `&`, and `HasTextDecoration` support combinations.
 - `TextStyle`: `font`, `foreground`, and `decoration`.
+
+FontFamily describes an immutable family independently of size/weight/slant. System, Monospace and Named request platform families; FromResources, FromFiles and FromBytes construct validated custom static OpenType/TrueType families. Resource loading uses the application thread; file/byte construction can run on a worker.
+
+Font::FromFamily, FromResource, FromFile and FromBytes construct a request. WithFamily changes the family while preserving size, weight and slant. TypographyScheme::family applies a family to theme-derived text. See [Fonts and typography](/docs/guides/fonts-and-typography/) for ownership, supported data and complete examples.
+
+## Software keyboard
+
+SoftwareKeyboardPolicy is Automatic or Manual in TextInputConfiguration::keyboard_policy. Automatic requests keyboard display on session start and a confirmed editor tap; Manual leaves display requests to the application. WindowHandle::ShowKeyboard and HideKeyboard act on the focused session without ending focus or selection. They are separate from text selection, secure-input policy and input action.
 
 ## Shaping and layout
 

@@ -3,7 +3,7 @@ title: Window and system UI
 description: Configure safe-area policy, system bars, desktop chrome, and window commands.
 ---
 
-`WindowOptions` is stable for one runtime.
+`WindowOptions` is stable for one UiWindow.
 It sets title, initial logical size, content mode, chrome mode, preferred custom title-bar height, and caption labels.
 
 ## Choose the root content mode
@@ -20,7 +20,7 @@ return Content().With(
 );
 ```
 
-In `SafeArea` mode the runtime consumes physical safe-area insets before measuring the root.
+In `SafeArea` mode UiWindow consumes physical safe-area insets before measuring the root.
 In `EdgeToEdge` mode the root receives the complete viewport and can apply selected insets to individual surfaces instead of padding the entire application.
 
 Software-keyboard viewport changes are distinct from persistent safe-area insets.
@@ -73,21 +73,66 @@ Validate focused fields near every edge, keyboard dismissal, orientation/resize,
 
 See the [Window API](../../reference/window/) and the relevant [platform guide](../../platforms/).
 
+## Control keyboard visibility
+
+Use a Manual policy when focusing an editor should not immediately summon the keyboard. Requests affect the focused editing session; they do not transfer focus to another field:
+
+```cpp compile="manual-keyboard"
+#include <huxerui/huxerui.h>
+
+using namespace huxerui;
+
+[[huxerui::composable]]
+View KeyboardControls() {
+  auto value = UseState(TextEditingValue::FromText(""));
+  auto window = UseWindow();
+  return Column {
+    TextField(value)
+        .InputConfiguration({.keyboard_policy = SoftwareKeyboardPolicy::Manual})
+        .OnChanged([value](TextEditingValue next) { value = next; }),
+    Button("Show keyboard").OnClick([window] { window.ShowKeyboard(); }),
+    Button("Hide keyboard").OnClick([window] { window.HideKeyboard(); }),
+  }.With(Spacing(12.0F), Padding(16.0F));
+}
+```
+
+Focus the editor before requesting ShowKeyboard. HideKeyboard preserves its focus, selection and composition session; it is distinct from clearing focus. Automatic policy also requests the keyboard on session start and a confirmed tap on an already-focused editor. Hardware keyboards and desktop hosts may make these requests visually ineffective.
+
 ## Close policy and system tray
 
 `WindowHandle::Show()`, `Hide()`, and `Activate()` control window visibility separately from application lifetime. `OnCloseRequest` and `OnMinimizeRequest` install lifecycle-bound decision handlers: true consumes the request, false lets the platform continue. Do not implement “minimize to tray” unless a usable tray presentation is available.
 
 ```cpp compile="system-tray"
 #include <huxerui/huxerui.h>
+#include <memory>
+#include <optional>
 
 using namespace huxerui;
 
+struct TrayModel {
+  State<std::optional<WindowHandle>> window{std::optional<WindowHandle>{}};
+};
+
+void InstallTray(ApplicationContext& context) {
+  auto model = std::make_shared<TrayModel>();
+  auto application = UseApplication();
+  auto tray = application.SystemTray();
+  context.Provide(model);
+  tray.OnActivate([model] {
+    const std::optional<WindowHandle>& window = model->window;
+    if (window && window->IsOpen()) {
+      window->Activate();
+    }
+  });
+}
+
 [[huxerui::composable]]
 View TrayShell(ImageResource icon) {
+  auto model = UseService<TrayModel>();
   auto application = UseApplication();
   auto window = UseWindow();
   auto tray = application.SystemTray();
-  tray.OnActivate([window] { window.Activate(); });
+  Lifecycle([model, window] { model->window = std::optional<WindowHandle>{window}; });
   window.OnCloseRequest([window, tray] {
     if (!tray.IsAvailable()) {
       return false;
@@ -100,12 +145,13 @@ View TrayShell(ImageResource icon) {
         .tooltip = "Document workspace",
         .menu = {MenuItem("Quit", [application] { application.Quit(); })},
     });
-    return [tray] { tray.Hide(); };
   }, icon);
   return Text("Workspace");
 }
 ```
 
-Pass a packaged raster image resource; tray icons must resolve to ImageAsset. The example uses an explicit Quit command, so hiding the last window does not make the application impossible to exit. One Runtime owns one active tray presentation and one committed activation handler.
+InstallTray belongs in application_hooks; TrayShell is used by the application's single main window with a packaged raster icon. The activation handler is application-owned and installed once, while the model points to that window. In a multi-window product, choose which window to activate in application policy.
+
+The tray presentation is shared across the application. A component cleanup should not hide a presentation that may have been replaced elsewhere. Explicitly hide it when application policy no longer needs it, or let application shutdown retire it. Keep an explicit Quit action available.
 
 Tray availability depends on the host, especially Linux desktop status-item support. Mobile and browser applications need a normal in-app entry point instead. `WindowOptions::minimum_size` requests a desktop minimum client size; it does not clamp actual WindowMetrics or pretend a mobile viewport is larger.

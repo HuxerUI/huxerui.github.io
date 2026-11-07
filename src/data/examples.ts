@@ -77,12 +77,12 @@ export const examples: Example[] = [
     documentation: "/docs/guides/navigation-and-routing/",
   },
   {
-    slug: "presentation",
-    title: "Presentation",
-    eyebrow: "Window-level layers",
-    description: "Toast, SnackBar actions, Dialog, BottomSheet, Popup, Menu, and declarative presentation.",
-    source: "examples/presentation/main.cpp",
-    documentation: "/docs/guides/presentation/",
+    slug: "dock_layout",
+    title: "Docking workspace",
+    eyebrow: "Application-owned workspace",
+    description: "Rearrange retained editor panels, resize split regions, and keep one controlled docking tree authoritative.",
+    source: "examples/dock_layout/main.cpp",
+    documentation: "/docs/components/dock-layout/",
   },
   {
     slug: "external_texture",

@@ -6,7 +6,7 @@ sidebar:
 ---
 
 HuxerUI shares one C++ application, DSL, state model, layout engine, interaction system, semantic tree, and paint scene.
-Platform adapters own lifecycle, scheduling, native input, text services, file and network transports, window integration, and scene rendering.
+Platform Runtime implementations own application services and dispatch. Each platform UiWindow owns its UI attachment, scheduling, input, text services and scene rendering.
 
 ## Status language
 
@@ -29,6 +29,9 @@ Platform adapters own lifecycle, scheduling, native input, text services, file a
 | PlatformView | Limited HWND child composition | Platform API for `NSView` | Not exposed | Platform API for DOM objects | Platform API for Android Views | Platform API for `UIView` |
 | PlatformModule | Typed C++ registration | Shared C++ registry | Shared C++ registry | Shared C++ registry | Typed registration plus Java/JNI factories | Shared C++ registry |
 | ExternalTexture | PixelTexture / D3D11Texture | PixelBufferTexture / MetalTexture | PixelTexture / GlTexture / GdkTexture | VideoFrameTexture | BitmapTexture / GlTexture / SurfaceStreamTexture | PixelBufferTexture / MetalTexture |
+| Programmatic top-level windows | Supported | Supported | Supported | Unavailable | Unavailable | Unavailable |
+| System-theme preference | Window-local | Window-local | Window-local | Browser preference | Window-local | Window-local |
+| Custom static fonts | Supported | Supported | Supported | Supported with Canvas shaping limits | Supported | Supported |
 | Window and system UI | System/custom desktop chrome | AppKit window integration | GTK window integration | Browser viewport only | Safe area, edge-to-edge, and system bars | Safe area, edge-to-edge, and system bars |
 | Local notifications | Configured Win32 notifications | User Notifications; no templates | Unavailable | Unavailable | Configured NotificationManager | User Notifications and optional content extension |
 | Retained CPU buffer payload | C++ BufferReference | Apple buffer bridge | C++ BufferReference | Not exposed | Direct ByteBuffer bridge | Apple buffer bridge |
@@ -36,6 +39,8 @@ Platform adapters own lifecycle, scheduling, native input, text services, file a
 | Camera/microphone permission | Limited by OS capability and app identity | Supported with app declarations | Unavailable shared permission transport | Query-only where available; requests unavailable | Supported with manifest declarations | Supported with usage descriptions |
 | Typed URL/history routing | Application-defined navigation only | Application-defined navigation only | Application-defined navigation only | Supported by `BrowserNavigationStack` | Application-defined navigation only | Application-defined navigation only |
 | Activation and lifecycle | Supported | Supported | Supported | Supported through location/visibility events | Supported | Supported |
+
+Programmatic window creation is queried with SupportsMultipleWindows. It is distinct from attaching a platform-managed mobile scene. The mcpp build supports Windows/macOS/Linux; CMake remains the build path for every listed platform.
 
 The matrix reports code present in the pinned revision, not a release certification statement.
 This website validates the shared public contracts and all listed Web examples; native device, GTK desktop, and Apple runtime behavior still requires the matching host toolchain and target environment.

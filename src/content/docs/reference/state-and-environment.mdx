@@ -22,6 +22,12 @@ Prefix and postfix increment and decrement are also available.
 
 Observable vector-like state for dynamic collections. `Size`, `Empty`, `At`, `operator[]`, and const iterators read its current elements. `PushBack`, `Insert`, `Set`, `Erase`, `Move`, `PopBack`, and `Clear` mutate the collection while preserving the cell identity. It has no separate Snapshot or per-element Update method.
 
+## Application-owned State
+
+Construct `State<T>(initial)` in a model during application_hooks or later application work when its lifetime spans windows. Copies share the cell. Direct construction creates a fresh cell; UseState remembers a cell by composition identity.
+
+Reads and writes require the original live application and its thread. Retaining a model does not keep Runtime alive or allow a stopped cell to bind to a replacement application. Use RunWorker on ordinary input snapshots, then update State after awaiting on the application thread. See [shared models](/docs/guides/application-and-windows/).
+
 ## State creation
 
 - `UseState(initial, source_location)` creates `State<decay_t<T>>` in the current scope.
@@ -35,6 +41,10 @@ Typed hierarchical value. `Set(value)` installs an `EnvironmentValue` by its C++
 ## `UseEnvironment<T>` and `ProvideEnvironment`
 
 `UseEnvironment<T>()` reads the nearest required value during composition. `ProvideEnvironment(environment, content)` or `ProvideEnvironment(value, content)` creates a subtree boundary.
+
+## System appearance
+
+ThemeBrightness is Light or Dark. UseSystemThemeBrightness reads and observes the current window host's effective preference during composition, without an ordered State slot. A local Theme does not overwrite the host preference; ThemeSpec::brightness describes the selected theme independently.
 
 ## Viewport environment
 

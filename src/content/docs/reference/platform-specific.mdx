@@ -19,19 +19,31 @@ Include platform headers explicitly; the portable umbrella does not make a backe
 | `<huxerui/windows/platform_registry.h>` | `windows` | Parent `HWND` / child `HWND`. |
 | `<huxerui/web/platform_registry.h>` | `web` | Browser event loop / detached `HTMLElement` in `emscripten::val`. |
 
-Register with `RootContext::RegisterPlatformView`. Direct C++ properties/controllers keep their exact types. Do not return temporary platform views or retain borrowed callback contexts.
+Register with `ApplicationContext::RegisterPlatformView`. Direct C++ properties/controllers keep their exact types. Do not return temporary platform views or retain borrowed callback contexts.
 
 ## Android bridge and JNI
 
-The Android registry header also exposes `PlatformEnv` and `GetPlatformEnv(PlatformAdapter&)` for the current UI-thread JNI environment/context, `PlatformModuleFactory<Module, Options>` for direct JNI factories, and `JavaPlatformModuleFactory` / `JavaPlatformViewFactory` for Java implementations.
+The Android registry header also exposes `PlatformEnv` and `GetPlatformEnv(UiWindow&)` for the current UI-thread JNI environment/context, `PlatformModuleFactory<Module, Options>` for direct JNI factories, and `JavaPlatformModuleFactory` / `JavaPlatformViewFactory` for Java implementations.
 
-Java factories identify a public, no-argument-constructible class by `class_name`. Their structured values cross through PlatformPayload; an optional typed facade/controller wraps PlatformChannel. Keep registration in a root hook.
+Java factories identify a public, no-argument-constructible class by `class_name`. Their structured values cross through PlatformPayload; an optional typed facade/controller wraps PlatformChannel. Keep registration in a application hook.
 
 `<huxerui/android/jni.h>` supplies UTF-8 and byte-array conversion and the move-only `LocalRef<Reference>`. It deletes only its owned JNI local reference. Never retain `JNIEnv*`; use explicit global references for Java objects that must outlive a callback.
 
+JavaWindowPlatformModuleFactory adapts HuxerUIPlatformModule.WindowFactory for a module bound to an original HuxerUIView. Capture its HuxerUIActivityResultLauncher when creating the instance; retained launchers do not bind to replacement attachments. Android application-only JNI uses GetPlatformApplicationEnv(Runtime&); never cache JNIEnv*.
+
+HuxerUIFileReference.fromUri(Context, Uri) creates a read-only retained file capability while source access is valid. It can block/copy and should run on an allowed worker; metadata does not grant write access. See [Android](/docs/platforms/android/).
+
+## iOS scoped modules and presentation
+
+ObjectiveCPlatformModuleFactory adapts HUXPlatformModuleFactory to an application host. ObjectiveCWindowPlatformModuleFactory adapts HUXUIKitWindowPlatformModuleFactory to its original UIViewController. WindowPlatformModuleFactory supports a direct Objective-C++ typed facade.
+
+HUXGetPresentationCoordinator(owner) returns that controller's shared main-thread presentation queue. Enqueued UI retains its slot through active cancellation until the finished callback confirms absence. Inactive windows defer admission; unmanaged modal UI can fail admission. See [iOS presentation](/docs/platforms/ios/#window-modules-and-native-presentation).
+
+HUXFileReference.copyFromFileURL:error: (Swift FileReference.copy(from:)) snapshots a provider file into SDK temporary storage while the URL is valid. Retain the capability rather than only its URL; the last owner releases temporary content.
+
 ## Web bridge and routing
 
-The Web registry header offers `JavaScriptPlatformModuleFactory` and `JavaScriptPlatformViewFactory`. Supply the JavaScript factory object directly from the root hook; there is no second global registration table. Modules provide create/invoke/dispose, with optional request cancellation; views also expose a detached element and property updates.
+The Web registry header offers `JavaScriptPlatformModuleFactory` and `JavaScriptPlatformViewFactory`. Supply the JavaScript factory object directly from the application hook; there is no second global registration table. Modules provide create/invoke/dispose, with optional request cancellation; views also expose a detached element and property updates.
 
 `<huxerui/web/navigation.h>` declares `BrowserNavigationStack(root, path, resolver, codec)`. The codec supplies `Decode(location)` and `Encode(path)`; one stack owns same-document URL synchronization. This does not replace browser server fallback configuration for direct navigation.
 
@@ -54,7 +66,7 @@ Software PixelFrame publication copies straight-alpha RGBA/BGRA rows. GPU produc
 
 `<huxerui/windows/installer.h>` exposes a specialized WiX Burn application boundary, not a normal desktop application service.
 
-Install `windows::InstallInstallerSession` once in the installer's root hooks and enter through `RunInstallerApplication()` from the generated bootstrapper entry. `UseInstaller()` returns `InstallerHandle`; its status supplies product state, phase, progress, failure, and any outstanding prompt.
+Install `windows::InstallInstallerSession` once in the installer's window_hooks and enter through `RunInstallerApplication()` from the generated bootstrapper entry. `UseInstaller()` returns `InstallerHandle`; its status supplies product state, phase, progress, failure, and any outstanding prompt.
 
 `Install(InstallerInstallOptions)`, `Repair()`, `Uninstall()`, and `Cancel()` request engine operations. Installation options can override absolute destination and desktop shortcut choice. `ChooseDestinationAsync(initial)` returns an optional directory; cancellation is empty. `Respond(prompt_id, choice)` answers the identified prompt; stale IDs are ignored. Do not use this service from an ordinary executable.
 
@@ -62,7 +74,7 @@ Install `windows::InstallInstallerSession` once in the installer's root hooks an
 
 Linux currently has no public PlatformView factory header; a GTK renderer does not imply that arbitrary GTK controls can be embedded through the shared component.
 
-PlatformAdapter and backend implementation machinery are not ordinary app APIs. Names in `huxerui::detail` remain internal even when templates mention them. See [platform capabilities](/docs/platforms/) for implementation status and validation limits.
+Runtime/UiWindow host implementation machinery are not ordinary app APIs. Names in `huxerui::detail` remain internal even when templates mention them. See [platform capabilities](/docs/platforms/) for implementation status and validation limits.
 
 ## Buffer references and notification data
 

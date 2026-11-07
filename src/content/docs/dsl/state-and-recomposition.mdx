@@ -5,7 +5,7 @@ sidebar:
   order: 2
 ---
 
-`State<T>` is a copyable handle to an observable value owned by the current component scope.
+`State<T>` is a copyable handle to an observable cell. `UseState` remembers a cell in the current component scope; application models can own shared cells across windows.
 Reading the value during composition subscribes that scope; writing a different value requests local recomposition.
 
 ## Declare state in a scope
@@ -97,7 +97,7 @@ View Settings() {
 ```
 
 Checkboxes, radio buttons, switches, sliders, tabs, segmented buttons, text editing values, navigation selection, progress, and declarative visibility follow this model.
-Always feed an accepted event value back into a later composition; the component does not mutate application state on its own.
+Always feed an accepted event value back into a later composition; the component does not mutate application state on its own. Passing State directly to a constructor is a reading convenience, not an implicit OnChanged binding.
 
 ## Observable lists
 
@@ -146,6 +146,12 @@ Recomposition creates new transient declarations, then reconciliation updates co
 Hover, press, focus, momentum, caret blink, and active animation are retained runtime facts.
 They do not need application `State` and do not force component recomposition every frame.
 
+## Share application state
+
+An application service can hold State directly. Construct the model during an ApplicationHook, install it with ApplicationContext::Provide, then let each window read it through UseService. Model State survives window retirement while its application remains live; component-local UseState follows its composable identity.
+
+All State access belongs to the original application thread. UseApplicationTaskScope owns application work without a window. A worker receives ordinary snapshots and returns results before State is changed on the application thread.
+
 ## Capture handles by value
 
 `State<T>` and `StateList<T>` are shared handles.
@@ -158,6 +164,6 @@ Button("Clear").OnClick([items] {
 ```
 
 An empty default-constructed handle is invalid.
-Obtain application state through `UseState` or `UseStateList` inside a valid scope.
+UseState and UseStateList remember component-local cells inside a valid scope. For an application model shared across windows, construct State values during application_hooks or later application-thread work; see [Application and windows](/docs/guides/application-and-windows/). Direct construction during composition would create a fresh cell every time.
 
 See [Scope](/docs/components/scope/), [Composition and identity](/docs/dsl/composition-and-identity/), and the [State API](/docs/reference/state-and-environment/).

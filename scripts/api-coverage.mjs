@@ -1,4 +1,6 @@
 export const components = [
+  { page: "split-layout", header: "view.h", symbols: ["SplitLayout", "SplitChange", "OnChanged"] },
+  { page: "dock-layout", header: "view.h", symbols: ["DockLayout", "DockTree", "DockItem", "DockPlacement"] },
   { page: "select", header: "view.h", symbols: ["Select"] },
   { page: "combo-box", header: "view.h", symbols: ["ComboBox"] },
   { page: "date-picker", header: "view.h", symbols: ["DatePicker"] },
@@ -55,11 +57,11 @@ export const components = [
 export const modules = [
   { page: "stream", headers: ["stream.h"], symbols: ["IoErrorCode", "IoError", "IoResult", "InputStream", "OutputStream", "AsyncInputStream", "AsyncOutputStream"] },
   { page: "system", headers: ["system.h"], symbols: ["Permission", "PermissionStatus", "LocalNotification", "LocalNotificationHandle", "NotificationActivation", "LocalNotificationCapabilities", "LocalNotificationOperationStatus", "TemplateNotificationPresentation"] },
-  { page: "testing", headers: ["testing/ui_test.h"], symbols: ["UiTest", "UiTestOptions", "UiSelector", "UiSemanticSelector", "UiNodeQuery", "UiSemanticQuery", "UiSnapshot", "UiTestFailure"] },
+  { page: "testing", headers: ["testing/ui_test.h"], symbols: ["UiTest", "UiTestOptions", "UiSelector", "UiSemanticSelector", "UiNodeQuery", "UiSemanticQuery", "UiSnapshot", "UiTestFailure", "UiScrollOptions", "PumpAndSettle", "ScrollUntil", "UpdateWindowLifecycleState"] },
   { page: "data", headers: ["data.h"], symbols: ["Bytes", "Uri", "Result", "BufferReference"] },
   { page: "gesture", headers: ["gesture.h"], symbols: ["GestureSettings", "MultiTapGesture", "LongPressGesture", "DragGesture", "TransformGesture", "DragSource", "DropTarget"] },
   { page: "animation", headers: ["animation.h"], symbols: ["Easing", "CubicBezierCurve", "AnimationSpec", "KeyframeSpec", "MotionController", "Transition", "SceneTransitionHandle", "TransitionSpec", "TransitionContext", "TransitionFrame", "SharedElement", "SharedBounds", "UseSharedTransition"] },
-  { page: "app", headers: ["app.h", "root.h", "platform_adapter.h"], symbols: ["Application", "AppOptions", "ApplicationActivation", "ApplicationLifecycleState", "ApplicationHandle", "RootContext", "UseService", "ProcessMetrics", "PlatformAdapter", "Runtime"] },
+  { page: "app", headers: ["app.h", "window.h"], symbols: ["Application", "AppOptions", "ApplicationActivation", "ApplicationLifecycleState", "ApplicationHandle", "ApplicationContext", "ApplicationHook", "WindowContext", "WindowHook", "UseService", "ProcessMetrics", "Runtime", "UiWindow"] },
   { page: "event", headers: ["event.h"], symbols: ["InteractionState", "InteractionEvent", "PointerEvent", "ScrollInputEvent", "KeyEvent", "BackEvent", "ViewEvents", "EventEmitter", "UseEvents"] },
   { page: "external-texture", headers: ["external_texture.h"], symbols: ["ExternalTexture"] },
   { page: "file", headers: ["file.h", "file_drop.h"], symbols: ["FileType", "File", "FileReference", "FilePickerFilter", "FilePicker", "AppDirectories"] },
@@ -73,11 +75,11 @@ export const modules = [
   { page: "platform-module", headers: ["platform_registry.h"], symbols: ["PlatformPayload", "PlatformEventEmitter", "PlatformRequestId", "PlatformChannel", "OpenPlatformModule"] },
   { page: "platform-view", headers: ["view.h"], symbols: ["PlatformView"] },
   { page: "presentation", headers: ["presentation.h", "layer.h"], symbols: ["LayerOptions", "LayerController", "PresentationMotion", "ToastHandle", "DialogContext", "DialogHandle", "BottomSheetContext", "BottomSheetHandle", "AnchorPlacement", "PopupHandle", "MenuItem", "MenuHandle", "Tooltip"] },
-  { page: "resource", headers: ["resource.h"], symbols: ["ResourceId", "StringResource", "ImageResource", "RawResource", "StringVariant", "Locale", "ResourceConfiguration", "RawAsset", "ImageAsset", "PlatformResources", "UseString", "UseImage"] },
+  { page: "resource", headers: ["resource.h"], symbols: ["ResourceId", "StringResource", "ImageResource", "RawResource", "StringVariant", "Locale", "ResourceConfiguration", "RawAsset", "ImageAsset", "Resources", "PlatformResources", "UseString", "UseImage"] },
   { page: "semantics", headers: ["semantics.h"], symbols: ["Semantics", "SemanticRole", "SemanticActionKind", "SemanticAction", "SemanticBuilder", "SemanticNode", "SemanticFrame"] },
-  { page: "state-and-environment", headers: ["state.h", "environment.h"], symbols: ["State", "StateList", "UseState", "ViewportClass", "ViewportBreakpoints", "Environment", "UseEnvironment"] },
-  { page: "task", headers: ["task.h"], symbols: ["Task", "TaskHandle", "TaskScope", "UseTaskScope", "Delay", "RunWorker", "WorkerSequence"] },
-  { page: "text-and-input", headers: ["text.h", "text_input.h", "validation.h", "clipboard.h"], symbols: ["Font", "TextStyle", "TextLayoutMetrics", "TextSelection", "TextEditingValue", "TextInputConfiguration", "TextInputClient", "PlatformTextInput", "ValidationResult", "Clipboard"] },
+  { page: "state-and-environment", headers: ["state.h", "environment.h"], symbols: ["State", "StateList", "UseState", "ViewportClass", "ViewportBreakpoints", "Environment", "UseEnvironment", "ThemeBrightness", "UseSystemThemeBrightness"] },
+  { page: "task", headers: ["task.h"], symbols: ["Task", "TaskHandle", "TaskScope", "UseTaskScope", "UseApplicationTaskScope", "AwaitCallback", "CallbackCompletion", "Delay", "RunWorker", "WorkerSequence"] },
+  { page: "text-and-input", headers: ["text.h", "text_input.h", "validation.h", "clipboard.h"], symbols: ["Font", "FontFamily", "SoftwareKeyboardPolicy", "TextStyle", "TextLayoutMetrics", "TextSelection", "TextEditingValue", "TextInputConfiguration", "TextInputClient", "PlatformTextInput", "ValidationResult", "Clipboard"] },
   { page: "theme", headers: ["theme.h"], symbols: ["ColorScheme", "InteractionScheme", "ThemeSpec", "ButtonStyle", "TextFieldStyle", "ThemeDefinition", "MaterialTheme", "FlatTheme"] },
   { page: "vector", headers: ["vector.h"], symbols: ["Path", "PathFillRule", "StrokeCap", "StrokeJoin", "VectorAsset", "VectorBuilder"] },
   { page: "view", headers: ["view.h"], symbols: ["View", "Views", "ForEach", "Button", "TextField"] },
@@ -91,7 +93,6 @@ export const publicHeaders = [
   { path: "data.h", audience: "application", documentation: "reference/data.mdx" },
   { path: "gesture.h", audience: "application", documentation: "reference/gesture.mdx" },
   { path: "file_drop.h", audience: "application", documentation: "reference/file.mdx" },
-  { path: "platform_adapter.h", audience: "platform-adapter", documentation: "reference/app.mdx" },
   { path: "windows/installer.h", audience: "platform-integration", documentation: "reference/platform-specific.mdx" },
   { path: "animation.h", audience: "application", documentation: "reference/animation.mdx" },
   { path: "app.h", audience: "application-and-adapter", documentation: "reference/app.mdx" },
@@ -115,7 +116,6 @@ export const publicHeaders = [
   { path: "presentation.h", audience: "application", documentation: "reference/presentation.mdx" },
   { path: "render_scene.h", audience: "platform-adapter", documentation: "reference/paint.mdx" },
   { path: "resource.h", audience: "application-and-adapter", documentation: "reference/resource.mdx" },
-  { path: "root.h", audience: "extension", documentation: "reference/app.mdx" },
   { path: "scroll.h", audience: "application-and-extension", documentation: "reference/layout.mdx" },
   { path: "semantics.h", audience: "application-and-extension", documentation: "reference/semantics.mdx" },
   { path: "state.h", audience: "application", documentation: "reference/state-and-environment.mdx" },
@@ -302,4 +302,42 @@ export const declarationContracts = [
       "std::function<void(Instance&, const Controller&)> connect;",
     ],
   },
+];
+
+export const memberContracts = [
+  { header: "app.h", type: "ApplicationHandle", declarations: [
+    "bool SupportsMultipleWindows() const;",
+    "WindowHandle OpenWindow(ViewFactory content, WindowOptions options = {}) const;",
+    "const std::optional<ApplicationActivation>& StartupActivation() const noexcept;",
+  ] },
+  { header: "app.h", type: "ApplicationContext", declarations: [
+    "void OnActivation(std::function<void(ApplicationActivation)> handler);",
+    "void OnLifecycleChanged(std::function<void(ApplicationLifecycleState)> handler);",
+  ] },
+  { header: "window.h", type: "WindowHandle", declarations: [
+    "bool IsOpen() const;", "WindowLifecycleState LifecycleState() const;",
+    "void ShowKeyboard() const;", "void HideKeyboard() const;",
+  ] },
+  { header: "view.h", type: "SplitLayout", declarations: ["SplitLayout Orientation(Axis axis) &&;"] },
+  { header: "view.h", type: "DockLayout", declarations: ["DockLayout(std::vector<DockItem> items, DockTree tree);"] },
+  { header: "text.h", type: "FontFamily", declarations: [
+    "static FontFamily FromResources(std::vector<RawResource> resources);",
+    "static FontFamily FromFiles(std::vector<File> files);",
+    "static FontFamily FromBytes(std::vector<Bytes> files);",
+  ] },
+  { header: "resource.h", type: "Resources", declarations: [
+    "ResourceConfiguration Configuration() const;",
+    "std::string GetString(const StringVariant& value) const;",
+  ] },
+  { header: "testing/ui_test.h", type: "UiNodeQuery", declarations: [
+    "Point ScrollBy(Point delta) const;",
+    "UiNodeQuery ScrollUntil(UiSelector target, UiScrollOptions options = {}) const;",
+  ] },
+  { header: "testing/ui_test.h", type: "UiTest", declarations: [
+    "void PumpAndSettle(UiPumpOptions options = {});",
+    "void UpdateWindowLifecycleState(WindowLifecycleState state);",
+  ] },
+  { header: "testing/ui_test.h", type: "UiSnapshot", declarations: [
+    "std::string Diff(const UiSnapshot& expected) const;",
+  ] },
 ];

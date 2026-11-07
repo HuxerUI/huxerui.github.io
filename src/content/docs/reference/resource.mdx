@@ -25,6 +25,12 @@ Prefer `Text::Format(resource, ...)` for `Text`, `UseString(resource, ...)` for 
 
 `Locale::FromLanguageTag`, `Locale::Default`, and `LanguageTag` represent normalized locale choice. `ResourceConfiguration` contains `locale` and logical `display_scale`.
 
+## Resources service
+
+`UseService<Resources>()` resolves application resources outside composition as well as during application work. Configuration returns the calling context's effective locale/density snapshot. GetRawResource, GetImage, GetVectorImage and GetString return immediate owned values; image/string overloads can accept an explicit ResourceConfiguration.
+
+These methods require the original application thread and live application, and do not subscribe composition. Use UseString, UseImage and UseVectorImage when a View should react to locale/density changes. Application-only work uses application defaults; a window event/task preserves its original window/local Locale context.
+
 ## `RawAsset`
 
 Factories: `FromBytes`, `CopyBytes`, and `FromSharedBytes`. Metadata: `MimeType`, `HasValue`, and equality. `ReadBytes(cache = false)` and `ReadString(cache = false)` return owned complete contents. `OpenRead()` returns InputStream; `OpenReadAsync()` returns `Task<AsyncInputStream>`.

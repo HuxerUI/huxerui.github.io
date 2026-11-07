@@ -10,13 +10,21 @@ Declared by `<huxerui/theme.h>`.
 ## Theme tokens
 
 - `ColorScheme`: primary/secondary roles, containers, background/surface levels, on-colors, outline, inverse roles, scrim, and error.
-- `TypographyScheme`: body large/medium/small, label large, title large, and headline small sizes.
+- `TypographyScheme`: body large/medium/small, label large, title large, and headline small sizes, plus the shared FontFamily in `family`.
 - `ShapeScheme`: extra-small through extra-large plus full radius.
 - `SpacingScheme`: extra-small through extra-large spacing.
 - `ElevationScheme`: low, medium, and high elevation.
 - `MotionScheme`: fast/normal/slow durations and `reduced_motion`.
 - `InteractionScheme`: default `Indication`, `FocusRing`, and disabled opacity.
-- `ThemeSpec`: aggregates all schemes and provides `Default()`.
+- `ThemeSpec`: aggregates all schemes, includes semantic ThemeBrightness in `brightness`, and provides `Default()`. Changing brightness alone does not transform the palette.
+
+## Follow system appearance
+
+UseSystemThemeBrightness reads the current window host's effective Light/Dark preference during composition. It observes host changes without allocating a State slot. A local Theme does not overwrite that preference.
+
+Application policy chooses a theme family and any manual override. Use matching Flat/Material light and dark specs/definitions. ThemeSpec::brightness describes that selected theme; it is distinct from system-bar foreground contrast. Open presentation surfaces follow updates to their captured provider while retaining content state and transient lifetime.
+
+See [Theme and styling](/docs/guides/theme-and-styling/) and [Fonts and typography](/docs/guides/fonts-and-typography/).
 
 ## Component styles
 

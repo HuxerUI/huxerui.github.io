@@ -5,7 +5,7 @@ sidebar:
   order: 23
 ---
 
-Declared by `<huxerui/platform_registry.h>` and `<huxerui/root.h>`; all shared declarations are in `huxerui`.
+Declared by `<huxerui/platform_registry.h>` and `<huxerui/app.h>`; all shared declarations are in `huxerui`.
 
 A PlatformModule is a registered C++ service, not a required base class. Direct C++ integrations keep their own typed methods. Use `PlatformChannel` only when a Java or JavaScript instance needs a request/event bridge. The registry implementation in `huxerui::detail` is not an application API.
 
@@ -13,13 +13,12 @@ A PlatformModule is a registered C++ service, not a required base class. Direct 
 
 | Operation | Contract |
 | --- | --- |
-| `RootContext::RegisterPlatformModule<Module>(name, factory)` | Factory takes `PlatformAdapter&` and returns exactly `Module`. |
+| `ApplicationContext::RegisterPlatformModule<Module>(name, factory)` | Factory takes `Runtime&` or `UiWindow&` and returns exactly `Module`. |
 | `RegisterPlatformModule<Module, Options>(name, factory)` | Factory also receives `const Options&`. |
-| `RootContext::OpenPlatformModule<Module>(name[, options])` | Opens during root installation. |
-| `OpenPlatformModule<Module>(name[, options])` | Opens from committed `Lifecycle` setup, not during composition or from an arbitrary event handler. |
-| `RootContext::Provide<Service>(shared_ptr)` | Makes a root-owned service available through `UseService<Service>()`. |
+| `OpenPlatformModule<Module>(name[, options])` | Opens after factory installation from a WindowHook, committed Lifecycle, event or running task with the required host. Composition and application installation are rejected. |
+| `ApplicationContext::Provide<Service>(shared_ptr)` | Makes an application-owned service available through `UseService<Service>()`. |
 
-Names are case-sensitive and shared by module and view registrations. Install before first composition; registration freezes after root hooks complete. The registered result/options types must match the requested types. Missing or incompatible registrations are errors, not implicit fallback factories.
+Names are case-sensitive and shared by module and view registrations. Install before first composition; registration freezes after application hooks complete. The registered result/options types must match the requested types. Missing or incompatible registrations are errors, not implicit fallback factories.
 
 ## `PlatformChannel`
 
@@ -63,7 +62,7 @@ PlatformRequestId ReadTitle(const PlatformChannel& channel, State<std::string> s
 
 Direct PlatformView events run synchronously on the UI thread and may return an optional result; channel notifications are asynchronous void events. Do not rely on a disconnected emitter delivering output.
 
-`PlatformPayload` is an immutable shared value. `PlatformPayloadKind` has `Null`, `Boolean`, `Integer`, `Double`, `String`, `Bytes`, `List`, `Object`, `ExternalTexture`, and `FileReference` alternatives. Constructors validate values; `Kind()`, `IsNull()`, and the corresponding `As...` accessor inspect them. A mismatched accessor throws.
+`PlatformPayload` is an immutable shared value. `PlatformPayloadKind` has `Null`, `Boolean`, `Integer`, `Double`, `String`, `Bytes`, `List`, `Object`, `ExternalTexture`, `FileReference`, and `BufferReference` alternatives. Constructors validate values; `Kind()`, `IsNull()`, and the corresponding `As...` accessor inspect them. A mismatched accessor throws.
 
 `PlatformPayloadEnvelope` retains serialized `bytes` **and** the `external_textures` and `file_references` capability tables. Preserve the complete envelope when encoding/decoding a bridge message. Copying just the bytes loses capabilities; a file reference is not interchangeable with a path string.
 

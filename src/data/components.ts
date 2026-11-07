@@ -29,8 +29,8 @@ export const componentGroups: ComponentGroup[] = [
   },
   {
     name: "Layout",
-    description: "Constraint-based composition, scrolling, responsive structure, and large-data virtualization.",
-    items: ["Row", "Column", "Flow", "Stack", "ScrollView", "VirtualList", "VirtualGrid", "TreeView", "RefreshBox", "DrawerLayout"],
+    description: "Constraint-based composition, controlled split/docking workspaces, responsive surfaces, and large-data virtualization.",
+    items: ["Row", "Column", "Flow", "Stack", "SplitLayout", "DockLayout", "ScrollView", "VirtualList", "VirtualGrid", "TreeView", "RefreshBox", "DrawerLayout"],
     href: "/docs/layout/",
   },
   {

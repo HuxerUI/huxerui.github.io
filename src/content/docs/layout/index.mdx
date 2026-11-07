@@ -98,3 +98,7 @@ Measure children only through `LayoutContext`, return a constrained `LayoutResul
 
 Use a custom layout for a genuinely new placement policy.
 Do not create one merely to hide a composition that `Row`, `Column`, `Flow`, or `Stack` already expresses.
+
+## Resizable workspaces
+
+Use [SplitLayout](/docs/components/split-layout/) for controlled pane sizing and [DockLayout](/docs/components/dock-layout/) for movable tab groups. Their events propose application-owned values; they do not replace layout constraints or automatically decide responsive structure.

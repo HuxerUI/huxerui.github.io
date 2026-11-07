@@ -230,4 +230,49 @@ static_assert(requires(PlatformChannel& instance, PlatformRequestId request) {
   instance.Close();
 });
 
+static_assert(requires(ApplicationHandle app, WindowHandle window, ViewFactory factory) {
+  { app.SupportsMultipleWindows() } -> std::same_as<bool>;
+  { app.OpenWindow(factory) } -> std::same_as<WindowHandle>;
+  { app.StartupActivation() } -> std::same_as<const std::optional<ApplicationActivation>&>;
+  { window.IsOpen() } -> std::same_as<bool>;
+  { window.LifecycleState() } -> std::same_as<WindowLifecycleState>;
+  window.ShowKeyboard();
+  window.HideKeyboard();
+});
+static_assert(std::same_as<decltype(AppOptions{}.application_hooks), std::vector<ApplicationHook>>);
+static_assert(std::same_as<decltype(AppOptions{}.window_hooks), std::vector<WindowHook>>);
+static_assert(requires(ApplicationContext& context) {
+  context.OnActivation([](ApplicationActivation) {});
+  context.OnLifecycleChanged([](ApplicationLifecycleState) {});
+});
+template <class T>
+concept HasActivationObserver = requires(T handle) { handle.OnActivation([](ApplicationActivation) {}); };
+static_assert(!HasActivationObserver<ApplicationHandle>);
+static_assert(requires(Resources& resources, StringVariant text) {
+  { resources.GetString(text) } -> std::same_as<std::string>;
+  { resources.Configuration() } -> std::same_as<ResourceConfiguration>;
+});
+static_assert(requires(FontFamily family, Font font, std::vector<Bytes> faces) {
+  { FontFamily::FromBytes(faces) } -> std::same_as<FontFamily>;
+  { Font::FromFamily(family) } -> std::same_as<Font>;
+  { font.WithFamily(family) } -> std::same_as<Font>;
+});
+static_assert(FontFamilyKind::Custom != FontFamilyKind::Named);
+static_assert(SoftwareKeyboardPolicy::Manual != SoftwareKeyboardPolicy::Automatic);
+static_assert(std::same_as<decltype(UseSystemThemeBrightness()), ThemeBrightness>);
+static_assert(std::same_as<decltype(UseApplicationTaskScope()), TaskScope>);
+static_assert(PubliclyConstructible<SplitLayout, std::vector<View>>);
+static_assert(PubliclyConstructible<DockLayout, std::vector<DockItem>, DockTree>);
+static_assert(requires(DockTree tree) {
+  { tree.Select("editor") } -> std::same_as<DockTree>;
+  { tree.Dock("output", "editor", DockPlacement::Bottom) } -> std::same_as<DockTree>;
+});
+static_assert(requires(testing::UiTest& ui, testing::UiNodeQuery query, testing::UiSnapshot snapshot) {
+  ui.PumpAndSettle();
+  ui.UpdateWindowLifecycleState(WindowLifecycleState::Inactive);
+  { query.ScrollBy({0.0F, 20.0F}) } -> std::same_as<Point>;
+  { query.ScrollUntil(testing::UiSelector::Key("row")) } -> std::same_as<testing::UiNodeQuery>;
+  { snapshot.Diff(snapshot) } -> std::same_as<std::string>;
+});
+
 } // namespace

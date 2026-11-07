@@ -12,7 +12,7 @@ huxerui setup android
 huxerui run android
 ```
 
-The host view owns one shared runtime and adapter. Java/Kotlin lifecycle, input method, accessibility node provider, file picker, HTTP transport, and system bars cross the JNI boundary into shared C++ behavior. Keep app UI code platform-neutral and add Android-specific factories through typed `RootContext` registration.
+The application Runtime owns shared services; each host view attaches a UiWindow for composition and input. Java/Kotlin lifecycle, input method, accessibility node provider, file picker, HTTP transport, and system bars cross the JNI boundary into shared C++ behavior. Keep app UI code platform-neutral and add Android-specific factories through typed `ApplicationContext` registration.
 
 Android defaults to safe-area content. Choose `WindowContentMode::EdgeToEdge` to draw behind system bars, then use `SafeAreaPadding` and `SystemBarsAppearance`. Software-keyboard viewport adjustment is distinct from physical safe-area insets.
 
@@ -25,3 +25,48 @@ Android behavior must still be validated on devices or emulators for API level, 
 Local notifications require application channel/icon metadata, a channel on API 26+, and notification permission for API 33+. Durable scheduling needs the explicit non-exported receiver; custom RemoteViews templates need an application layout provider on API 24+. Permissions and channel policy can suppress accepted delivery.
 
 See [Local notifications](/docs/guides/local-notifications/) for shared usage and platform configuration, and [System API](/docs/reference/system/) for exact contracts.
+
+## Window modules and Activity results
+
+Use JavaPlatformModuleFactory for application Context-only capabilities and JavaWindowPlatformModuleFactory for a module that needs its original HuxerUIView. Register either factory through ApplicationContext; open it after installation.
+
+A window factory can retain the launch capability instead of retaining an Activity:
+
+```java
+public HuxerUIPlatformModule create(
+        HuxerUIView window, PlatformPayload options, HuxerUIPlatformChannel.Events events) {
+    return new DocumentModule(window.getActivityResultLauncher(), events);
+}
+```
+
+The application supplies DocumentModule and implements invoke/dispose. The retained HuxerUIActivityResultLauncher can launch a configured result-producing Intent:
+
+```java
+return launcher.launch(intent, new HuxerUIActivityResultLauncher.Callback() {
+    @Override
+    public void onResult(int resultCode, Intent data) {
+        handleDocumentResult(resultCode, data);
+    }
+
+    @Override
+    public void onFailure(RuntimeException error) {
+        failRequest(error);
+    }
+});
+```
+
+These are integration fragments inside the library's window factory/module. Native RESULT_CANCELED is an ordinary result, while host/launch failures enter onFailure. Both callbacks run asynchronously on the main thread, at most once. Cancel suppresses delivery and requests dismissal; the active presentation slot remains occupied until a result or host closure.
+
+The host Activity connects ActivityResultHost, forwards results through dispatchActivityResult, and updates setActivityResultResumed. Generated shells own this wiring; an embedding host must supply it. Capture the launcher once at factory creation: a retired launcher must never target a replacement attachment.
+
+## Import an externally supplied URI
+
+HuxerUIFileReference.fromUri(context, uri) creates a retained read capability from a content/file URI while access is valid. Call it on a worker while the provider/grant remains readable; it may copy into SDK-owned temporary storage and throws IOException for unsupported/unreadable input. It returns a file reference, not an editable path or persistent grant.
+
+Pass that reference through PlatformPayload rather than extracting a path. Keep it, its opened stream or pending operation alive until consumption completes, then close owned Java wrappers. A display name/MIME type is metadata, not a content validation result.
+
+## Current host boundaries
+
+SoftwareKeyboardPolicy and ShowKeyboard/HideKeyboard request IME visibility without ending editor focus. System appearance and font scaling follow the window host. Programmatic OpenWindow is unavailable; platform-managed activity attachments still share the application's services and State.
+
+The website checks shared C++ contracts and Web rendering. Android URI providers, Activity results, permissions, keyboard and module teardown still require device/emulator validation.

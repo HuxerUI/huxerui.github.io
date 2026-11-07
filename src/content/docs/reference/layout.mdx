@@ -14,6 +14,10 @@ Declared by `<huxerui/layout.h>`, `<huxerui/scroll.h>`, and `<huxerui/virtual_la
 - `HorizontalAlignment`: `Start`, `Center`, `End`, `Stretch`.
 - `VerticalAlignment`: `Start`, `Center`, `End`, `Stretch`.
 
+## Built-in resizable workspaces
+
+SplitLayout, SplitChange, DockLayout, DockTree, DockItem and DockPlacement are declared by `<huxerui/view.h>`. SplitLayout emits Frame/Grow proposals for its panes; DockLayout emits a complete controlled tree. See their [SplitLayout](/docs/components/split-layout/) and [DockLayout](/docs/components/dock-layout/) references for construction, writeback and retained panel identity.
+
 ## Custom layout
 
 `ViewNode` is a non-owning view of a reconciled node during layout and extension callbacks. It exposes child iteration, current layout and presentation geometry, interaction and alignment values, typed `LayoutValue` lookup, and a type-indexed `Cache<T>` owned by that node. `ChildAt` throws `std::out_of_range` for an invalid index and a cache type mismatch throws `std::logic_error`; do not retain a node or child reference across reconciliation.

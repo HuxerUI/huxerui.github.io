@@ -16,7 +16,7 @@ Declared by `<huxerui/system.h>` in `huxerui`; Windows entry functions are in `h
 | Field | Meaning |
 | --- | --- |
 | `identifier` | Stable nonempty application-owned UTF-8 identifier used for replacement, cancellation, and activation. |
-| `title`, `body` | StringVariant values resolved in the handle's captured Environment at submission. At least one must resolve to nonempty text. |
+| `title`, `body` | StringVariant values resolved using the calling context's effective resource configuration at submission. At least one must resolve to nonempty text. |
 | `presentation` | LocalNotificationPresentation: DefaultNotificationPresentation or TemplateNotificationPresentation with an identifier declared by the platform shell. |
 | `data` | PlatformPayload snapshot delivered to a template and returned in primary activation. Default is Null. |
 
@@ -26,7 +26,7 @@ A template is platform-owned notification UI, not a HuxerUI View or a shared lay
 
 ## LocalNotificationHandle
 
-Obtain `UseApplication().LocalNotifications()` during composition and capture it into UI-thread events or tasks. It retains the effective Environment for localized submission. Authorization requests and notification mutations preserve submission order within a Runtime; authorization queries are independent.
+Obtain `UseApplication().LocalNotifications()` during composition and capture it into UI-thread events or tasks. It is application-owned; text resolves using the resource context of each Show/Schedule call, without capturing a composition Environment in the handle. Authorization requests and notification mutations preserve submission order within an application Runtime; authorization queries are independent.
 
 | Method | Return and behavior |
 | --- | --- |

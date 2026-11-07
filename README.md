@@ -5,7 +5,7 @@ Astro owns the public landing pages and Starlight renders documentation written 
 
 ## Requirements
 
-- Node.js 22.12 or later
+- Node.js 22.23.4 or later (Node.js 24 is used in CI)
 - Git
 - Emscripten 4.0.19, CMake, and Ninja only when building interactive Web examples locally
 
@@ -63,3 +63,11 @@ npm run check:links
 `validate.yml` checks every website change.
 `deploy.yml` builds the selected HuxerUI Web examples, validates the site, and deploys the `dist` artifact through GitHub Pages Actions.
 No `gh-pages` branch content is maintained manually.
+
+## Updating the framework revision
+
+Audit the candidate with npm run audit:revision -- /path/to/HuxerUI. Review changed header owners, public member contracts and selected examples before pinning huxerui-source.json. Update user-facing content and scripts/api-coverage.mjs, then record the reviewed headers with --record-header-review. The tracked scripts/api-review.json catches any later header change, including additions inside an existing header; its hashes are review signals, not an automatic API classification.
+
+Complete C++ fences use compile="id"; explanatory fences use fragment. Add module to a complete import-based unit. Module units are compiled with the pinned modules/huxerui.cppm and the selected MSVC std module, separately from C++20 header examples. Deployment requires both profiles.
+
+The documentation version notice identifies the source revision. Release metadata is refreshed during checks/builds, and the download page can report an older released SDK than this development manual. Keep source build instructions and the explicit platform verification boundaries current.

@@ -9,13 +9,36 @@ HuxerUI ships as a relocatable SDK with the `huxerui` command-line tool, CMake p
 
 ## Requirements
 
-All applications require:
+For the CMake/SDK workflow, prepare:
 
 - A C++20 compiler supported by the selected platform toolchain.
 - CMake 3.20 or later.
 - The HuxerUI SDK for the current development host.
 
 Platform builds also require their platform SDK: Visual Studio on Windows, Xcode on Apple platforms, the Android SDK and NDK for Android, or Emscripten for Web.
+
+## Build the documented revision
+
+This manual follows the source commit shown beside each page title. New APIs can precede a public SDK release; the Downloads page reports released artifacts independently. Build the documented source revision when following these examples.
+
+```bash
+git clone https://github.com/HuxerUI/HuxerUI.git
+git -C HuxerUI checkout 56eb5ab225997cffc83ce8f2736d1fd52c530b70
+```
+
+For a host-only CMake package, configure from a supported developer environment. On Windows use an MSVC Developer PowerShell with Ninja available; on macOS use Xcode command-line tools; Linux requires the GTK/system dependencies in its platform guide:
+
+```bash
+cmake -S HuxerUI -B build/huxerui -G Ninja -DCMAKE_BUILD_TYPE=Release -DHUXERUI_BUILD_SHARED=OFF -DHUXERUI_BUILD_STATIC=ON -DHUXERUI_BUILD_TESTS=OFF -DHUXERUI_BUILD_EXAMPLES=OFF
+cmake --build build/huxerui --parallel 4
+cmake --install build/huxerui --prefix build/huxerui-install
+```
+
+Point CMAKE_PREFIX_PATH to that install for a custom desktop CMake application, or use the source checkout directly through add_subdirectory as shown in [CMake integration](/docs/tooling/cmake/). A host install alone does not create Android/Web SDK artifacts.
+
+For a complete SDK, the source repository provides scripts/package_sdk.ps1 and scripts/package_sdk.sh. They build target artifacts and require a complete Android/Java/Emscripten environment; macOS packaging also builds iOS with Xcode. Keep their build/output under a build directory. They do not bootstrap missing SDKs.
+
+For a desktop module project use [C++ Modules and mcpp](/docs/tooling/cpp-modules-and-mcpp/), which has its own manifest/build rules and current C++23 template mode.
 
 ## Select an SDK
 

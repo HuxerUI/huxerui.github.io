@@ -11,7 +11,7 @@ sidebar:
 
 `PlatformView(std::string name)` uses a registration without properties. `PlatformView(name, properties)` stores the actual C++ properties type, which must be move-constructible and equality-comparable. Keep it a small declarative value; compatible recomposition updates the existing platform instance instead of recreating it.
 
-Register through `RootContext::RegisterPlatformView<Properties>(name, factory)`, or its `<Properties, Controller>` overload. Include the host-specific `platform_registry.h` for its `PlatformViewFactory`. Registration names and types must match exactly.
+Register through `ApplicationContext::RegisterPlatformView<Properties>(name, factory)`, or its `<Properties, Controller>` overload. Include the host-specific `platform_registry.h` for its `PlatformViewFactory`. Registration names and types must match exactly.
 
 ## Events and controller
 

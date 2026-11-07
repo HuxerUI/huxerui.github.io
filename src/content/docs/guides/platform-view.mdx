@@ -3,7 +3,7 @@ title: PlatformView
 description: Integrate native controls while preserving HuxerUI layout and typed events.
 ---
 
-`PlatformView` embeds a registered platform control. The application supplies typed, equality-comparable properties and binds typed events; a root hook installs the matching platform-specific factory.
+`PlatformView` embeds a registered platform control. The application supplies typed, equality-comparable properties and binds typed events; a application hook installs the matching platform-specific factory.
 
 ## Keep values controlled
 
@@ -21,7 +21,7 @@ Events request application changes through typed HuxerUI event keys.
 
 ## Register one typed factory
 
-Use `RootContext::RegisterPlatformView<Properties>(name, factory)` before first composition. Include the host-specific `platform_registry.h`; its `PlatformViewFactory<Properties, Instance>` owns the retained implementation state, extracts its stable view, applies updates, and disposes resources. An optional third Controller type adds mounted connect/disconnect operations.
+Use `ApplicationContext::RegisterPlatformView<Properties>(name, factory)` before first composition. Include the host-specific `platform_registry.h`; its `PlatformViewFactory<Properties, Instance>` owns the retained implementation state, extracts its stable view, applies updates, and disposes resources. An optional third Controller type adds mounted connect/disconnect operations.
 
 Direct C++ properties stay typed. Only Java/JavaScript bridge factories require payload encoding. A platform event key defines its full function signature and stable `Name`; `.On<Key>()` binds it without a separate event list.
 

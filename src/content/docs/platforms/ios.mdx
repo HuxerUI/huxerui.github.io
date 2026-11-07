@@ -1,11 +1,11 @@
 ---
 title: iOS
-description: Build HuxerUI applications for iOS 13 and later.
+description: Build HuxerUI applications for iOS 15 and later.
 sidebar:
   order: 3
 ---
 
-iOS support targets iOS 13 and later. The SDK and generated project configure CMake/Xcode sources, UIKit application lifecycle, and the HuxerUI static application link.
+iOS support targets iOS 15 and later. The SDK and generated project configure CMake/Xcode sources, UIKit application lifecycle, and the HuxerUI static application link.
 
 ```bash
 huxerui setup ios
@@ -24,3 +24,36 @@ The website's cross-platform contract checks do not verify UIKit accessibility, 
 Local notifications use User Notifications. An embedded Notification Content Extension owns template UI; HUXGetLocalNotificationData reads its submitted payload. Clicks enter OnActivation even when launching the process. This does not supply remote push registration.
 
 See [Local notifications](/docs/guides/local-notifications/) for shared usage and platform configuration, and [System API](/docs/reference/system/) for exact contracts.
+
+## Window modules and native presentation
+
+An application-bound HUXPlatformModuleFactory receives options/events without a controller. HUXUIKitWindowPlatformModuleFactory receives the original UIViewController; register it with ObjectiveCWindowPlatformModuleFactory for modal UI operations. Registration belongs to application_hooks and instance creation follows OpenPlatformModule's live-host rules.
+
+Retain the coordinator returned by HUXGetPresentationCoordinator(owner) at module creation. This fragment belongs inside that module's invoke implementation; the module supplies its controller, completion and failure policy:
+
+```objectivec
+HUXPresentationCoordinator* coordinator = HUXGetPresentationCoordinator(owner);
+id<HUXPlatformCancellation> request =
+    [coordinator enqueueWithStart:^id<HUXPlatformCancellation>(
+        UIViewController* presenter, void (^finished)(void)) {
+      return PresentDocumentPicker(presenter, finished);
+    } failure:^(NSError* error) {
+      FailDocumentRequest(error);
+    }];
+```
+
+PresentDocumentPicker must synchronously install its UI and return native cancellation, or call finished before returning nil. Call finished exactly when the UI is absent: after dismiss completion, interactive dismissal or failed startup. A canceled active presentation retains its queue slot until then; duplicate/late finished calls are harmless. A still-live request needs a result/failure when its host closes.
+
+All presentation coordinator operations run on the main thread. Inactive windows defer admission; unmanaged modal UI fails admission instead of being covered. Use [AwaitCallback](/docs/guides/tasks/#adapt-a-callback-api) in a typed C++ facade to await one result while preserving these cancellation and native-cleanup rules.
+
+## Copy a provider file safely
+
+HUXFileReference::copyFromFileURL:error: (Swift FileReference.copy(from:)) snapshots a readable ordinary file into SDK-owned temporary storage. It can run on a background queue and must finish while the provider URL is valid. The result is read-only; source contents are unchanged.
+
+The SDK balances security-scoped access it acquires for that copy. Retain the HUXFileReference or a derived stream/operation, not only its fileURL: the last capability owner releases temporary storage. A nil result carries an NSError and partial copies are removed. Forward the reference through PlatformPayload instead of serializing its URL.
+
+## Window and appearance policy
+
+UIKit attachments share application services, while each UiWindow retains its own focus, presentation, resource context and system-theme preference. The shared OpenWindow API does not create arbitrary iOS scenes. Use host scene configuration for native attachment policy.
+
+Manual software-keyboard requests preserve focus and selection; actual UIKit keyboard visibility and accessibility behavior still require a real iOS host. Custom families use static font data with platform fallback. See [Fonts and typography](/docs/guides/fonts-and-typography/).

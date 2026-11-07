@@ -52,8 +52,8 @@ export const platforms: Platform[] = [
   {
     name: "OHOS",
     status: "Planned",
-    stack: "Platform adapter planned",
-    detail: "The shared Runtime is designed for another adapter, but HuxerUI does not claim an implemented OHOS backend yet.",
+    stack: "Platform host planned",
+    detail: "The shared application model supports additional platform hosts, but HuxerUI does not claim an implemented OHOS backend yet.",
     code: "OHO",
   },
 ];

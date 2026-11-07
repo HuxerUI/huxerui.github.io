@@ -1,8 +1,10 @@
-import { readdir, readFile } from "node:fs/promises";
+import { readdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { execFileSync } from "node:child_process";
 
-import { components, modules, declarationContracts, publicHeaders } from "./api-coverage.mjs";
+import { components, modules, declarationContracts, memberContracts, publicHeaders } from "./api-coverage.mjs";
+import { normalizeDeclaration, headerReviewHash, typeBody } from "./api-contract.mjs";
+import review from "./api-review.json" with { type: "json" };
 import { loadSourceConfig } from "./source-config.mjs";
 
 const candidateArgument = process.argv[2] ?? process.env.HUXERUI_SOURCE_DIR;
@@ -24,9 +26,6 @@ async function collect(directory, suffix) {
   return files;
 }
 
-function normalizeDeclaration(value) {
-  return value.replace(/\s+/g, " ").replace(/\s*([<>{}(),;*&=])\s*/g, "$1").trim();
-}
 
 const config = await loadSourceConfig();
 const headerRoot = path.join(candidateRoot, "include", "huxerui");
@@ -86,8 +85,19 @@ for (const contract of declarationContracts) {
   }
 }
 
+for (const contract of memberContracts) {
+  const body = normalizeDeclaration(typeBody(await readCandidateHeader(contract.header), contract.type));
+  for (const declaration of contract.declarations) {
+    if (!body.includes(normalizeDeclaration(declaration))) {
+      contractDrift.add(`${contract.header}::${contract.type}: ${declaration}`);
+    }
+  }
+}
+const headerHashes = Object.fromEntries(await Promise.all(actualHeaders.map(async header =>
+  [header, headerReviewHash(await readCandidateHeader(header))])));
+const unreviewed = actualHeaders.filter(header => review.headers[header] !== headerHashes[header]);
 const affectedDocs = new Set();
-for (const file of changedFiles) {
+for (const file of [...changedFiles, ...unreviewed.map(header => "include/huxerui/" + header)]) {
   const header = file.replace(/^include\/huxerui\//, "");
   const contract = publicHeaders.find(({ path: candidate }) => candidate === header);
   if (contract) {
@@ -114,11 +124,20 @@ console.log(`Candidate revision: ${candidateRevision}`);
 console.log(`Added headers:       ${added.length ? added.join(", ") : "none"}`);
 console.log(`Removed headers:     ${removed.length ? removed.join(", ") : "none"}`);
 console.log(`Contract drift:      ${contractDrift.size ? [...contractDrift].sort().join("; ") : "none"}`);
+console.log(`Headers needing review: ${unreviewed.length ? unreviewed.join(", ") : "none"}`);
 console.log(`Missing examples:    ${missingExamples.length ? missingExamples.join(", ") : "none"}`);
 console.log(`Changed Web examples:${changedExamples.length ? ` ${changedExamples.join(", ")}` : " none"}`);
 console.log(`Pages to review:     ${affectedDocs.size ? [...affectedDocs].sort().join(", ") : "none detected"}`);
 console.log("Run check:docs and the C++ contract build against the candidate before changing huxerui-source.json.");
 
-if (added.length || removed.length || contractDrift.size || missingExamples.length) {
+const record = process.argv.includes("--record-header-review");
+if (record && !added.length && !removed.length && !contractDrift.size && !missingExamples.length) {
+  if (candidateRevision !== config.ref) throw new Error("Pin the reviewed revision before recording header review.");
+  await writeFile(new URL("./api-review.json", import.meta.url), JSON.stringify({
+    revision: candidateRevision, headers: headerHashes,
+  }, null, 2) + "\n");
+  console.log("Recorded header review. Run the documentation and compiled contract checks before publication.");
+}
+if (added.length || removed.length || contractDrift.size || missingExamples.length || (!record && unreviewed.length)) {
   process.exitCode = 1;
 }

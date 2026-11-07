@@ -5,15 +5,21 @@ import {
   components,
   modules,
   declarationContracts,
+  memberContracts,
   platformHeaders,
   publicHeaders,
 } from "./api-coverage.mjs";
+import { normalizeDeclaration, headerReviewHash, typeBody } from "./api-contract.mjs";
+import review from "./api-review.json" with { type: "json" };
+import { loadSourceConfig } from "./source-config.mjs";
 import { resolveHuxerUISource } from "./resolve-huxerui-source.mjs";
 
 const docsRoot = path.resolve("src/content/docs");
 const frameworkRoot = await resolveHuxerUISource();
 const publicHeaderRoot = path.join(frameworkRoot, "include", "huxerui");
 const failures = [];
+const sourceConfig = await loadSourceConfig();
+if (review.revision !== sourceConfig.ref) failures.push("Header review revision does not match huxerui-source.json");
 
 async function readDocument(relativePath) {
   try {
@@ -54,9 +60,6 @@ function requireSymbols(owner, content, symbols) {
   }
 }
 
-function normalizeDeclaration(value) {
-  return value.replace(/\s+/g, " ").replace(/\s*([<>{}(),;*&=])\s*/g, "$1").trim();
-}
 
 for (const component of components) {
   const pagePath = `components/${component.page}.mdx`;
@@ -138,6 +141,20 @@ for (const contract of declarationContracts) {
   }
 }
 
+for (const contract of memberContracts) {
+  const body = normalizeDeclaration(typeBody(await readHeader(contract.header), contract.type));
+  for (const declaration of contract.declarations) {
+    if (!body.includes(normalizeDeclaration(declaration))) {
+      failures.push(`Public member changed in ${contract.header}::${contract.type}: ${declaration}`);
+    }
+  }
+}
+for (const header of actualPublicHeaders) {
+  if (review.headers[header] !== headerReviewHash(await readHeader(header))) {
+    failures.push(`Public header needs documentation review: ${header}`);
+  }
+}
+
 const documents = await collectFiles(docsRoot, ".mdx");
 
 const discouraged = [
@@ -149,7 +166,7 @@ const discouraged = [
 for (const document of documents) {
   const content = await readFile(document, "utf8");
   const relative = path.relative(docsRoot, document).split(path.sep).join("/");
-  const cppBlocks = [...content.matchAll(/```(?:cpp|c\+\+)\s*\n([\s\S]*?)```/g)].map((match) => match[1]).join("\n");
+  const cppBlocks = [...content.matchAll(/^```(?:cpp|c\+\+)(?:[ \t][^\n]*)?\r?\n([\s\S]*?)^```[ \t]*\r?$/gm)].map((match) => match[1]).join("\n");
   for (const rule of discouraged) {
     rule.pattern.lastIndex = 0;
     if (rule.pattern.test(cppBlocks)) {

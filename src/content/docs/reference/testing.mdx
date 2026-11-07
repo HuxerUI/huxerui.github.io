@@ -1,17 +1,17 @@
 ---
 title: UI testing API
-description: Query, interact with, and inspect a real Runtime without opening a native window.
+description: Query, interact with, and inspect a real application Runtime and shared UiWindow without opening a native window.
 ---
 
 Explicitly include `<huxerui/testing/ui_test.h>` and link `HuxerUI::testing`. Names are in `huxerui::testing`; the production umbrella header does not include this testing API. Start with the [complete test](/docs/tooling/testing-and-delivery/#test-a-controlled-editor).
 
 ## UiTest and fixture ownership
 
-`UiTest(const Application&, UiTestOptions = {})` borrows an Application that must outlive it. Construction executes ordinary root hooks and commits one frame at virtual time zero. The fixture is neither copyable nor movable. Create, use, and destroy it on the same thread, and never reenter its operations from application callbacks.
+`UiTest(const Application&, UiTestOptions = {})` borrows an Application that must outlive it. Construction executes application/window hooks and commits one frame at virtual time zero. The fixture is neither copyable nor movable. Create, use, and destroy it on the same thread, and never reenter its operations from application callbacks.
 
 UiTestOptions supplies viewport (800 × 600 logical units by default), safe_area, ResourceConfiguration resources, optional PlatformResources resource_provider, initial ApplicationActivation, and maximum_callbacks_per_frame (10000). Resources are explicit: no provider means no packaged payloads, not an implicit filesystem search. Test resource configuration overrides the provider's locale/density.
 
-The adapter uses reference text measurement, not native shaping. It tests shared state, layout, input, semantics and render intent, not OS permissions, platform pixels, PlatformView descendants, or a screen reader. Application hooks are not sandboxed and can still perform real platform work.
+The testing host uses reference text measurement, not native shaping. It tests shared state, layout, input, semantics and render intent, not OS permissions, platform pixels, PlatformView descendants, or a screen reader. Application hooks are not sandboxed and can still perform real platform work.
 
 ## Queries and selectors
 
@@ -32,7 +32,7 @@ UiNodeQuery offers Tap, EnterText, ReplaceText, SetSelection, and Submit. Tap us
 
 UiTest provides TapAt, Drag and PressKey high-level helpers that pump their events. UiPointerOptions defaults to touch, pointer_id 1. UiDragOptions defaults to 0.2 seconds and 10 movement segments. Raw SendPointer, SendScroll, SendKey and SendTextInput do not pump; follow them with Pump before inspecting state. Raw pointer input requires complete Down/Move/Up or Cancel sequences.
 
-UiSemanticQuery::PerformSemanticAction dispatches through Runtime's accessibility path and pumps once. It tests semantic action handling separately from pointer geometry.
+UiSemanticQuery::PerformSemanticAction dispatches through UiWindow's accessibility path and pumps once. It tests semantic action handling separately from pointer geometry.
 
 ## Deterministic time
 
@@ -42,9 +42,17 @@ UiSemanticQuery::PerformSemanticAction dispatches through Runtime's accessibilit
 
 Now returns virtual seconds. SetWindowMetrics and UpdateResourceConfiguration change configuration but need a subsequent Pump before queries see a committed result.
 
+## Scroll, settle and lifecycle
+
+UiNodeQuery::ScrollBy(delta) sends a real wheel update and pumps once. ScrollUntil(selector, UiScrollOptions) repeatedly scrolls that query's container until a unique descendant has visible geometry. Defaults are a vertical 240-DIP step, 100 ms interval and 20 attempts. It uses ordinary virtualization and routing rather than constructing a missing item directly.
+
+PumpAndSettle(UiPumpOptions) always commits an initial frame, then advances bounded virtual time until shared UI work is settled. Repeating animation or recurring timers can exhaust the bound; real workers/HTTP still need controlled completion or a wall-clock test timeout.
+
+UpdateWindowLifecycleState injects Active, Inactive or Background for the fixture window without pumping. It does not change aggregate application lifecycle or perform a native window operation. Pump before checking observations. ActiveTextInput returns session/revision/selection metadata without secure text.
+
 ## Snapshots and failures
 
-CaptureSnapshot returns UiSnapshot with an owning ToString representation of canonical semantic/render structure. It is not JSON or a screenshot. It excludes platform handles, external texture pixels and PlatformView descendants; ordinary text and encoded image content are not anonymized. The test runner owns baseline files and approvals.
+CaptureSnapshot returns UiSnapshot with an owning ToString representation of canonical semantic/render structure. It is not JSON or a screenshot. It excludes platform handles, external texture pixels and PlatformView descendants; ordinary text and encoded image content are not anonymized. The test runner owns baseline files and approvals. UiSnapshot supports equality and Diff(expected), which reports bounded named structural changes from the expected snapshot to the actual value rather than comparing serialized text lines.
 
 UiTestFailure reports missing/ambiguous targets, unavailable actions and bounded-wait failures. Invalid arguments use invalid_argument; wrong-thread/reentrant operations use logic_error. Application exceptions preserve their type. A frame/input/configuration-processing exception invalidates the session; subsequent operations fail. Query mismatches and PumpUntil timeouts alone do not invalidate a healthy session. Queries fail after fixture destruction.
 

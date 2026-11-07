@@ -1,0 +1,25 @@
+---
+import sourceConfig from "../../huxerui-source.json";
+import releaseData from "../generated/release.json";
+const release: { available: boolean; tag?: string } = releaseData;
+const revision = sourceConfig.ref.slice(0, 8);
+---
+
+<aside class="documentation-version" aria-label="Documentation version">
+  <span>Development manual · <a href={`https://github.com/HuxerUI/HuxerUI/commit/${sourceConfig.ref}`}>framework {revision}</a></span>
+  <span>Examples target this source revision. <a href="/docs/get-started/installation/#build-the-documented-revision">Build it from source</a>.</span>
+  {release.available && <a href="/downloads/">Latest released SDK: {release.tag}</a>}
+</aside>
+
+<style>
+  .documentation-version {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem 0.9rem;
+    margin-block: 0.75rem 0;
+    color: var(--sl-color-gray-2);
+    font-size: var(--sl-text-sm);
+    line-height: 1.65;
+  }
+  .documentation-version a { color: var(--sl-color-text-accent); }
+</style>

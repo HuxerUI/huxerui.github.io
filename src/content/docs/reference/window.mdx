@@ -11,6 +11,7 @@ Declared by `<huxerui/window.h>`.
 
 - `WindowContentMode`: `SafeArea`, `EdgeToEdge`.
 - `WindowChromeMode`: `System`, `Custom`.
+- `WindowLifecycleState`: `Active`, `Inactive`, `Background`, for this window independently of aggregate application state.
 - `WindowCommand`: `Show`, `Hide`, `Activate`, `Minimize`, `Maximize`, `Restore`, `ToggleMaximize`, `Close`.
 - `SystemBarContentBrightness`: `Automatic`, `Light`, `Dark`.
 
@@ -31,10 +32,18 @@ Declared by `<huxerui/window.h>`.
 
 `WindowTitleBar` is a variadic/collection `Layout` that applies drag-region and centered cross-axis behavior while reserving standard controls. `UseWindow() -> WindowHandle`; handle methods are `Show`, `Hide`, `Activate`, `Minimize`, `Maximize`, `Restore`, `ToggleMaximize`, and `Close`.
 
+## Lifetime and keyboard requests
+
+WindowHandle::IsOpen observes whether its original window remains open. Hidden and minimized windows remain open; retired handles never attach to a replacement. LifecycleState and OnLifecycleChanged observe only that window. Observers are composition-bound and do not replay the current state.
+
+ShowKeyboard requests the software keyboard for the focused editor. HideKeyboard dismisses it while preserving focus, selection and the editing session. Both run on the application thread and remain requests to the platform. TextInputConfiguration::keyboard_policy selects SoftwareKeyboardPolicy::Automatic or Manual.
+
+UseApplication().OpenWindow creates a native window only where SupportsMultipleWindows reports support. UseWindow requires the current original window context; an application-only callback has no default window. See [application/window ownership](/docs/guides/application-and-windows/).
+
 ## Platform contract
 
 `WindowOptions` is read when the platform shell creates its window.
-`WindowMetrics` is adapter-owned observable geometry expressed in logical units.
+`WindowMetrics` is host-submitted observable geometry expressed in logical units.
 `SafeAreaPadding` consumes only selected insets not already consumed by an ancestor, so nested safe-area containers do not double-pad content.
 
 `WindowContentMode::SafeArea` asks the root to stay within platform insets; `EdgeToEdge` allows drawing behind system UI.

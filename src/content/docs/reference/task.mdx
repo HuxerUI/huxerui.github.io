@@ -126,3 +126,15 @@ The dependency is text, so moving the caret alone does not restart a lookup. For
 `Launch(Task<void>&&)` transfers a named coroutine result. `Launch(factory)` owns the callable until its coroutine finishes, avoiding a dangling capturing-coroutine lambda. Do not immediately invoke a temporary capturing coroutine lambda and pass its result as though its closure would live forever.
 
 Launching during composition, after a scope closes, or with an empty Task is a logic error. Fallible application work should catch and present expected exceptions inside the launched operation; do not use an unobserved launch as an error-reporting strategy. Service APIs may also validate synchronously before returning their lazy Task, so put construction of a fallible request inside the intended error boundary.
+
+## Application scope and callback adapters
+
+UseApplicationTaskScope returns the application's shared TaskScope, available without composition. Tasks outlive windows and end at application shutdown. UseTaskScope remains composition-owned. Both scopes retain their original execution lifetime; they do not attach to a replacement application.
+
+`AwaitCallback<T>(starter)` returns a lazy `Task<T>`. The starter receives `CallbackCompletion<T>` and returns a cancellation function (which may be empty). It can retain move-only captures. Complete(value) or Complete() for void publishes success; Fail(non-null exception_ptr) publishes failure. The completion endpoint is copyable and does not keep the waiting task alive.
+
+Complete and Fail may run on any thread. The first valid submission wins; errors while storing the result reach co_await. A null exception_ptr is invalid_argument even after completion/cancellation. Awaiting requires a running HuxerUI task.
+
+The starter runs on the owning task thread; continuations restore that task's application/window context. Startup exceptions propagate at co_await. Cancellation actions run at most once on the owning thread for pending work and must not throw. They do not guarantee native work has stopped. A submission already queued for resumption can be suppressed by cancellation without invoking the action.
+
+See the [complete callback adapter](/docs/guides/tasks/#adapt-a-callback-api). AwaitCallback is for one result; use an owned subscription plus Post for a multi-event stream.

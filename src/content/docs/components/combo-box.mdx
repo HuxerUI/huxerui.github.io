@@ -68,6 +68,10 @@ Plain string-like suggestion ranges and `initializer_list<StringVariant>` use bu
 
 For server suggestions, update the complete editing value immediately, cancel the old search through TaskScope, and publish results only for the current query. An empty suggestion list is valid; provide `EmptyContent` if an open result surface should explain “No matches.” Do not replace an in-progress IME composition with a suggestion simply because a request completed.
 
+## Keyboard visibility
+
+`InputConfiguration({.keyboard_policy = SoftwareKeyboardPolicy::Manual})` retains normal suggestion behavior while suppressing automatic software-keyboard requests. Focus the ComboBox first, then use WindowHandle::ShowKeyboard or HideKeyboard from your action. Hiding the keyboard preserves editor focus and does not close the suggestion popup by itself. The same policy and platform limits as [TextField](/docs/components/text-field/#software-keyboard-policy) apply.
+
 ## Field and popup styling
 
 The editor uses `TextFieldStyle`, including the chosen variant, caret, and validation. `ComboBoxStyle` owns only the popup: `popup_background`, `foreground`, `active_item_background`, `item_padding`, `popup_padding`, `popup_shadow`, `minimum_item_height`, `maximum_popup_height`, `popup_corner_radii`, and `item_indication`. The height limit bounds scrolling; it does not truncate the suggestion collection.

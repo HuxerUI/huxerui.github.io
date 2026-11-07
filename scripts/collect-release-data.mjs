@@ -23,6 +23,8 @@ function classifyAsset(name) {
 }
 
 async function checksumFor(asset, assets) {
+  const digest = asset.digest?.match(/^sha256:([a-f0-9]{64})$/i);
+  if (digest) return digest[1].toLowerCase();
   const checksumAsset = assets.find((candidate) => candidate.name === `${asset.name}.sha256`);
   if (!checksumAsset) {
     return undefined;

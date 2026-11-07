@@ -5,13 +5,14 @@ description: Register typed services and choose a cross-language channel only wh
 
 A PlatformModule gives a platform SDK capability a typed C++ interface. It does not have to inherit a framework class or route every call through string messages.
 
-## A root-owned service
+## Register a factory, then choose an owner
 
-Define the shared interface, implement it in platform-selected source files, and register a factory in a root hook. The complete declaration below leaves `CreateDeviceInfo` to the platform implementation rather than pretending to return a real platform value:
+Register factories in an ApplicationHook. A factory accepts Runtime& for an application-bound module or UiWindow& for a module needing the original native window. The catalog freezes before windows and queued work start. Each open creates an instance; registration itself does not.
+
+This example opens a nonvisual device module during window installation and makes it available as that window's service. The platform implementation supplies CreateDeviceInfo:
 
 ```cpp compile="typed-platform-service"
 #include <huxerui/huxerui.h>
-
 #include <memory>
 #include <string>
 
@@ -22,34 +23,33 @@ struct DeviceInfo {
   virtual std::string Model() const = 0;
 };
 
-std::shared_ptr<DeviceInfo> CreateDeviceInfo(PlatformAdapter& adapter);
+std::shared_ptr<DeviceInfo> CreateDeviceInfo(Runtime& runtime);
 
-void InstallDeviceInfo(RootContext& root) {
-  root.RegisterPlatformModule<std::shared_ptr<DeviceInfo>>("app/device-info", CreateDeviceInfo);
-  root.Provide<DeviceInfo>(root.OpenPlatformModule<std::shared_ptr<DeviceInfo>>("app/device-info"));
+void RegisterDeviceInfo(ApplicationContext& context) {
+  context.RegisterPlatformModule<std::shared_ptr<DeviceInfo>>("app/device-info", CreateDeviceInfo);
+}
+
+void InstallDeviceInfo(WindowContext& context) {
+  context.Provide<DeviceInfo>(OpenPlatformModule<std::shared_ptr<DeviceInfo>>("app/device-info"));
 }
 
 View App() {
-  auto device = UseService<DeviceInfo>();
-  return Text(device->Model());
+  return Text(UseService<DeviceInfo>()->Model());
 }
 
-AppOptions Options() {
-  AppOptions options;
-  options.root_hooks.push_back(InstallDeviceInfo);
-  return options;
-}
-
-const Application application{App, Options()};
+const Application application{
+    App,
+    {.application_hooks = {RegisterDeviceInfo}, .window_hooks = {InstallDeviceInfo}},
+};
 ```
 
-The service is shared for this Runtime/window, not a process-wide singleton. Keep platform handles in the implementation, respect its UI-thread and resource-lifetime rules, and report unavailable capabilities explicitly.
+The factory's host lifetime and the instance's owning service are separate decisions. An application-bound factory can be opened without a window from ordinary application work after installation. A window-bound factory requires that original live window context. Do not replace one with whichever window is currently active.
 
 ## Component-owned instances
 
-Use the free `OpenPlatformModule<Module>()` only inside committed `Lifecycle` setup when an instance should follow a component's mount/dependency lifetime. Return a cleanup that closes or releases it. Opening during composition is rejected: composition may be retried and is not a safe place to create platform side effects.
+OpenPlatformModule also works in committed Lifecycle setup, events and running tasks with the required host context. It is rejected during composition and application installation. For a component-owned instance, release it in Lifecycle cleanup when that component unmounts.
 
-Factories may accept an explicit options type through `RegisterPlatformModule<Module, Options>`. The open call must use the same registered types and case-sensitive name. Prefer an integration library's `Install...` and `Use...` helpers so applications do not repeat registration names.
+`RegisterPlatformModule<Module, Options>` accepts an exact strongly typed options value. Prefer an integration library's Install/Use helper rather than repeating a string registration name at every call.
 
 ## When a channel helps
 
@@ -75,12 +75,28 @@ Keep the returned request identity if you need to cancel. Closing a channel affe
 ## Choose the boundary
 
 - Use ordinary C++ for shared algorithms.
-- Use a root service for coordinated per-window ownership.
+- Use an application service for shared lifetime or a window service for per-window coordination.
 - Register a PlatformModule for a platform implementation of that service.
 - Use [PlatformView](/docs/guides/platform-view/) for an actual platform control.
 - Use [ExternalTexture](/docs/guides/external-texture/) for changing pixels without platform-control input.
 
 Test missing registration, exact options types, teardown during work, cancellation, late events, and thread delivery. See the [registry and channel reference](/docs/reference/platform-module/) for individual contracts.
+
+## Android window modules and Activity results
+
+JavaPlatformModuleFactory uses HuxerUIPlatformModule.Factory and an application Context. JavaWindowPlatformModuleFactory uses HuxerUIPlatformModule.WindowFactory and receives the original HuxerUIView. Both factories are public classes with public no-argument constructors; their C++ facade wraps the created PlatformChannel.
+
+For an activity-producing operation, capture window.getActivityResultLauncher() when the window factory creates the instance. Keep that launcher rather than looking up a later attachment. The host forwards onActivityResult with dispatchActivityResult, supplies ActivityResultHost, and updates resumed state. An unavailable or retired attachment fails the request instead of rerouting it through another Activity.
+
+See the [Android integration guide](/docs/platforms/android/#window-modules-and-activity-results) for setup and result delivery.
+
+## iOS window modules and presentation
+
+ObjectiveCPlatformModuleFactory uses an application-bound HUXPlatformModuleFactory. ObjectiveCWindowPlatformModuleFactory adapts HUXUIKitWindowPlatformModuleFactory and supplies its original UIViewController. A permission or picker-style operation needs the latter when it owns modal UI.
+
+Capture HUXGetPresentationCoordinator(owner) during creation and enqueue native presentations through it. The coordinator serializes UI, pauses new admissions while inactive and keeps a canceled active slot until dismissal completes. Call its finished callback only when the presented UI is actually absent.
+
+See [iOS integration](/docs/platforms/ios/#window-modules-and-native-presentation) for a callback-to-task example and the exact cleanup boundary.
 
 ## Retained CPU buffers
 
@@ -90,4 +106,4 @@ Android uses HuxerUIBufferReference.wrap with a direct ByteBuffer. The current p
 
 Apple exposes HUXBufferReference (Swift BufferReference) with a retained owner and scoped unsafe-byte access. Windows/Linux C++ factories can receive BufferReference directly. Web payload bridges reject it; do not simulate zero-copy by encoding a large buffer to JSON.
 
-See [BufferReference](/docs/reference/data/#bufferreference) for construction, slicing and equality, and the [buffer analysis source](https://github.com/HuxerUI/HuxerUI/tree/8db9f8d0cc7c61487feb315c53cd377b1a9de47e/examples/buffer_reference) for a real platform producer.
+See [BufferReference](/docs/reference/data/#bufferreference) for construction, slicing and equality, and the [buffer analysis source](https://github.com/HuxerUI/HuxerUI/tree/56eb5ab225997cffc83ce8f2736d1fd52c530b70/examples/buffer_reference) for a real platform producer.

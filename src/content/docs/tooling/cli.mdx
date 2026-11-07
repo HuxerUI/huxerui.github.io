@@ -9,8 +9,8 @@ It discovers the SDK, validates the current host, and delegates each build to th
 ## Command map
 
 ```text
-huxerui create app <name> [--id <project-id>] [-p|--platform <platform-list>]
-huxerui create library <name> [--namespace <cpp-namespace>] [--target <public-cmake-target>] [-p|--platform <platform-list>]
+huxerui create app <name> [--build cmake|mcpp] [--template <name>] [--id <project-id>] [-p|--platform <platform-list>]
+huxerui create library <name> [--build cmake|mcpp] [--template <name>] [--namespace <cpp-namespace>] [--target <public-cmake-target>] [-p|--platform <platform-list>]
 huxerui platform add <platform-list>
 huxerui doctor [platform-list]
 huxerui setup <platform-list> [--yes]
@@ -49,6 +49,19 @@ Add a platform later without replacing application-owned files:
 ```bash
 huxerui platform add ios
 ```
+
+## Choose the build system
+
+Create defaults to CMake. --build mcpp renders a desktop module project; --template selects app, navigation or library package templates. The mcpp path rejects --platform because it has no Android/iOS/Web platform shells.
+
+```bash
+huxerui create app notes --build mcpp --template navigation
+cd notes
+mcpp build
+mcpp run
+```
+
+Use the [C++ Modules and mcpp guide](/docs/tooling/cpp-modules-and-mcpp/) for source layout, language mode, resources and library consumption. The CMake project layout above applies to the default build path.
 
 ## Diagnose and set up tools
 
@@ -149,7 +162,7 @@ huxerui mcpp build --source path/to/project --release --locked
 
 This is a direct frontend for an installed mcpp executable and a project containing mcpp.toml. It forwards --release, --locked, --offline and --verbose to mcpp build in that directory. It does not generate platform shells, translate huxerui.toml, install mcpp, or run the CMake application workflow.
 
-The [stateless desktop example](https://github.com/HuxerUI/HuxerUI/tree/8db9f8d0cc7c61487feb315c53cd377b1a9de47e/examples/mcpp_demo) demonstrates linking public components. Composable transformation and packaged resources still need explicit mcpp integration; this frontend is not equivalent to huxerui build for a general application. Use the normal CMake/platform workflow unless this independent toolchain is intentional.
+The [module examples](https://github.com/HuxerUI/HuxerUI/tree/56eb5ab225997cffc83ce8f2736d1fd52c530b70/mcpp/examples) demonstrate the supported module build rules, composable transformation, resources and library consumption. This command forwards an existing mcpp project build; project generation and normal use are covered by [C++ Modules and mcpp](/docs/tooling/cpp-modules-and-mcpp/).
 
 ## Exit behavior
 

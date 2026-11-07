@@ -1,0 +1,90 @@
+---
+title: C++ Modules and mcpp
+description: Create desktop projects that import HuxerUI, transform composables, compile resources and consume libraries with mcpp.
+---
+
+HuxerUI exposes the same public entities through `import huxerui;` and `#include <huxerui/huxerui.h>`. The module does not introduce a different widget model or runtime ABI.
+
+CMake remains the workflow for all six supported platforms. mcpp builds framework and application projects on Windows, macOS and Linux. Choose the build system when creating the project.
+
+## Create a desktop application
+
+```bash
+huxerui create app notes --build mcpp
+cd notes
+mcpp build
+mcpp run
+```
+
+Use --template navigation for the navigation application template. For a reusable package, use `huxerui create library widgets --build mcpp` and its library template.
+
+The mcpp generator renders mcpp.toml, build.mcpp, module sources and resources. It does not generate platform shells; --platform is rejected with --build mcpp. Run mcpp build/run for this project rather than sending it through huxerui's CMake platform drivers. The CMake path remains the default when --build is omitted.
+
+## A module-based application
+
+Keep UI definitions in a module unit. Import std in a unit that instantiates HuxerUI templates or uses standard-library declarations:
+
+```cpp compile="modules-app" module
+export module documentation_app;
+
+import std;
+import huxerui;
+
+using namespace huxerui;
+
+View App() {
+  auto count = UseState(0);
+  return Column {
+    Text::Format("Count: {}", count),
+    Button("Increment").OnClick([count] { ++count; }),
+  }.With(Padding(24.0F), Spacing(12.0F));
+}
+
+const Application application{
+    App,
+    {.window = {.title = "Module application", .initial_size = {520.0F, 360.0F}}},
+};
+```
+
+The root already owns a scope. A reusable function that owns its own state still uses [[huxerui::composable]], exactly as in header-based code.
+
+The entry unit only starts the application:
+
+```cpp compile="modules-entry" module
+import huxerui;
+import documentation_app;
+
+int main() {
+  return huxerui::RunApplication();
+}
+```
+
+Use the generated template's entry when building a real application; it also owns Windows GUI subsystem setup. Importing huxerui does not import an application's module automatically.
+
+## Language mode and source ownership
+
+The current mcpp templates select C++23 for their import-std toolchain path. Preserve that generated mode across the module graph. The header/CMake path remains C++20; adding module support does not raise every application's language requirement.
+
+build.mcpp imports huxerui.rules and calls configure. That build rule owns source discovery, composable transformation and compiled resources. Do not also glob the same original sources in the manifest: a build program adds sources and cannot replace a second list's originals.
+
+The application module and the framework module use the same declarations. Macros do not cross module boundaries. Prefer exported Scope and View APIs when writing an explicit scope by hand; the code generator expands its own scope support for marked functions.
+
+## Split module units and consume libraries
+
+A project can export a component from another module unit, import it into its app unit and keep entry code separate. Its dependency edge should carry the framework build rules and platform link interface.
+
+Use the library template for a component package. The generated manifest records a fully qualified package identity; do not substitute a bare package name or a guessed SDK archive URL. When creating against a source checkout, the CLI can configure a path dependency on that checkout.
+
+The maintained [module examples](https://github.com/HuxerUI/HuxerUI/tree/56eb5ab225997cffc83ce8f2736d1fd52c530b70/mcpp/examples) cover a minimal import, multiple module units and a separate library package. They are source examples rather than browser previews.
+
+## Resources and packaging
+
+The generated rule runs hrc and packages resource payloads alongside the target. Continue to pass generated StringResource/ImageResource values directly to components, and use UseString for localized formatting. Module syntax does not replace resource packaging or platform declarations.
+
+The desktop build rules can package an application; the Windows module example includes an MSI configuration. Code signing, installer identity and distribution policy remain application concerns. Do not apply a Windows installer definition to mobile or Web projects.
+
+## Verify module examples
+
+Website examples marked module are extracted as real module units. The documentation build compiles the pinned framework's module front door and these units with an MSVC module toolchain; the header-based examples remain a separate C++20 check. A compiler that cannot import std cannot establish module-example validation.
+
+See [CLI](/docs/tooling/cli/), [CMake integration](/docs/tooling/cmake/), [DSL fundamentals](/docs/dsl/fundamentals/) and [resources](/docs/guides/resources-and-localization/).

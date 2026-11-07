@@ -16,13 +16,33 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  modules:
+    runs-on: windows-2025
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+      - name: Resolve documented framework revision
+        run: node --input-type=module -e "import('./scripts/resolve-huxerui-source.mjs').then(m => m.resolveHuxerUISource())"
+      - name: Extract documentation examples
+        run: npm run check:examples
+      - name: Configure MSVC module contracts
+        run: >-
+          cmake -S tests/snippets -B .cache/docs-modules
+          -DHUXERUI_SOURCE_DIR=${{ github.workspace }}/.cache/huxerui
+          -DHUXERUI_DOC_EXAMPLES_DIR=${{ github.workspace }}/.cache/docs-examples
+          -DHUXERUI_DOC_BUILD_MODULES=ON
+      - name: Compile framework import and documentation module units
+        run: cmake --build .cache/docs-modules --config Release --target huxerui_documentation_modules --parallel 2
+
   build:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v5
         with:
-          node-version: 22
+          node-version: 24
           cache: npm
       - run: npm ci
       - name: Resolve HuxerUI source for Web examples
@@ -83,7 +103,7 @@ jobs:
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
-    needs: build
+    needs: [build, modules]
     runs-on: ubuntu-24.04
     steps:
       - name: Deploy to GitHub Pages

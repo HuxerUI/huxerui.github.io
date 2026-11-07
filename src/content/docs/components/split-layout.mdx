@@ -1,0 +1,66 @@
+---
+title: SplitLayout
+description: Resize controlled panes while preserving each pane's constraints and application-owned sizing.
+---
+
+SplitLayout arranges two or more panes along an axis and inserts interactive separators. Pane sizing comes from the ordinary Frame and Grow modifiers on its children. A resize emits proposals; the owner decides whether to apply them.
+
+## Keep sizing controlled
+
+```cpp compile="controlled-split-layout"
+#include <huxerui/huxerui.h>
+#include <vector>
+
+using namespace huxerui;
+
+struct PaneSizing {
+  Frame frame;
+  Grow grow{0.0F};
+  bool operator==(const PaneSizing&) const = default;
+};
+
+[[huxerui::composable]]
+View ResizableInspector() {
+  auto sizes = UseState(std::vector<PaneSizing>{
+      {Frame{.width = 180.0F, .min_width = 120.0F}, Grow{0.0F}},
+      {Frame{.min_width = 160.0F}, Grow{1.0F}},
+  });
+  const std::vector<PaneSizing>& panes = sizes;
+  return SplitLayout {
+    Text("Inspector").With(panes[0].frame, panes[0].grow).Key("inspector"),
+    Text("Document").With(panes[1].frame, panes[1].grow).Key("document"),
+  }.Orientation(Axis::Horizontal)
+      .OnChanged([sizes](const std::vector<SplitChange>& changes) {
+        sizes.Update([&](std::vector<PaneSizing>& next) {
+          for (const auto& change : changes) {
+            next.at(change.index) = {change.frame, change.grow};
+          }
+        });
+      })
+      .With(Frame{.height = 320.0F});
+}
+```
+
+Write back both Frame and Grow together. A proposal can coordinate several panes or change growth-based sizing to a fixed preference. Ignoring the event leaves the declared sizes authoritative; do not apply only a pixel delta to unrelated application state.
+
+## Construction and events
+
+Declared by `<huxerui/view.h>`. Construct from a vector, initializer list or braced children. Orientation defaults to Axis::Horizontal; Axis::Vertical stacks panes vertically and resizes along that axis.
+
+OnChanged receives `const std::vector<SplitChange>&` through SplitEvents::Changed. Each SplitChange contains index, frame and grow. Indices refer to the callback's current flattened nonempty child order, excluding separators. Do not store them as persistent panel identifiers. Use stable View keys for dynamic stateful panes.
+
+Programmatic sizing and window resizing do not emit user change events. Empty Views are ignored; fewer than two panes have no separator.
+
+## Constraints and interaction
+
+The parent must give the layout useful space along its arrangement axis. Frame minima/maxima constrain proposals; Grow distributes the available space. Cross-axis Frame fields remain part of the proposal instead of being discarded.
+
+Separators participate in shared pointer, keyboard and semantic interaction. Keep resizing available without relying on a custom drag-only Canvas control. Test constrained windows and keyboard adjustment alongside pointer dragging.
+
+Responsive applications can choose Orientation from UseViewportClass. They still own that choice; SplitLayout does not automatically turn a document/inspector relationship into a drawer.
+
+## Choose a layout
+
+Use Row/Column for fixed composition, DrawerLayout for responsive side surfaces, and [DockLayout](/docs/components/dock-layout/) when users can move panels between tab groups.
+
+See [layout constraints](/docs/layout/) and the [focused source example](https://github.com/HuxerUI/HuxerUI/tree/56eb5ab225997cffc83ce8f2736d1fd52c530b70/examples/split_layout).

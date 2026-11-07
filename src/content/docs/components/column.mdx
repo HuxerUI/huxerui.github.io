@@ -12,7 +12,7 @@ sidebar:
 ```cpp fragment
 Column {
   Text("Account", TextRole::Title),
-  TextField(name).Label("Display name"),
+  TextField(name).OnChanged([name](const TextEditingValue& next) { name = next; }).Label("Display name"),
   Button("Save").OnClick(SaveAccount),
 }.With(
     Padding(24.0F),
