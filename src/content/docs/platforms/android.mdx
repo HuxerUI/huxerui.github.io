@@ -5,7 +5,7 @@ sidebar:
   order: 2
 ---
 
-Android support targets API 23 and later. Generated projects use a Gradle build with the `HuxerUI` library module and an application module; the library links the Android HuxerUI shared library while application C++ remains in the generated source tree.
+Android support targets API 23 and later. Generated Gradle projects use a `HuxerUI` library module for the Java host and statically link the framework into the application shared library by default. The generated application shell loads the actual CMake artifact name. Third-party shared libraries can still be packaged as separate APK dependencies.
 
 ```powershell
 huxerui setup android
@@ -25,6 +25,8 @@ Android behavior must still be validated on devices or emulators for API level, 
 Local notifications require application channel/icon metadata, a channel on API 26+, and notification permission for API 33+. Durable scheduling needs the explicit non-exported receiver; custom RemoteViews templates need an application layout provider on API 24+. Permissions and channel policy can suppress accepted delivery.
 
 See [Local notifications](/docs/guides/local-notifications/) for shared usage and platform configuration, and [System API](/docs/reference/system/) for exact contracts.
+
+Permission requests require the matching manifest declarations and a live platform launcher. Use the application settings target for an app grant and the system target for a disabled global capability when supported. Approximate location and selected-media access can yield `Limited` for permissions requiring broader scope.
 
 ## Window modules and Activity results
 
@@ -64,6 +66,12 @@ The host Activity connects ActivityResultHost, forwards results through dispatch
 HuxerUIFileReference.fromUri(context, uri) creates a retained read capability from a content/file URI while access is valid. Call it on a worker while the provider/grant remains readable; it may copy into SDK-owned temporary storage and throws IOException for unsupported/unreadable input. It returns a file reference, not an editable path or persistent grant.
 
 Pass that reference through PlatformPayload rather than extracting a path. Keep it, its opened stream or pending operation alive until consumption completes, then close owned Java wrappers. A display name/MIME type is metadata, not a content validation result.
+
+## Open a seekable document descriptor
+
+Use `FileReference::OpenRandomAccess()` for portable offset-based I/O. To pass a descriptor to an Android library, include `<huxerui/android/jni.h>` and call `android::OpenSeekableFileDescriptor(reference, access, mode)` on a worker. It supports existing whole-file content URIs that can supply a compatible descriptor. Read-write or truncating access requires the original grant to authorize it.
+
+The returned `FileDescriptor` owns the fd and retains the provider grant. Borrow its `Get()` value for a consumer that leaves ownership with the caller. Keep the owner alive throughout the consumer's work and close it afterward. Serialize descriptor use, close, and moves. If the provider cannot supply seekable access or requires reliable Java close signaling, use the reference's sequential I/O instead.
 
 ## Current host boundaries
 

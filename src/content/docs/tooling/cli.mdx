@@ -15,9 +15,9 @@ huxerui platform add <platform-list>
 huxerui doctor [platform-list]
 huxerui setup <platform-list> [--yes]
 huxerui devices [platform]
-huxerui build [platform-list] [--device <id>] [--profile debug|release] [--generator <name>]
-huxerui run <platform> [--device <id>] [--profile debug|release] [--generator <name>]
-huxerui package <platform-list> [--device <id>] [--profile debug|release] [--generator <name>]
+huxerui build [platform-list] [build-options]
+huxerui run <platform> [build-options]
+huxerui package <platform-list> [build-options]
 huxerui open ios
 huxerui update [--check] [--version <version>] [--yes]
 huxerui mcpp build [--source <path>] [--release] [--locked] [--offline] [--verbose]
@@ -119,6 +119,34 @@ huxerui run web --profile release
 Windows selects an MSVC-compatible generator automatically; `--generator` is intended for other supported CMake workflows.
 Android and iOS builds are driven through their platform projects rather than a generic desktop generator.
 
+The shared build options are `--device <id>`, `--profile debug|release`, `--generator <name>`, `--source <checkout>`, `--abi <abi-list>`, `--optimization default|size|minsize`, and `--lto on|off`. Platform drivers validate the options they can use.
+
+## Select target ABIs
+
+`--abi` accepts a comma-separated list when the invocation targets one platform. The CLI normalizes aliases and removes duplicates. Omit it to use the platform and project defaults.
+
+| Platform | ABI selection |
+| --- | --- |
+| Android | `arm64-v8a` and `x86_64` in one APK. Termux supports only `arm64-v8a`. |
+| Windows | `x86_64`. |
+| Linux | `aarch64` or `x86_64`. Packaging both publishes separate artifacts in `dist/linux/<abi>`. Run accepts one ABI. A non-host build needs `--source` and a target `CMAKE_TOOLCHAIN_FILE`. |
+| macOS | `arm64` or `x86_64`. A universal build needs `--source` and universal dependencies. |
+| iOS | `arm64` on devices. A simulator can select `arm64` or `x86_64` as supported by Xcode. |
+| Web | `wasm32`. |
+
+`x64` and `amd64` select `x86_64`. `arm64` and `aarch64` normalize to the platform's ARM spelling. For example, `huxerui package android --abi arm64` produces an ARM64 APK.
+
+## Tune release size
+
+`--optimization size` selects the toolchain's size optimization and `minsize` requires `-Oz` support. `--lto on` enables link-time optimization when supported. Both affect release configurations of source targets. Use `--source` to rebuild the framework with these choices. An installed SDK library keeps its published optimization settings.
+
+```bash
+huxerui build web --profile release --optimization minsize --lto on
+huxerui package android --abi arm64 --source ../HuxerUI --optimization size --lto on
+```
+
+See [CMake build options](/docs/tooling/cmake/#release-optimization) for direct builds.
+
 ## Package artifacts
 
 `package` builds first and then replaces `dist/<platform>` with the platform driver's distributable artifacts.
@@ -131,6 +159,8 @@ huxerui package android --device emulator-5554 --profile debug
 
 Packaging is not code signing or store submission.
 The produced files are the input to the platform's signing, notarization, store, or deployment workflow.
+
+Linux AppImage packaging requires `appimagetool`, `patchelf` 0.19.0 or later, and binutils. Generated Android projects use a development signing configuration by default. Supply your own release signing configuration before publishing the APK.
 
 ## Open the iOS project
 
@@ -162,7 +192,7 @@ huxerui mcpp build --source path/to/project --release --locked
 
 This is a direct frontend for an installed mcpp executable and a project containing mcpp.toml. It forwards --release, --locked, --offline and --verbose to mcpp build in that directory. It does not generate platform shells, translate huxerui.toml, install mcpp, or run the CMake application workflow.
 
-The [module examples](https://github.com/HuxerUI/HuxerUI/tree/56eb5ab225997cffc83ce8f2736d1fd52c530b70/mcpp/examples) demonstrate the supported module build rules, composable transformation, resources and library consumption. This command forwards an existing mcpp project build; project generation and normal use are covered by [C++ Modules and mcpp](/docs/tooling/cpp-modules-and-mcpp/).
+The [module examples](https://github.com/HuxerUI/HuxerUI/tree/d9f0822f2d33855954083f87bd071d6ac709a9d0/mcpp/examples) demonstrate the supported module build rules, composable transformation, resources and library consumption. This command forwards an existing mcpp project build; project generation and normal use are covered by [C++ Modules and mcpp](/docs/tooling/cpp-modules-and-mcpp/).
 
 ## Exit behavior
 

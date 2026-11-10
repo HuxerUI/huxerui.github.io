@@ -76,6 +76,8 @@ To copy without retaining the entire document, open an async writer, await `Copy
 
 See the [complete file-copy example](/docs/reference/stream/#copy-a-file-with-bounded-memory).
 
+Use `FileReference::OpenRead()` or `OpenWrite()` when a provider supports synchronous I/O and the call runs on an appropriate worker. When a parser needs to jump among known offsets, use [random-access streams](/docs/reference/stream/#random-access-streams). A browser-selected reference needs the asynchronous path. Prefer reading through the reference so provider access stays attached to the operation.
+
 ## Filter and save
 
 Picker filters describe names, extensions, and MIME intent where supported.

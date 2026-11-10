@@ -45,10 +45,12 @@ Desktop SDKs can expose both forms:
 - `HuxerUI::huxerui` selects the shared runtime when that package provides it.
 - `HuxerUI::huxerui_static` requests static linkage explicitly.
 - iOS and Web expose the static form only.
-- Generated Android applications use the shared runtime expected by the Java host shell.
+- Generated Android applications link `HuxerUI::huxerui_static` into their own shared library by default. The Java host loads that application artifact.
 
 Windows SDKs can contain both release and debug libraries so a multi-configuration application does not mix C runtime variants.
 Do not copy a `.dll`, `.so`, or `.a` into an application manually; use the exported CMake targets so runtime files and transitive dependencies remain correct.
+
+Installed libraries keep the SDK's published optimization level. To tune the framework itself, use a [source build with release optimization](/docs/tooling/cmake/#release-optimization).
 
 ## Locate an SDK
 

@@ -76,7 +76,7 @@ ImageFill contains `source`, `fit`, `horizontal_alignment`, `vertical_alignment`
 | Operations | Inputs and important distinction |
 | --- | --- |
 | `DrawRect` | Rect, Brush, and optional CornerRadii. A Color/gradient converts to Brush. |
-| `DrawText` | Rect, string or AttributedText, TextStyle, TextLayoutOptions, optional paragraph offset. |
+| `DrawText` | Rect, string or AttributedText, TextStyle, TextLayoutOptions, optional paragraph offset. The point overload draws a prepared TextLayout. |
 | `DrawTextRun` / `DrawTextRuns` | Explicit run bounds and baseline origins; use when the caller already owns run positioning. |
 | `DrawImage` | Whole ImageAsset, VectorAsset, or shared ExternalTexture into a destination rectangle. |
 | `DrawImageRect` | A source subrectangle into a destination; source coordinates are intrinsic logical units, not encoded pixel coordinates. |
@@ -88,6 +88,40 @@ ImageFill contains `source`, `fit`, `horizontal_alignment`, `vertical_alignment`
 | `PushTransform` | Compose an affine transform for subsequent commands. |
 
 Raster/texture image overloads accept ImageSampling and opacity; vector overloads accept optional tint and opacity. Drawing an image rectangle does not apply ImageFit automatically: the caller already chose source/destination geometry.
+
+## Draw a laid-out paragraph
+
+Prepare a `TextLayout` before recording. `DrawText(Point, layout)` uses the captured typography and shaping, clipping to the paragraph's width and measured height. Use the same paragraph origin when converting pointer positions, caret geometry, selection rectangles, and inline object bounds.
+
+When the same translation unit uses Win32 headers, undefine the Win32 `DrawText` macro after those headers and before declaring or calling HuxerUI's `DrawText` methods.
+
+```cpp compile="paragraph-inline-object"
+#include <huxerui/huxerui.h>
+
+using namespace huxerui;
+
+[[huxerui::composable]]
+View BuildStatus() {
+  constexpr float width = 240.0F;
+  const auto& colors = UseTheme().colors;
+  const auto text = AttributedText("Build \uFFFC ready").WithInlineObjects({
+    {.offset = 6, .width = 14.0F, .ascent = 10.0F, .descent = 4.0F},
+  });
+  const TextStyle style{Font::System(16.0F), colors.on_surface};
+  const auto layout = UseTextMeasurer().CreateTextLayout(text, style, width);
+  const auto marker = layout.InlineObjectRect(6);
+
+  return Canvas([layout, marker, color = colors.primary](PaintContext& paint, Size) {
+    paint.DrawText(Point{0.0F, 0.0F}, layout);
+    if (marker) {
+      paint.DrawRect(*marker, color);
+    }
+  }).With(Frame{.width = width, .height = layout.Metrics().size.height},
+          Semantics{.role = SemanticRole::Text, .label = "Build ready"});
+}
+```
+
+The replacement character occupies one UTF-16 position. The layout reserves space at its baseline and hit testing uses the boundaries before and after the object. The Canvas paints the marker and supplies a semantic label for the complete status. See [Text and input API](/docs/reference/text-and-input/#lay-out-a-paragraph-for-interaction).
 
 ## Recording lifecycle
 

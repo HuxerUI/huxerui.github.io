@@ -26,3 +26,7 @@ A new frame schedules repaint without recomposing the View or rerecording its Pa
 Platform subclasses own mailbox format, synchronization, and publication. Their `Finish()` stops further publication while retaining the last frame. Publication after finish is invalid. Choose a new texture identity when logical size changes.
 
 Subclassing the shared class does not automatically teach a renderer a new GPU format; the renderer must explicitly support the concrete mailbox type. Prefer the [provided platform types](/docs/reference/platform-specific/) and follow their thread and ownership contracts.
+
+## Frame acquisition
+
+Concrete GPU and platform producers expose `AcquireFrame()`. Acquisition returns the latest completed publication using the platform's retained resource type. A frame can outlive a later publication or the producer itself. Keep it alive through consumer work and release it under the owning API's rules. See [published frame ownership by platform](/docs/guides/external-texture/#acquire-a-published-frame).

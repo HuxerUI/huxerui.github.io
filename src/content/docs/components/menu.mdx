@@ -7,22 +7,32 @@ description: Present themed actions, sections, checked items, and nested submenu
 
 ## Declare items and submenus
 
-```cpp fragment
-auto menu = UseMenu();
+```cpp compile="anchored-menu"
+#include <huxerui/huxerui.h>
 
-IconButton(images::more, "More actions")
-    .With(menu.Anchor())
-    .OnClick([menu] {
-      menu.Show({
-        MenuItem(images::edit, "Edit", Edit),
+using namespace huxerui;
+
+[[huxerui::composable]]
+View DocumentActions() {
+  auto menu = UseMenu();
+  auto target = UseViewHandle();
+  auto action = UseState(std::string{"Choose an action"});
+
+  return Column {
+    Text(action),
+    Button("More actions").With(target).OnClick([menu, target, action] {
+      menu.Show(target, {
+        MenuItem("Edit", [action] { action = "Editing"; }),
         MenuItem("Move to", {
-          MenuItem("Archive", Archive),
-          MenuItem("Favorites", AddToFavorites),
+          MenuItem("Archive", [action] { action = "Moved to Archive"; }),
+          MenuItem("Favorites", [action] { action = "Moved to Favorites"; }),
         }),
         MenuSection{},
-        MenuItem("Delete", Delete),
+        MenuItem("Delete", [action] { action = "Deleted"; }),
       });
-    })
+    }),
+  }.With(Spacing(8.0F));
+}
 ```
 
 Leaf items contain a callback; parent items contain `std::vector<MenuEntry>` children. Icons use `ImageVariant`, including `ImageResource`, `ImageAsset`, and `VectorAsset`. `.Enabled(bool)` and `.Checked(bool)` add state without changing entry structure. `MenuSection` marks a logical boundary; the active theme decides whether and how to draw separators.
@@ -38,8 +48,8 @@ Checked, disabled, and expanded submenu state is exposed to assistive technology
 
 ## API
 
-- `UseMenu() -> MenuHandle`; `Anchor() -> LayerAnchor`.
-- `Show(std::vector<MenuEntry>, MenuOptions = {})` and `ShowAt(Point, ...)`.
+- `UseMenu() -> MenuHandle`.
+- `Show(const ViewHandle&, std::vector<MenuEntry>, MenuOptions = {})` and `ShowAt(Point, ...)`.
 - `MenuItem(label, callback)` and icon overloads.
 - `MenuItem(label, children)` and icon overloads for submenus.
 - `Enabled(bool)` and `Checked(bool)`.
@@ -53,7 +63,7 @@ The menu takes a snapshot of its ordered entries when shown. `Checked(false)` op
 
 Capture command inputs by value when callbacks outlive the event that opens the menu. Use domain identifiers rather than references to a temporary row or a vector element that might move. `Dismiss(id)` closes the matching root menu and its submenu chain and returns false for a stale request. There is no menu `Update` operation.
 
-`Show` needs the handle's anchor modifier on a mounted View; `ShowAt` takes a point in window DIPs rather than screen pixels. `MenuOptions` contains `placement`, `gap` (4 DIPs), `viewport_margin` (8 DIPs), `offset`, optional `width`, outside/cancel dismissal (both true), and `on_dismiss_request`. The request callback handles outside/cancel policy; it is not an action-selection event.
+`Show` follows the mounted view bound to the supplied target and throws `std::logic_error` if that target is unavailable or belongs to another window. `ShowAt` takes a point in window DIPs. `MenuOptions` contains `placement`, `gap` (4 DIPs), `viewport_margin` (8 DIPs), `offset`, optional `width`, outside/cancel dismissal (both true), and `on_dismiss_request`. The request callback handles outside/cancel policy separately from item selection.
 
 ## `MenuStyle` fields
 

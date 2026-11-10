@@ -12,6 +12,7 @@ const reviewedMoves = new Map([
   ],
   ["reference/file.mdx:std::move(text)", "extracts the owned value from an rvalue IoResult"],
   ["guides/files.mdx:std::move(text)", "extracts the owned value from an rvalue IoResult"],
+  ["reference/text-and-input.mdx:std::move(write)", "transfers the clipboard Task into its rvalue awaiter"],
   [
     "guides/lifecycle-and-activation.mdx:std::move(subscription)",
     "transfers the subscription into the cleanup that owns it",

@@ -84,6 +84,14 @@ WindowHandle::Close consults that window's OnCloseRequest policy. Hide keeps the
 
 By default, closing the last framework-owned desktop window quits. Set AppOptions::quit_on_last_window_closed to false only when application-level policy provides a way to open another window or quit, such as a tray menu. An application with no initial window is not automatically terminated by this option.
 
+## Handle a composition failure
+
+When an exception escapes composition of a root, component, layer, or virtual item, the built-in platform hosts retire the affected window's content and display an error page. Other windows and application-owned services stay active. Close and reopen the affected window to start a fresh composition.
+
+`AppOptions::show_composition_error_details` controls whether the page shows the failed operation and exception message. It defaults to true in debug builds and false when `NDEBUG` is defined. The host logs diagnostics in either mode. Recoverable domain errors can be handled in the component or item factory before they escape composition.
+
+Direct `UiWindow::BuildFrame()` calls and [UiTest](/docs/reference/testing/#snapshots-and-failures) preserve application exceptions. The built-in error page applies to failures during composition.
+
 ## Put services at the right scope
 
 ```cpp compile="window-service-installation"
@@ -120,4 +128,4 @@ UseApplicationTaskScope returns a task owner that survives UI retirement. Applic
 
 State reads and writes remain on the application thread. RunWorker receives ordinary input snapshots and returns a result to that thread. Retaining State, a task scope or an application handle does not revive a stopped application.
 
-Continue with [Lifecycle and activation](/docs/guides/lifecycle-and-activation/), [Tasks](/docs/guides/tasks/), and [Window API](/docs/reference/window/). The [desktop example source](https://github.com/HuxerUI/HuxerUI/tree/56eb5ab225997cffc83ce8f2736d1fd52c530b70/examples/multi_window) demonstrates real native windows.
+Continue with [Lifecycle and activation](/docs/guides/lifecycle-and-activation/), [Tasks](/docs/guides/tasks/), and [Window API](/docs/reference/window/). The [desktop example source](https://github.com/HuxerUI/HuxerUI/tree/d9f0822f2d33855954083f87bd071d6ac709a9d0/examples/multi_window) demonstrates real native windows.

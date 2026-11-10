@@ -36,7 +36,8 @@ Platform Runtime implementations own application services and dispatch. Each pla
 | Local notifications | Configured Win32 notifications | User Notifications; no templates | Unavailable | Unavailable | Configured NotificationManager | User Notifications and optional content extension |
 | Retained CPU buffer payload | C++ BufferReference | Apple buffer bridge | C++ BufferReference | Not exposed | Direct ByteBuffer bridge | Apple buffer bridge |
 | System tray | Supported | Supported | Limited by desktop host | Not exposed | Not exposed | Not exposed |
-| Camera/microphone permission | Limited by OS capability and app identity | Supported with app declarations | Unavailable shared permission transport | Query-only where available; requests unavailable | Supported with manifest declarations | Supported with usage descriptions |
+| [Application permissions](/docs/reference/system/#authorization-and-capabilities) | Camera, microphone, location, and notification authorization where supported | Framework permissions with app declarations | No standalone permission transport | Browser queries and gesture-bound notification requests | Manifest- and API-level-dependent permissions | Framework permissions with usage descriptions |
+| [Typed clipboard](/docs/reference/text-and-input/#clipboard) | Platform formats | Platform formats | GDK formats | Async text, HTML, and PNG in a secure context | Platform formats and URI grants | Pasteboard formats and provider access |
 | Typed URL/history routing | Application-defined navigation only | Application-defined navigation only | Application-defined navigation only | Supported by `BrowserNavigationStack` | Application-defined navigation only | Application-defined navigation only |
 | Activation and lifecycle | Supported | Supported | Supported | Supported through location/visibility events | Supported | Supported |
 

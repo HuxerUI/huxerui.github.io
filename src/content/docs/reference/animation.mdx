@@ -37,8 +37,10 @@ Declared by `<huxerui/animation.h>`.
 ## Scene transitions
 
 - `TransitionSpec(effect, AnimationSpec, delay = 0)` describes a one-shot effect. Built-ins are FadeTransition, SlideTransition, ScaleFadeTransition, and CircularRevealTransition.
-- `SceneTransitionAnchor` tags retained scene content and is obtained from `SceneTransitionHandle::Anchor()`.
-- `UseSceneTransition() -> SceneTransitionHandle`; `Run(TransitionSpec, mutation)` applies a synchronous state mutation. `RunAt(origin, spec, mutation)` supplies a window-local logical origin; `RunFromCurrentInteraction(spec, mutation)` uses the current synchronous pointer position or the activated control's center for keyboard/accessibility input. It does not require an Anchor and cannot be deferred beyond that interaction callback.
+- `UseSceneTransition() -> SceneTransitionHandle`. `Run(TransitionSpec, mutation)` applies a synchronous state mutation for an effect without an origin.
+- `RunAt(origin, spec, mutation)` supplies a window-local logical point.
+- `RunFromView(target, spec, mutation)` captures the mounted target's presentation center before mutation. An unavailable target or a target from another window throws `std::logic_error`.
+- `RunFromCurrentInteraction(spec, mutation)` uses the pointer position or the activated control's center for keyboard and accessibility input. Call it before the interaction callback returns.
 
 Navigation uses PageTransition from navigation.h with independent push/pop/replace TransitionSpec values. Presentation services retain their owning PresentationMotion contract; choosing a scene effect does not change Dialog or Popup layout.
 

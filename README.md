@@ -1,6 +1,6 @@
 # HuxerUI website
 
-This repository builds the official HuxerUI website and user documentation at [huxerui.github.io](https://huxerui.github.io).
+This repository builds the official HuxerUI website and user documentation at [huxerui.org](https://huxerui.org).
 Astro owns the public landing pages and Starlight renders documentation written and maintained in this repository.
 
 ## Requirements

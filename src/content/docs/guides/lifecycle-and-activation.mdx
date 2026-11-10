@@ -171,6 +171,6 @@ Application handlers do not register file associations or URL schemes. See [plat
 
 ## Request permissions in context
 
-Capture ApplicationHandle and a task owner, then request Camera or Microphone permission from the feature's user action. Platform declarations remain mandatory. Request/settings operations retain the original native presentation endpoint; they do not silently switch to another window if that endpoint closes.
+Capture ApplicationHandle and a task owner, then request the specific permission from the feature's user action. Supply the corresponding platform declarations. Requests and settings retain their original presentation endpoint and report unavailable if it expires.
 
 Check authorization again after settings. See the [permission example](/docs/reference/app/#permission-requests) and [application/window lifetime](/docs/guides/application-and-windows/).

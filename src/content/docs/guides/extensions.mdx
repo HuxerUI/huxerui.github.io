@@ -95,6 +95,16 @@ Derive from `VirtualLayout<Derived>` only for a genuinely different visible-rang
 Its policy decides what range is needed and where realized items are placed; UiWindow owns realization and cleanup.
 Try `VirtualList` or `VirtualGrid` first, and use stable semantic keys when data can reorder.
 
+## Virtualize two axes
+
+For a large table or map, derive from `VirtualLayout<Derived>` and call `EnableBothAxes()` in its constructor. Give the layout a finite width and height. The [Virtual table example](/examples/virtual_table/) represents 10,000 rows and 100 columns and realizes the visible row and column ranges.
+
+- Read `context.Viewport()` to find the visible rectangle in content coordinates. Derive the visible rows and columns and call `context.Item(index)` only for that range and any overscan.
+- Report the viewport size and full content size separately. Measure each realized cell and place it at its logical content position. Supply logical row and column indices for collection semantics.
+- Bind one `ScrollController` per axis. Implement `ItemBounds` so a controller can align an unrealized item using a known or estimated rectangle. Use `SetScrollOffset(Axis, offset)` to preserve a scroll anchor after measurements or density change.
+
+The layout policy owns logical indexing and placement. Keep the cell factory and measurements repeatable across tentative passes. Runtime owns mounting, clipping, and scroll interaction. See [Virtual layout API](/docs/reference/layout/#virtual-layout).
+
 ## Retain node-local behavior with `NodeExtension`
 
 A retained modifier attaches one `NodeExtension` instance to one mounted node.
@@ -168,6 +178,16 @@ View OutlinedContent() {
 ```
 
 `ViewNode::Bounds()` is node-local geometry including resolved padding; `ContentBounds()` excludes that padding, not borders. `PresentationBounds()` is a window-space axis-aligned box, not the visible clipped region. Use the matching space for paint and hit testing; borrow ViewNode only for the callback.
+
+## Build a custom text editor
+
+Start with [TextField](/docs/components/text-field/) for an ordinary controlled editor. A document editor with rich-text runs and custom selection can own its document and use `TextLayout` for the interaction geometry.
+
+Prepare one paragraph snapshot with `CreateTextLayout` for the current text, typography, and width. Use it to draw through `PaintContext::DrawText` and to answer hit testing, caret, and selection queries in the same coordinate space. Keep document offsets separate from paragraph-local UTF-16 offsets. Rebuild layout snapshots when their inputs change.
+
+The [Custom editor example](/examples/custom_editor/) connects this geometry to a retained `TextInputClient`. The editor owns edits, selection, undo, and composition state. The platform text-input path delivers session-scoped IME commands through the client. Keep the paint callback read-only and retain layout values on the UI thread.
+
+See [Text and input API](/docs/reference/text-and-input/#lay-out-a-paragraph-for-interaction) for geometry queries and the [inline object example](/docs/reference/paint/#draw-a-laid-out-paragraph) for painting a reserved paragraph object.
 
 ## Emit semantic output with typed events
 

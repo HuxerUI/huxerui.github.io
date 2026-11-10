@@ -43,6 +43,21 @@ Android/Linux `GlTexture::PublishCurrent` runs with the producer context current
 
 Keep device/context loss, fences, and platform handles out of shared UI code. A module can expose a typed producer while owning the platform-specific work.
 
+## Acquire a published frame
+
+The platform producers listed below expose `AcquireFrame()` for external processing of the latest completed publication. Image and other consumers acquire independently. Retain the frame or imported resource until GPU use finishes. A subsequent publication, `Finish()`, or producer destruction leaves an acquired frame usable while its device and context remain valid. Treat the pixels as read-only and write processed output to a separate resource.
+
+| Producer | Acquisition and lifetime |
+| --- | --- |
+| Android `GlTexture`, `SurfaceStreamTexture` | A shared `GlFrame` owns a premultiplied frame with bottom-left origin. `ImportCurrent()` imports a caller-owned `GL_TEXTURE_2D` in a compatible current OpenGL ES context on the same `EGLDisplay`. Delete the imported texture after GPU use. |
+| Windows `D3D11Texture` | A shared `D3D11Frame` owns the snapshot. `TryCopyTo(context, destination)` submits a copy to a matching BGRA8 texture on the same adapter. Serialize immediate-context use and keep both resources alive until the copy finishes. A busy frame returns false. |
+| Linux `GdkTexture`, `GlTexture` | A shared `GdkFrame` owns the retained GDK texture. `Texture()` and `TextureOrigin()` expose the borrowed resource and orientation. A GL frame can also borrow its texture name through `GlTextureNameCurrent()` in a compatible current `GdkGLContext`. |
+| iOS and macOS `PixelBufferTexture` | A retained `CVPixelBufferRef`. Release it with `CVPixelBufferRelease` after CPU and GPU consumers finish. The producer keeps its pixels immutable while consumers retain it. |
+| iOS and macOS `MetalTexture` | In Objective-C++, `AcquireFrame(origin)` returns the retained texture and its origin together. Sample on the owning Metal device. ARC manages the reference, or balance it with `release` without ARC. |
+| Web `VideoFrameTexture` | A separate VideoFrame clone on the browser main thread. Before publication it returns `undefined` and a failed clone returns `null`. Close a valid clone on that thread after GPU use. |
+
+Before the first publication, the platform result is empty. Follow the concrete header for context, format, and synchronization requirements. The [ExternalTexture Web example](/examples/external_texture/) demonstrates publication into Image.
+
 ## Separate layout from frames
 
 Intrinsic size is set once in logical DIPs. The published pixel dimensions may change without changing that layout intent. Replace the texture identity if logical size really changes.

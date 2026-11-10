@@ -39,5 +39,6 @@ Built-in controls already provide their normal roles, values, state, and actions
 Do not duplicate a visible child label unless the platform accessibility name genuinely needs a different value.
 
 `SemanticBuilder` is for a custom `NodeExtension`; `SemanticNode` and `SemanticFrame` are resolved platform-adapter records.
+For a two-axis scroll container, `SemanticNode::scroll` describes the vertical axis and `additional_scroll` describes the horizontal axis. A single-axis container uses `scroll` for its one axis.
 Actions return to Runtime on the UI thread through `PerformSemanticAction`.
 Platform exposure depends on the backend; the shared semantic tree existing does not by itself prove that a platform accessibility bridge is implemented.

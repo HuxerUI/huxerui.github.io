@@ -33,6 +33,8 @@ JavaWindowPlatformModuleFactory adapts HuxerUIPlatformModule.WindowFactory for a
 
 HuxerUIFileReference.fromUri(Context, Uri) creates a read-only retained file capability while source access is valid. It can block/copy and should run on an allowed worker; metadata does not grant write access. See [Android](/docs/platforms/android/).
 
+`android::OpenSeekableFileDescriptor(reference, access, mode)` from `<huxerui/android/jni.h>` opens a compatible whole-file content URI on the calling thread. It returns a move-only `android::FileDescriptor` that retains provider access. `Get()` borrows the fd and `Close()` releases it. The operation accepts `ReadOnly` or `ReadWrite` for an existing file. A nonseekable source or a provider that needs reliable Java close signaling reports `Unsupported`. See [descriptor ownership](/docs/platforms/android/#open-a-seekable-document-descriptor).
+
 ## iOS scoped modules and presentation
 
 ObjectiveCPlatformModuleFactory adapts HUXPlatformModuleFactory to an application host. ObjectiveCWindowPlatformModuleFactory adapts HUXUIKitWindowPlatformModuleFactory to its original UIViewController. WindowPlatformModuleFactory supports a direct Objective-C++ typed facade.
@@ -61,6 +63,8 @@ All producer objects derive from `ExternalTexture`; share them through `std::sha
 | `<huxerui/web/external_texture.h>` | `VideoFrameTexture::Publish(const emscripten::val&)`. |
 
 Software PixelFrame publication copies straight-alpha RGBA/BGRA rows. GPU producers have format/context/synchronization constraints, not a universal “borrow any texture” contract. Read [ExternalTexture integration](/docs/guides/external-texture/) before choosing one.
+
+The concrete acquisition interfaces include `android::GlFrame`, `windows::D3D11Frame`, and `linux::GdkFrame`. The Apple producers return retained Core Video or Metal resources, and the Web producer returns a VideoFrame clone. See [Acquire a published frame](/docs/guides/external-texture/#acquire-a-published-frame) for the associated release and context requirements.
 
 ## Windows installer UI
 

@@ -7,7 +7,7 @@ Use local notifications for system-delivered information that may remain relevan
 
 ## Ask in context and show a notification
 
-Obtain the handle during composition, request authorization after a user action, and inspect both capabilities and operation results:
+Obtain the handle during composition, request authorization after a user action, and inspect both capabilities and operation results. `Permission::Notifications` manages application-level authorization, while the notification handle also reports delivery capabilities. On Android, a configured and enabled channel is a separate delivery requirement.
 
 ```cpp compile="local-notification"
 #include <huxerui/huxerui.h>
@@ -144,4 +144,4 @@ On Android the metadata keys are `org.huxerui.local_notification.channel_id` and
 
 On iOS the extension declares UNNotificationExtensionCategory and can retrieve submitted data with HUXGetLocalNotificationData from the iOS platform registry header. Ordinary banners remain system-controlled. On Windows use a TemplateNotificationPresentation only when your LocalNotificationTemplateProvider supports that identifier; actions and in-place progress updates are not implemented.
 
-Use the maintained [platform example](https://github.com/HuxerUI/HuxerUI/tree/56eb5ab225997cffc83ce8f2736d1fd52c530b70/examples/local_notification) for shell files and source, and the [System API](/docs/reference/system/) for validation, limits, and registration cleanup. Platform notifications cannot be faithfully demonstrated by an in-browser mock.
+Use the maintained [platform example](https://github.com/HuxerUI/HuxerUI/tree/d9f0822f2d33855954083f87bd071d6ac709a9d0/examples/local_notification) for shell files and source, and the [System API](/docs/reference/system/) for validation, limits, and registration cleanup. Platform notifications cannot be faithfully demonstrated by an in-browser mock.

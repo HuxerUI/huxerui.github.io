@@ -89,6 +89,8 @@ The example displays the requested URI; it does not open arbitrary external link
 
 Use `.SelectionBlock(id)` with a [SelectionArea source](/docs/components/selection-area/#virtual-document-selection) when selection must reach unrealized content.
 
+For content that includes an application-drawn inline marker, annotate its replacement character with `AttributedText::WithInlineObjects` and use its `TextLayout::InlineObjectRect` when recording the paragraph. See the [Canvas example](/docs/reference/paint/#draw-a-laid-out-paragraph).
+
 ## Select the formatting boundary
 
 | Need | API |

@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://huxerui.github.io/sitemap-index.xml
+Sitemap: https://huxerui.org/sitemap-index.xml

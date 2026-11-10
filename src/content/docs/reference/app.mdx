@@ -16,6 +16,7 @@ Declared by `<huxerui/app.h>`; window installation and WindowHandle are declared
 | `window` | WindowOptions for the initial window. |
 | `viewport_breakpoints` | Width thresholds for responsive composition. |
 | `show_debug_overlay` | Defaults on in debug builds and off in release builds; applies to each UI window. |
+| `show_composition_error_details` | Shows the operation and exception message on the built-in window error page. Defaults on in debug builds and off when `NDEBUG` is defined. Diagnostics are logged in either mode. |
 | `quit_on_last_window_closed` | Defaults true for framework-owned desktop windows. Hidden windows still count; an initially windowless application does not immediately quit. |
 | `application_hooks` | ApplicationHook callbacks installed once, in declaration order, before windows or queued application work. |
 | `window_hooks` | WindowHook callbacks installed before each UiWindow first composes. |
@@ -60,7 +61,7 @@ Invalid configuration throws invalid_argument, invalid thread/lifetime throws lo
 
 ## Permission requests
 
-Permission covers Camera and Microphone. CheckPermissionAsync and RequestPermissionAsync return Task of PermissionStatus. States are NotDetermined, Granted, Denied, PermanentlyDenied, Restricted, Unavailable and Provisional; notifications use their separate authorization methods and can report Provisional.
+`CheckPermissionAsync(permission)` and `RequestPermissionAsync(permission)` return `Task<PermissionStatus>`. The check reads current authorization without a prompt. A request may prompt or return the current status if the user needs to change Settings. See the [permission states and platform capabilities](/docs/reference/system/#authorization-and-capabilities).
 
 ```cpp compile="application-permission"
 #include <huxerui/huxerui.h>
@@ -68,42 +69,45 @@ Permission covers Camera and Microphone. CheckPermissionAsync and RequestPermiss
 using namespace huxerui;
 
 [[huxerui::composable]]
-View EnableCamera() {
+View LocationAccess() {
   auto application = UseApplication();
   auto tasks = UseTaskScope();
   auto status = UseState(PermissionStatus::NotDetermined);
+  auto settings = UseState(std::string{});
   const PermissionStatus authorization = status;
   return Column {
-    Text(authorization == PermissionStatus::Granted ? "Camera allowed" : "Camera not enabled"),
-    Button("Enable camera").OnClick([application, tasks, status] {
+    Text(authorization == PermissionStatus::Granted ? "Location allowed" : "Location not enabled"),
+    Button("Check access").OnClick([application, tasks, status] {
       tasks.Launch([application, status]() -> Task<void> {
-        status = co_await application.RequestPermissionAsync(Permission::Camera);
+        status = co_await application.CheckPermissionAsync(Permission::Location);
       });
     }),
-  };
+    Button("Request location").OnClick([application, tasks, status] {
+      tasks.Launch([application, status]() -> Task<void> {
+        status = co_await application.RequestPermissionAsync(Permission::Location);
+      });
+    }),
+    Button("Location settings").OnClick([application, tasks, settings, authorization] {
+      const auto target = authorization == PermissionStatus::SystemDisabled
+                              ? PermissionSettingsTarget::System
+                              : PermissionSettingsTarget::Application;
+      tasks.Launch([application, settings, target]() -> Task<void> {
+        const bool opened = co_await application.OpenPermissionSettingsAsync(Permission::Location, target);
+        settings = opened ? "Check access after returning" : "These settings are unavailable";
+      });
+    }),
+    Text(settings),
+  }.With(Spacing(8.0F));
 }
 ```
 
-Request/settings methods capture the original native presentation endpoint when called. An expired endpoint does not borrow a replacement window. Some hosts can present without a UiWindow; unavailable hosts return Unavailable. Required Android manifests and Apple usage descriptions remain application configuration.
+Requests and settings capture the original platform presentation endpoint at the call. Some hosts can present without a UiWindow. If the original endpoint expires or the operation is unsupported, requests report `Unavailable` and settings return false. Supply required Android manifest declarations, Apple usage descriptions, and other platform configuration in the application package.
 
-OpenPermissionSettingsAsync returns whether opening settings was accepted, not whether permission was granted. Recheck on return.
+`OpenPermissionSettingsAsync(permission, target = PermissionSettingsTarget::Application)` returns `Task<bool>` for whether the platform accepted opening Settings. Recheck authorization when the application becomes active. Invalid permissions or settings targets throw `std::invalid_argument` before returning a task. The [application example](https://github.com/HuxerUI/HuxerUI/tree/d9f0822f2d33855954083f87bd071d6ac709a9d0/examples/application) includes a fallback to the system settings target where the app-specific page is unavailable.
 
 ## Clipboard and directories
 
-Clipboard returns the same non-null `shared_ptr<Clipboard>` each time. Query IsAvailable and inspect each operation's result. Methods run synchronously on the application thread; retained clipboard objects report unavailable after shutdown.
-
-```cpp compile="application-clipboard"
-#include <huxerui/huxerui.h>
-
-using namespace huxerui;
-
-View CopyTitle(std::string title) {
-  auto clipboard = UseApplication().Clipboard();
-  return Button("Copy title").With(Enabled(clipboard->IsAvailable())).OnClick([clipboard, title] {
-    clipboard->WriteText(title);
-  });
-}
-```
+`Clipboard()` returns the same non-null `shared_ptr<Clipboard>` on each call. Start operations on the application thread and inspect their results. Retained objects report unavailable after shutdown. See [Clipboard](/docs/reference/text-and-input/#clipboard) for supported representations, synchronous versus asynchronous operations, and a Web-compatible example.
 
 Directories returns a borrowed AppDirectories captured at initialization; copy File values for independent ownership. Unavailable directories throw logic_error. CurrentDirectory queries the process working directory and throws runtime_error on failure. Captured directory values remain usable as paths after Runtime shutdown; paths do not grant filesystem access.
 
@@ -116,5 +120,7 @@ SystemTray returns the shared application tray handle without requiring composit
 ## Platform implementation boundary
 
 Runtime owns application services, ordinary timers, dispatch and the frozen factory catalog. UiWindow owns composition, retained nodes, layout, input, semantics, animation, layers and RenderScene generation. Each platform derives these bases to implement genuine native operations. These are host implementation contracts, not objects an ordinary component constructs or subclasses.
+
+Built-in hosts use `BuildFrameOrErrorPage()` for composition failure isolation. Direct `UiWindow::BuildFrame()` calls propagate exceptions. See [composition failures](/docs/guides/application-and-windows/#handle-a-composition-failure).
 
 ProcessMetrics contains cumulative CPU time, memory footprint and processor count. Shared application and UI work uses one application thread. See [extension points](/docs/guides/extensions/) before choosing a lower-level integration boundary.

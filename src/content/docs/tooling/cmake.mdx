@@ -161,6 +161,16 @@ The public functions are installed with the SDK and used by source builds too.
 Application CMake should select where HuxerUI comes from, then describe the application once.
 Avoid platform-specific copies of the shared source list, resource compiler invocation, or generated-code rules.
 
+## Release optimization
+
+`HUXERUI_OPTIMIZATION` accepts `default`, `size`, or `minsize`. `HUXERUI_ENABLE_LTO` is off by default. The options apply to release configurations of source targets created through HuxerUI helpers. Android uses ThinLTO when requested. Other platforms use the toolchain's CMake interprocedural optimization support. An unsupported explicit option fails configuration.
+
+```bash
+cmake -S . -B build -DHUXERUI_OPTIMIZATION=size -DHUXERUI_ENABLE_LTO=ON
+```
+
+Prebuilt SDK libraries retain their build flags. For repository source builds, `HUXERUI_ENABLE_PROFILING` defaults to off. Enable it explicitly when collecting private Runtime diagnostics.
+
 ## Related documentation
 
 - [SDK structure](/docs/tooling/sdk/)

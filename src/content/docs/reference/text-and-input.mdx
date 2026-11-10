@@ -30,9 +30,24 @@ SoftwareKeyboardPolicy is Automatic or Manual in TextInputConfiguration::keyboar
 - `TextShapingOptions`: locale/language and direction inputs.
 - `TextAlign`: `Leading`, `Center`, or `Trailing`.
 - `TextWrap`: `NoWrap` or `Word`.
-- `TextLayoutOptions`: shaping options, alignment, and wrapping; maximum width is the separate `MeasureText` argument.
+- `TextLayoutOptions` holds shaping, alignment, and wrapping options. Measurement and layout take width as a separate argument.
 - `FontMetrics`, `TextRunMetrics`, and `TextLayoutMetrics`: ascent/descent/leading, run geometry, overall size, baselines, and line data.
 - `TextMeasurer` platform interface and `UseTextMeasurer()` extension hook.
+
+### Lay out a paragraph for interaction
+
+`TextMeasurer::CreateTextLayout(attributed_text, style, width, options)` returns an immutable, copyable `TextLayout`. Width must be finite and positive. Borrow the measurer during composition or geometry preparation, then retain the layout on its creating UI thread. Rebuild the layout when its content, width, style, shaping options, or effective font metrics change. Pass an explicit shaping locale when the layout should use the inherited locale.
+
+| Query | Result |
+| --- | --- |
+| `Metrics()`, `Lines()` | Measured size, baselines, and the visual lines in top-to-bottom order. Each `TextLineMetrics` contains a half-open source range excluding the hard break, logical bounds, and a paragraph-relative baseline. The span borrows the layout snapshot. |
+| `HitTest(Point)` | The nearest caret position with visual affinity, including for points outside the paragraph. |
+| `CaretRect(TextPosition)`, `LineIndex(TextPosition)` | Unclipped caret geometry and visual line index. Affinity selects the appropriate side of a soft wrap. |
+| `RangeRects(TextRange)` | Unclipped selection fragments. A range across lines or directional runs can produce multiple rectangles. |
+| `PreviousCaretOffset(offset)`, `NextCaretOffset(offset)` | The adjacent caret boundary in logical text order. |
+| `InlineObjectRect(offset)` | Baseline-positioned bounds for an annotated replacement character, or an empty optional at an unannotated position. |
+
+Queries use UTF-16 offsets and paragraph-local logical coordinates from the top-left origin. Invalid offsets and positions that split a surrogate pair throw `std::invalid_argument`. A collapsed range has no selection fragments. Empty text and a trailing hard break produce an empty visual line. See [custom text editing](/docs/guides/extensions/#build-a-custom-text-editor) and [paragraph drawing](/docs/reference/paint/#draw-a-laid-out-paragraph).
 
 ## Editing values
 
@@ -65,7 +80,50 @@ SoftwareKeyboardPolicy is Automatic or Manual in TextInputConfiguration::keyboar
 
 ## Clipboard
 
-`TextEditingAction` is `Cut`, `Copy`, `Paste`, or `SelectAll`. `TextSelectionMenuLabels` supplies localized labels. `Clipboard` is obtained with `UseApplication().Clipboard()`. On the UI thread, check `IsAvailable()`, use `ReadText()` for an optional string, and `WriteText(text)` for a success flag. Invalid UTF-8 is rejected. An unavailable or disconnected service fails safely. The Web service is unavailable; browser-owned TextField clipboard operations are a separate path.
+Obtain the application-owned `Clipboard` with `UseApplication().Clipboard()` and start its operations on the application thread. `IsAvailable()` reports synchronous plain-text support for `ReadText()` and `WriteText(text)`. Check each typed operation's result independently.
+
+| Operation | Contract |
+| --- | --- |
+| `WriteContent(content)`, `WriteContentAsync(content)` | Publish one `ClipboardContent` value and return acceptance as `bool` or `Task<bool>`. The variant accepts UTF-8 text, `AttributedText`, `ImageAsset`, `std::vector<File>`, or `std::vector<FileReference>`. Malformed text, an empty image, or an empty file list throws `std::invalid_argument`. |
+| `ReadTextAsync()` | Returns `Task<IoResult<std::string>>`. An empty stored string is a successful read. |
+| `ReadRichTextAsync()` | Returns `Task<IoResult<AttributedText>>`. Supported styling and links are preserved. If rich text is absent, the result uses the plain-text representation of the same clipboard contents. |
+| `ReadImageAsync()` | Returns `Task<IoResult<ImageAsset>>` for encoded raster content. An image file in a file list is still a file. |
+| `ReadFilesAsync()` | Returns `Task<IoResult<std::vector<FileReference>>>` for the complete, ordered list of copied entries. The references are read-only and preserve available provider access. A failed entry fails the read. |
+
+Missing content, denied access, unsupported formats, and oversized content report distinct `IoErrorCode` values. File publication preserves the source and can retain access for delayed delivery. The operating system can revoke a clipboard grant after its contents change. Inspect the resulting references and open them through the [file API](/docs/reference/file/).
+
+On Web, start the operation directly in the user action, before launching or suspending a task. A secure browser context can provide text, rich text through HTML and a plain-text alternative, and PNG images. File-list operations report unsupported or a rejected publication. Browser-managed TextField shortcuts use the browser's editing path. On platforms with synchronous writes, `WriteContentAsync()` may publish during the call and report the result through its task. Canceling delivery does not undo a publication that has started.
+
+```cpp compile="application-clipboard"
+#include <huxerui/huxerui.h>
+#include <utility>
+
+using namespace huxerui;
+
+Task<void> ReportClipboardWrite(Task<bool> write, State<std::string> status) {
+  const bool accepted = co_await std::move(write);
+  status = accepted ? "Copied" : "Clipboard write unavailable";
+}
+
+[[huxerui::composable]]
+View CopyHeading() {
+  auto clipboard = UseApplication().Clipboard();
+  auto tasks = UseTaskScope();
+  auto status = UseState(std::string{"Ready to copy"});
+
+  return Column {
+    Button("Copy heading").OnClick([clipboard, tasks, status] {
+      const AttributedText heading{
+        TextSpan("Build ready").Style({.font_weight = FontWeight::Bold}),
+      };
+      tasks.Launch(ReportClipboardWrite(clipboard->WriteContentAsync(heading), status));
+    }),
+    Text(status),
+  }.With(Spacing(8.0F));
+}
+```
+
+`TextEditingAction` provides `Cut`, `Copy`, `Paste`, and `SelectAll` for the focused text client. `TextSelectionMenuLabels` supplies localized labels. Editing actions retain their own selection, secure-input, and platform policies.
 
 ## Complete controlled TextField example
 
@@ -99,7 +157,9 @@ Writing the complete event value preserves selection, affinity, and composition.
 
 `TextSpan(text).Style(TextSpanStyle).Link(Uri)` builds character runs. `AttributedText` accepts text, an initializer list of spans, or a span range. It owns shared immutable text/styles/links; copying it is suitable for State and component arguments.
 
-`AttributedText::FromRanges(text, styles, links = {})` accepts UTF-16 ranges. Each style/link list must be ordered and non-overlapping within itself; endpoints must not split surrogate pairs. Style and link ranges are independent and may cross one another. `WithStyles(...)` replaces styles while preserving the shared body and links. `PlainText()`, `Length()`, `StyleRanges()`, `LinkRanges()`, and `TextInRange()` inspect content.
+`AttributedText::FromRanges(text, styles, links = {})` accepts UTF-16 ranges. Each style/link list must be ordered and non-overlapping within itself. Endpoints must not split surrogate pairs. Style and link ranges are independent and may cross one another. `WithStyles(...)` replaces styles while preserving the shared body, links, and inline objects. `PlainText()`, `Length()`, `StyleRanges()`, `LinkRanges()`, and `TextInRange()` inspect content.
+
+`WithInlineObjects(vector<TextInlineObject>)` replaces object annotations. Each annotation names a U+FFFC replacement character by UTF-16 offset and supplies a positive width with nonnegative ascent and descent. Offsets must be strictly increasing, dimensions finite, and total height positive. An empty list clears the annotations. `InlineObjects()` borrows the ordered annotation list. Text drawing leaves the reserved boxes blank so the caller can fill them using the layout's object rectangles.
 
 `TextSpanStyle` partially overrides font, size, weight, slant, foreground, background, and decoration. An unset field inherits; `TextDecoration::None` explicitly clears decoration. It is not a complete `TextStyle` replacement.
 

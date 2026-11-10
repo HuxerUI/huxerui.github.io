@@ -21,7 +21,7 @@ for (const file of await walk(distribution)) {
   const html = await readFile(file, "utf8");
   for (const match of html.matchAll(/href=["'](https?:\/\/[^"'#]+(?:#[^"']*)?)["']/g)) {
     const url = new URL(match[1]);
-    if (url.hostname === "huxerui.github.io") {
+    if (url.hostname === "huxerui.org") {
       continue;
     }
     links.add(url.href);

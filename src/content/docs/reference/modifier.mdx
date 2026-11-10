@@ -23,7 +23,15 @@ Descriptor and erased storage types live in `huxerui::detail`; custom retained b
 - `Spacing{value}`, `MainAlign{MainAxisAlignment}`, `CrossAlign{CrossAxisAlignment}`, and `Align{HorizontalAlignment, VerticalAlignment}`.
 - `Grow{factor}`.
 - `ScrollPhysics{fling_enabled, deceleration_rate, minimum_fling_velocity, maximum_fling_velocity}`.
-- `ScrollBar{optional<ScrollBarStyle>}`; style fields cover geometry, fade timing, track, and thumb.
+- `ScrollBar{optional<ScrollBarStyle>}` paints an indicator on each axis with a scroll range. Style fields cover geometry, fade timing, track, and thumb.
+
+## Mounted view handles
+
+`UseViewHandle()` remembers a `ViewHandle` at the current composition call site and occurrence. Bind it to one view with `.With(target)`. Copies share the same window-local target and can be passed to focus, presentation, and scene-transition operations. Reconciliation may transfer the binding to a replacement. Removing the binding disconnects the target.
+
+`RequestFocus()` is an application-thread operation. It succeeds when the eligible target owns focus after the call, including when it already had focus. A missing, disabled, input-excluded, or modal-ineligible target returns false without queuing a request. Calls during a focus-change notification also return false. Calls during composition, from another thread, or from another application's context throw `std::logic_error`.
+
+Binding a handle does not make its view focusable. Built-in controls retain their usual focus policy. A custom control may opt in through `Focusable(true)`. Logical focus and operating-system keyboard display are separate outcomes.
 
 ## `NodeExtension`
 

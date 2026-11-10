@@ -16,17 +16,53 @@ Declared by `<huxerui/stream.h>` in `huxerui`. Files, provider references, raw r
 | Source | Synchronous opening | Asynchronous opening |
 | --- | --- | --- |
 | File | `OpenRead()` / `OpenWrite(mode)` return IoResult | `OpenReadAsync()` / `OpenWriteAsync(mode)` return Task of IoResult |
-| FileReference | Not exposed | `OpenReadAsync()` / `OpenWriteAsync()` return Task of IoResult |
+| FileReference | `OpenRead()` / `OpenWrite()` return IoResult when supported by the provider | `OpenReadAsync()` / `OpenWriteAsync()` return Task of IoResult |
 | RawAsset | `OpenRead()` returns InputStream | `OpenReadAsync()` returns Task of AsyncInputStream |
 | HTTP response | Not exposed | `HttpResponseStream::Body()` borrows an already opened AsyncInputStream |
 
-RawAsset opening uses resource exceptions; its later stream operations use IoResult. File opening can succeed even if a later read fails. Provider references retain access rather than manufacturing local paths. All four stream types are move-only and have no public default constructor: obtain them from a source instead of constructing internal state.
+RawAsset opening uses resource exceptions and its later operations use IoResult. File opening can succeed even if a later read fails. Provider streams retain the reference's access. Stream types are move-only and obtained from their sources.
 
 ## InputStream and OutputStream
 
 `InputStream::Read(std::span<std::byte>)` returns the valid byte count in the buffer's prefix. Supply a nonempty scratch buffer. A short read is not EOF; zero is. Further reads after EOF return zero. `CopyTo(OutputStream&, scratch)` copies from the current position through EOF and returns a total byte count without closing either endpoint.
 
 `OutputStream::Write(std::span<const std::byte>)` accepts the entire range on success; an empty write is valid. `Close()` finalizes output and is idempotent after success. A failed write or close makes that stream unusable. Destruction releases or aborts it but is not a successful close. Calls run on the calling thread and can block.
+
+## Random-access streams
+
+Use `OpenRandomAccess()` on a `File` or a seekable `FileReference` for offset-based I/O. `RandomAccessStream` is move-only and keeps the opened resource and its grant alive. Serialize its synchronous operations, including closing and moving it to another thread. Run blocking work off the UI thread on platforms with workers.
+
+| Operation | Contract |
+| --- | --- |
+| `ReadAt(offset, buffer)` | Read at an absolute byte offset into a nonempty buffer. A short read is valid and a successful zero means EOF at that offset. A failed read leaves the stream usable. |
+| `WriteAt(offset, bytes)` | Write the whole range on success. A nonempty write beyond EOF extends the file and the gap reads as zeros. A backend failure can leave a written prefix and makes the stream unusable. |
+| `Size()` | Returns `IoResult<std::optional<std::uint64_t>>`. An empty optional means the size is unknown, while zero means a known empty file. |
+| `Close()` | Releases the resource on success and can then be called again. A failed close cannot be retried. Close does not roll back writes or promise power-loss durability. |
+
+Offsets outside backend limits report `TooLarge`. Wrong access mode, moved-from handles, and use of failed or closed streams are logic errors. Android provider references require a compatible seekable descriptor. Browser-selected files use asynchronous streams. Persistent local Web paths reject writable random-access opening so changes can use the asynchronous persistence path.
+
+```cpp compile="random-access-header"
+#include <huxerui/huxerui.h>
+
+using namespace huxerui;
+
+IoResult<std::size_t> ReadHeader(const FileReference& reference, std::uint64_t offset,
+                                 std::span<std::byte> buffer) {
+  auto opened = reference.OpenRandomAccess();
+  if (!opened.Succeeded()) {
+    return IoResult<std::size_t>::Failure(opened.Error());
+  }
+  auto& stream = opened.Value();
+  auto read = stream.ReadAt(offset, buffer);
+  auto closed = stream.Close();
+  if (read.Succeeded() && !closed.Succeeded()) {
+    return IoResult<std::size_t>::Failure(closed.Error());
+  }
+  return read;
+}
+```
+
+Supply a nonempty buffer and inspect the returned byte count before parsing its prefix. For a sequential transfer or Web picker reference, use the async stream contract below.
 
 ## AsyncInputStream and AsyncOutputStream
 

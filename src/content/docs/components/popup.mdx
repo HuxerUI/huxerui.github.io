@@ -7,19 +7,28 @@ description: Show custom anchored or point-positioned floating content.
 
 ## Anchor to a view
 
-```cpp fragment
-auto popup = UsePopup();
+```cpp compile="anchored-popup"
+#include <huxerui/huxerui.h>
 
-Button("Details")
-    .With(popup.Anchor())
-    .OnClick([popup] {
-      popup.Show(DetailsCard, PopupOptions{
-          .placement = {AnchorSide::Below, AnchorAlignment::Start},
-      });
-    })
+using namespace huxerui;
+
+[[huxerui::composable]]
+View DetailsAction() {
+  auto popup = UsePopup();
+  auto target = UseViewHandle();
+
+  return Button("Details").With(target).OnClick([popup, target] {
+    popup.Show(target, [](PopupContext context) {
+      return Column {
+        Text("This surface follows the Details button."),
+        Button("Close").OnClick([context] { context.Dismiss(); }),
+      }.With(Padding(16.0F), Spacing(8.0F), Background(UseTheme().colors.surface));
+    }, {.placement = {AnchorSide::Below, AnchorAlignment::Start}});
+  });
+}
 ```
 
-The anchor is a retained modifier and follows the view's final bounds. `ShowAt(point, ...)` skips anchoring. Factories may receive `PopupContext` to dismiss themselves.
+Bind the target to one mounted view with `.With(target)`. The popup follows its final bounds through layout, scrolling, and presentation transforms. It follows a replacement that takes over the same binding and closes when the binding loses its target. `ShowAt(point, ...)` uses a fixed window point. Factories may receive `PopupContext` to dismiss themselves.
 
 ## Resolve placement
 
@@ -33,8 +42,8 @@ Set `trap_focus` for interactive floating surfaces that must contain keyboard an
 ## API
 
 - `UsePopup() -> PopupHandle`.
-- `Anchor() -> LayerAnchor`.
-- `Show(factory, PopupOptions = {})` and `ShowAt(Point, factory, PopupOptions = {})`.
+- `Show(const ViewHandle&, factory, PopupOptions = {})`.
+- `ShowAtAnchor(const ViewHandle&, Rect, factory, PopupOptions = {})` and `ShowAt(Point, factory, PopupOptions = {})`.
 - Context-aware and bound-argument factory overloads.
 - `Dismiss(LayerId)`; `PopupContext::Id()` and `Dismiss()`.
 - `AnchorSide`, `AnchorAlignment`, `AnchorPlacement`, and `PopupOptions`.
@@ -45,14 +54,14 @@ See [Menu](../menu/) for structured actions and [Tooltip](../tooltip/) for descr
 
 | Operation | Anchor and result |
 | --- | --- |
-| `Show(factory, options)` | Uses the full bounds of the View carrying `Anchor()`. Returns `LayerId`. |
-| `ShowAtAnchor(Rect, factory, options)` | Uses a rectangle local to that mounted anchor, for example a caret or selection range. Returns `LayerId`. |
+| `Show(target, factory, options)` | Uses the full bounds of the view bound to the target. Returns `LayerId`. |
+| `ShowAtAnchor(target, Rect, factory, options)` | Uses a rectangle local to that mounted view, for example a caret or selection range. Returns `LayerId`. |
 | `ShowAt(Point, factory, options)` | Uses a fixed point in window DIPs, not desktop pixels. Returns `LayerId`. |
 | `Update(id, factory)` | Replaces content while keeping the anchored request; returns whether it was updated. |
 | `UpdateAnchor(id, Rect)` | Updates an existing local-rectangle anchor without recreating content; returns whether it was updated. |
 | `Dismiss(id)` | Dismisses the matching request; false for a stale request. |
 
-Factories can be `ViewFactory` or `PopupFactory` (`View(PopupContext)`), with copyable bound-argument overloads. Acquire the handle in composition, attach its anchor once to the intended View, and show it from an event. A function-local reference captured by a retained factory is not kept alive by the popup.
+Factories can be `ViewFactory` or `PopupFactory` (`View(PopupContext)`), with copyable bound-argument overloads. Obtain the popup and target handles in composition and show the surface from an event. A missing target or a target from another window throws `std::logic_error`. Capture factory inputs by value so they remain alive for the layer.
 
 ## `PopupOptions` reference
 

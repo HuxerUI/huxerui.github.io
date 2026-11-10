@@ -7,7 +7,40 @@ Declared by `<huxerui/system.h>` in `huxerui`; Windows entry functions are in `h
 
 ## Authorization and capabilities
 
-`Permission` contains Camera and Microphone, requested through ApplicationHandle. `PermissionStatus` contains NotDetermined, Granted, Denied, PermanentlyDenied, Restricted, Unavailable, and Provisional. Notifications use their own authorization methods and can report Provisional for quiet trial delivery; they are not another Permission enumerator.
+Use [ApplicationHandle](/docs/reference/app/#permission-requests) to check, request, or open settings for a `Permission`. Each operation depends on the host and the application's declarations.
+
+| Access | Permission values |
+| --- | --- |
+| Camera and audio capture | `Camera`, `Microphone` |
+| Location | `Location` accepts approximate foreground access. `PreciseLocation` asks for full accuracy. `BackgroundLocation` represents authorization beyond foreground use. |
+| Notifications | `Notifications` checks application-level authorization. Delivery also depends on the notification service and its configuration. |
+| Contacts and calendars | `ContactsRead`, `CalendarAdd`, `CalendarReadWrite` |
+| Media library | `PhotosRead`, `VideosRead`, `PhotoLibraryAdd` |
+| Bluetooth | `BluetoothScan`, `BluetoothConnect` |
+
+| Status | Meaning |
+| --- | --- |
+| `NotDetermined` | The user has not made an authorization decision. |
+| `Granted` | The requested access is currently available. |
+| `Denied` | Access is denied and another prompt may be possible. |
+| `PermanentlyDenied` | The application cannot prompt again. The user can change access in Settings where available. |
+| `Restricted` | A system or administrative policy restricts access. |
+| `Unavailable` | The host or application configuration cannot provide this capability. |
+| `Provisional` | Authorization allows limited behavior such as quiet notification delivery. |
+| `Limited` | A reduced scope was granted, such as approximate access for `PreciseLocation` or access to selected photos. |
+| `SystemDisabled` | A system-wide capability switch is off. The app may still hold a grant. |
+
+`PermissionSettingsTarget::Application` opens the page where the user manages this application's access. `System` requests the system-wide capability page. Availability depends on the specific permission and platform.
+
+| Host | Key boundaries |
+| --- | --- |
+| Android | Requests require manifest declarations and a live launcher. Background location uses the app permission settings on Android 11 and later. Notification authorization and channel policy are separate. |
+| iOS and macOS | Usage descriptions and applicable entitlements are application-owned. Calendar add-only requests require iOS 17 or macOS 14. The iOS settings target is app-specific. The shared macOS permission API has no settings target. |
+| Windows | Camera and microphone use AppCapability when present. Location offers a system settings target. Notification authorization depends on the registered toast identity. Windows 7 compatibility builds report unavailable. |
+| Web | Browser support determines camera, microphone, and geolocation queries. Prompts for those features come from browser acquisition APIs. Notification requests require active user interaction. |
+| Linux | Standalone permission requests are unavailable. Location authorization can be part of a platform portal session. |
+
+For the full check/request/settings matrix and platform declarations, see the [framework permission contract](https://github.com/HuxerUI/HuxerUI/blob/d9f0822f2d33855954083f87bd071d6ac709a9d0/docs/design/permissions.md).
 
 `LocalNotificationCapabilities` reports five independent booleans: `can_show`, `can_schedule`, `can_cancel`, `can_activate`, and `can_use_templates`. Check the operation you intend to offer. Capabilities do not grant permission, prove a template exists, or guarantee visibility.
 
@@ -27,6 +60,8 @@ A template is platform-owned notification UI, not a HuxerUI View or a shared lay
 ## LocalNotificationHandle
 
 Obtain `UseApplication().LocalNotifications()` during composition and capture it into UI-thread events or tasks. It is application-owned; text resolves using the resource context of each Show/Schedule call, without capturing a composition Environment in the handle. Authorization requests and notification mutations preserve submission order within an application Runtime; authorization queries are independent.
+
+The notification handle shares application authorization for `Permission::Notifications` where supported. Its delivery capabilities also depend on the installed transport and platform configuration. For example, the Web host can query browser notification authorization while the HuxerUI local notification transport is unavailable.
 
 | Method | Return and behavior |
 | --- | --- |

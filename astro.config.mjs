@@ -2,8 +2,10 @@ import { defineConfig } from "astro/config";
 import sitemap from "@astrojs/sitemap";
 import starlight from "@astrojs/starlight";
 
+const site = "https://huxerui.org";
+
 export default defineConfig({
-  site: "https://huxerui.github.io",
+  site,
   integrations: [
     sitemap(),
     starlight({
@@ -34,7 +36,7 @@ export default defineConfig({
       head: [
         {
           tag: "meta",
-          attrs: { property: "og:image", content: "https://huxerui.github.io/social-card.png" },
+          attrs: { property: "og:image", content: new URL("/social-card.png", site).href },
         },
         {
           tag: "meta",

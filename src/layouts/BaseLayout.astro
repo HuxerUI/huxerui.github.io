@@ -16,7 +16,7 @@ interface Props {
 const {
   title,
   description = site.description,
-  image = "https://huxerui.github.io/social-card.png",
+  image = new URL("/social-card.png", Astro.site).href,
   noIndex = false,
 } = Astro.props;
 const pageTitle = title ? `${title} · ${site.name}` : `${site.name} · Declarative C++ UI`;

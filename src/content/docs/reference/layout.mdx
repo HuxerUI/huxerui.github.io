@@ -35,7 +35,7 @@ Applications implement the static measurement contract on `Layout<Derived>` and 
 - `ScrollController`: `Metrics`, `Offset`, `MaxOffset`, `ViewportExtent`, `ContentExtent`, `IsConnected`, `ScrollTo`, `ScrollBy`, and `ScrollToItem`.
 - `UseScrollController(initial_offset = 0, source_location)` creates a scope-stable controller.
 
-Attach a controller through `ScrollView::Controller` or the matching virtual component method; the binding used to connect it to a mounted scroll node is internal.
+Attach a controller through `ScrollView::Controller` or the matching virtual component method. Each controller observes one axis. With two-axis scrolling, use `Controller(Axis, controller)` and a distinct controller per axis.
 
 ## Virtual layout
 
@@ -47,6 +47,8 @@ Attach a controller through `ScrollView::Controller` or the matching virtual com
 `VirtualLayout<Derived>` accepts either a range/factory pair or an item count/factory pair and invokes the derived static measurement contract. Its erased descriptor and realized-item source are internal.
 
 The built-in lazy components are [`VirtualList`](../../components/virtual-list/) and [`VirtualGrid`](../../components/virtual-grid/).
+
+For two-dimensional virtualization, a derived constructor calls protected `EnableBothAxes()`. Both viewport dimensions must be bounded. `VirtualViewport::offset` carries both coordinates, and `VirtualLayoutResult::SetScrollOffset(Axis, float)` corrects either coordinate before placement. A correction may cause another measure pass. Implement optional `ItemBounds(ViewNode&, std::size_t) -> std::optional<Rect>` to resolve `ScrollToItem` against known or estimated bounds in content coordinates. See the [virtual table walkthrough](/docs/guides/extensions/#virtualize-two-axes).
 
 ## Implement a virtual measurement policy
 

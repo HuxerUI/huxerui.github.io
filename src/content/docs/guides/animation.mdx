@@ -41,7 +41,7 @@ Application code should not update `State` on every display frame.
 
 ## Run a scene transition
 
-`UseSceneTransition()` returns a handle whose `Anchor()` modifier tags retained scene content and whose `Run` or `RunAt` method applies a synchronous mutation with a TransitionSpec. Use FadeTransition for crossfade or CircularRevealTransition with an explicit origin. Navigation uses the same effect descriptions through PageTransition.
+`UseSceneTransition()` returns a handle that applies a synchronous mutation with a `TransitionSpec`. Use `Run` for a fade and provide an origin for a circular reveal. Navigation uses the same effect descriptions through `PageTransition`.
 
 Scene transitions capture the current visual state around a declared mutation.
 They are appropriate for theme changes and other whole-scene changes; use ordinary `Transition` for a component that remains in the same scene.
@@ -57,11 +57,12 @@ using namespace huxerui;
 View ThemeSwitcher() {
   auto dark = UseState(false);
   auto scene = UseSceneTransition();
+  auto origin = UseViewHandle();
   const auto theme = dark ? FlatDarkThemeSpec() : FlatLightThemeSpec();
   return FlatTheme(theme, Column {
     Text("Appearance", TextRole::Title),
-    Button("Switch theme").OnClick([dark, scene] {
-      scene.RunFromCurrentInteraction(
+    Button("Switch theme").With(origin).OnClick([dark, scene, origin] {
+      scene.RunFromView(origin,
           TransitionSpec{CircularRevealTransition{}, TweenSpec{.duration = 0.4}},
           [dark] { dark = !dark; });
     }),
@@ -69,7 +70,7 @@ View ThemeSwitcher() {
 }
 ```
 
-RunFromCurrentInteraction supports pointer, keyboard, and accessibility activation but must run before that event callback returns. Use RunAt with a window-local Point when supplying a stored origin later. Anchor supplies geometry for Run; it does not limit the transition to that subtree. See SharedTransition below for local-only changes.
+`RunFromView` uses the bound view's presentation center as the origin of the window transition. `RunFromCurrentInteraction` instead uses the actual pointer position, or the control center for keyboard and accessibility activation, during the synchronous callback. Use `RunAt` when the application already has a window-local point. See SharedTransition below for changes within one layout.
 
 ## Configure navigation motion
 

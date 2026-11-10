@@ -1,6 +1,6 @@
 ---
 title: ScrollView
-description: Scroll one measured content subtree vertically or horizontally.
+description: Scroll one measured content subtree along one or both axes.
 sidebar:
   order: 44
 ---
@@ -34,6 +34,35 @@ Set `.ScrollAxis(Axis::Horizontal)` for horizontal content.
 `ScrollController` reports `ScrollMetrics` and supports `ScrollTo`, `ScrollBy`, and virtual-layout `ScrollToItem`.
 Create a scope-stable controller with `UseScrollController(initial_offset)`.
 
+## Scroll in two dimensions
+
+`ScrollBothAxes()` measures the content for horizontal and vertical scrolling in one clipped viewport. Bound both viewport dimensions and bind a distinct controller for each axis.
+
+```cpp compile="two-axis-scroll-view"
+#include <huxerui/huxerui.h>
+
+using namespace huxerui;
+
+[[huxerui::composable]]
+View DiagramViewport() {
+  auto horizontal = UseScrollController();
+  auto vertical = UseScrollController();
+  return Column {
+    Button("Back to origin").OnClick([horizontal, vertical] {
+      horizontal.ScrollTo(0.0F);
+      vertical.ScrollTo(0.0F);
+    }),
+    ScrollView(Text("Diagram origin").With(Frame{.width = 880.0F, .height = 560.0F}))
+        .ScrollBothAxes()
+        .Controller(Axis::Horizontal, horizontal)
+        .Controller(Axis::Vertical, vertical)
+        .With(Frame{.width = 320.0F, .height = 240.0F}, ScrollBar()),
+  }.With(Spacing(8.0F));
+}
+```
+
+`ScrollBar()` shows an indicator for each axis that has a scroll range. For a large two-dimensional data set, use a [two-axis virtual layout](/docs/guides/extensions/#virtualize-two-axes) so offscreen items need not mount.
+
 ## Preserve user scrolling
 
 The runtime owns pointer wheel or touch scrolling, momentum, bounds, clipping, scrollbar interaction, and nested scroll arbitration.
@@ -44,7 +73,7 @@ ScrollView exposes scroll-view role, extent, current offset, and semantic scroll
 ## API
 
 - Constructor: `explicit ScrollView(View content)`.
-- Fluent methods: `.ScrollAxis(Axis)`, `.Controller(ScrollController)`.
+- Fluent methods: `.ScrollAxis(Axis)` or `.ScrollBothAxes()`. Use `.Controller(ScrollController)` for one axis and `.Controller(Axis, ScrollController)` for a specific axis in two-axis mode.
 - Common modifiers: `ScrollBar`, `Frame`, `Grow`, `Background`.
 
 Use [`VirtualList`](/docs/components/virtual-list/) or [`VirtualGrid`](/docs/components/virtual-grid/) for large collections.
@@ -53,7 +82,7 @@ Use [`VirtualList`](/docs/components/virtual-list/) or [`VirtualGrid`](/docs/com
 
 ScrollView measures ordinary content; every child in that content exists even when offscreen. Give the viewport finite space on the scroll axis, for example a height Frame or Grow in a bounded Column. Otherwise the parent may expand to fit the content and no useful scrolling range remains. The default axis is Vertical; horizontal scrolling requires `.ScrollAxis(Axis::Horizontal)`.
 
-Keep one stable `UseScrollController()` per independently scrolling viewport. `ScrollTo(offset)` and `ScrollBy(delta)` return whether a current connection accepted the request. Offsets use logical pixels and clamp to the available range. `ScrollToItem` is a virtual-layout operation, not a way to index arbitrary descendants of ScrollView.
+Keep one stable `UseScrollController()` per independently controlled axis. `ScrollTo(offset)` and `ScrollBy(delta)` return whether a current connection accepted the request. Offsets use logical units and clamp to the available range. `ScrollToItem` addresses virtual-layout items.
 
 `Metrics()`, `Offset()`, `MaxOffset()`, `ViewportExtent()`, and `ContentExtent()` expose the current projection; `IsConnected()` lets a caller distinguish a mounted connection. Request scrolling from an event or committed effect, not while constructing the scrollable declaration before it has connected.
 

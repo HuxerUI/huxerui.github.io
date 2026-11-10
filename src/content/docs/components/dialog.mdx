@@ -63,14 +63,15 @@ Use a standard alert for a decision whose answer immediately completes the promp
 using namespace huxerui;
 
 [[huxerui::composable]]
-View EditName(DialogContext dialog, State<std::string> name) {
+View EditName(DialogContext dialog, State<std::string> name, ViewHandle editor) {
   const std::string initial = name;
   auto draft = UseState(TextEditingValue::FromText(initial));
   return Column {
     Text("Rename", TextRole::Title),
     TextField(draft)
         .Label("Name")
-        .OnChanged([draft](const TextEditingValue& next) { draft = next; }),
+        .OnChanged([draft](const TextEditingValue& next) { draft = next; })
+        .With(editor),
     Row {
       Button("Cancel").OnClick([dialog] { dialog.Dismiss(); }),
       Button("Save")
@@ -86,13 +87,18 @@ View EditName(DialogContext dialog, State<std::string> name) {
 [[huxerui::composable]]
 View RenameAction(State<std::string> name) {
   auto dialog = UseDialog();
-  return Button("Rename").OnClick([dialog, name] {
-    dialog.Show(EditName, name);
+  auto editor = UseViewHandle();
+  return Button("Rename").OnClick([dialog, name, editor] {
+    dialog.Show([name, editor](DialogContext context) {
+      return EditName(context, name, editor);
+    }, {.initial_focus = editor});
   });
 }
 ```
 
-The draft belongs to this dialog's composition, not the underlying document. Cancel leaves the document unchanged. Bound factory arguments are copied into retained storage; the State copy still refers to the same application-owned value.
+The draft belongs to the dialog's composition. Cancel leaves the document unchanged. The factory captures the application State and the editor target by value.
+
+`DialogOptions::initial_focus` is tried once when the dialog first acquires focus. The target can bind inside the new content, as the editor does here. An unavailable or ineligible target falls back to the first eligible control. Updating the dialog content does not repeat the initial focus request. Dismissal restores focus according to the modal stack.
 
 ## Dismissal policy versus explicit dismissal
 

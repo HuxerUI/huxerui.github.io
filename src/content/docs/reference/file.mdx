@@ -1,6 +1,6 @@
 ---
 title: File API
-description: Local paths, async I/O, file references, pickers, and app directories.
+description: Local paths, retained file references, sequential and random-access I/O, and pickers.
 sidebar:
   order: 17
 ---
@@ -25,11 +25,15 @@ I/O methods have synchronous and `Async` forms: read bytes/string; write and app
 
 `File::OpenRead()` returns `IoResult<InputStream>`; `OpenReadAsync()` returns `Task<IoResult<AsyncInputStream>>`. Writers use `OpenWrite(mode)` or `OpenWriteAsync(mode)`, with `FileWriteMode::Truncate` by default or `Append`. Opening a writer can create the file but not missing parent directories.
 
-FileReference offers async read/write opening through its provider. Opening a writer replaces existing contents and requires writable ordinary-file access; it does not turn a read-only picker grant into a writable grant. Await `CloseAsync()` to finish output, especially for browser persistence and provider-backed staging. See [Streams](/docs/reference/stream/) for EOF, operation ordering, and partial failures.
+`FileReference` offers `OpenRead()`, `OpenWrite()` and their asynchronous counterparts through its provider. Opening a writer replaces existing contents and requires writable ordinary-file access. Close the writer explicitly with `Close()` or `CloseAsync()`. Providers without a synchronous path, including browser selections, report `Unsupported`. See [Streams](/docs/reference/stream/) for EOF, operation ordering, and partial failures.
+
+`File::OpenRandomAccess(access, mode)` and `FileReference::OpenRandomAccess(access, mode)` return `IoResult<RandomAccessStream>`. Both default to `FileAccessMode::ReadOnly` and `FileOpenMode::OpenExisting`. `WriteOnly` and `ReadWrite` authorize writes on the opened stream. `CreateNew` is an exclusive create for a local `File`. `TruncateExisting` requires write access and an existing entry. A `FileReference` accepts the existing-file modes when the provider offers compatible seekable access. See [random-access streams](/docs/reference/stream/#random-access-streams) for the operation contract.
 
 ## `FileReference`
 
-Capability for a selected or activated file. Metadata: `Name`, optional `Size`, optional `ContentType`, `CanWrite`. Async operations: `ReadBytesAsync`, `ReadStringAsync`, `ImportToAsync`, and `ReplaceWithAsync`.
+A capability for a selected, activated, or copied entry. Inspect `Name`, optional `Size` and `ContentType`, and `CanWrite`. `ReadBytes()` and `ReadString()` read the complete file into owned memory on the calling thread. `ReadString()` validates UTF-8 and removes a UTF-8 byte-order mark when present. Use `ReadBytesAsync` and `ReadStringAsync` for nonblocking application work. `ImportToAsync` and `ReplaceWithAsync` transfer content through the provider.
+
+Keep the reference or its open stream alive while using provider access. When available, synchronous operations can block and are suitable for a worker. A reference does not grant access beyond the original selection or clipboard grant.
 
 ## `FilePicker`
 
@@ -80,7 +84,7 @@ An empty optional means no file was delivered: cancellation, denial, failure, an
 
 `FilePicker::CanOpenDirectories(writable = false)` checks the requested kind of directory access; `OpenDirectoryAsync(writable = false)` returns an optional `FileReference`. User cancellation is empty, not a directory with an empty path.
 
-`FileReference::Type()` describes the captured entry kind. For a directory, `ListChildrenAsync()`, `CreateDirectoryAsync(name)`, and `CopyFileFromAsync(source, name, overwrite = false)` operate through its retained provider grant. `CopyDirectoryContentsToAsync(destination, overwrite = false)` accepts a File or FileReference destination and returns `IoResult<DirectoryCopySummary>`. This is not a transaction: failure/cancellation can leave already copied output; success counts are meaningful only after successful completion.
+`FileReference::Type()` describes the captured entry kind. For a directory, `ListChildren()` and `CreateDirectory(name)` use synchronous provider access where available. Their `Async` variants serve UI work and asynchronous-only providers. Child references retain the grant. `CopyFileFromAsync(source, name, overwrite = false)` copies one file, while `CopyDirectoryContentsToAsync(destination, overwrite = false)` transfers the directory contents to a `File` or `FileReference` and returns `IoResult<DirectoryCopySummary>`. Failure or cancellation can leave copied output.
 
 `AsFile()` returns an optional local File when the provider has a known path. It neither imports data nor transfers the reference's grant. Keep the FileReference alive while using a path that depends on its access/temporary-file ownership. Android document URIs and browser handles do not become local paths. `File::ToUri()` converts a local path to a URI; it does not manufacture provider authority.
 

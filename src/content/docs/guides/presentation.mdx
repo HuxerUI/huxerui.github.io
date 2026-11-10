@@ -41,7 +41,7 @@ Use the context-aware Dialog, BottomSheet, or Popup factory when content needs i
 
 ## Control dismissal and focus
 
-Modal presentations trap the relevant interaction and restore focus after dismissal. Anchored presentations use a retained `LayerAnchor` modifier and follow final view bounds. Point-positioned popup and menu overloads are available for pointer context menus.
+Modal presentations trap the relevant interaction and restore focus after dismissal. A custom dialog can designate its initial control with `DialogOptions::initial_focus`. For anchored presentations, create a `ViewHandle` with `UseViewHandle()`, bind it with `.With(target)`, and pass it to `Show(target, ...)`. Use `ShowAt` for a context menu at a fixed window point, or `PopupHandle::ShowAtAnchor` for a caret rectangle inside a mounted view.
 
 Options decide whether outside press and platform cancel dismiss the layer.
 After an action completes, dismiss or replace the layer unless the interaction explicitly continues inside it.

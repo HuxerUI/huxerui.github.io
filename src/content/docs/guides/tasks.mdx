@@ -35,6 +35,8 @@ View LoadButton(State<std::string> status) {
 The scope cancels all active handles when its component unmounts; explicit `Cancel()` is idempotent.
 
 Capture `State` and service handles by value.
+
+Update State directly in a synchronous UI event when changing a view or navigation value. The update schedules recomposition for a later frame. Launch a task when the operation actually awaits work. A retained inactive page keeps its scope and tasks alive, so pause nonessential polling through the page's visibility policy.
 Do not retain raw `View` objects or platform objects across suspension unless their API explicitly provides that lifetime.
 
 ## Compose and handle failures

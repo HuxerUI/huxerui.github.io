@@ -23,7 +23,11 @@ Website CI builds every listed Web example at the pinned revision, but browser p
 
 ## System capability boundaries
 
-Local notifications and BufferReference payload bridging are currently unavailable. Use in-app feedback and owned Bytes respectively. Shared streams still cover supported browser files and Fetch response bodies; browser persistence requires the async write/close path.
+Browser-selected file references use async streams. For writable persistent local paths, use the async write and close path so browser storage is synchronized. Writable random-access streams are available only where the local path does not require async persistence.
+
+Asynchronous [clipboard operations](/docs/reference/text-and-input/#clipboard) can use text, HTML, and PNG in a secure context. Start them in the user action and handle denied or unsupported results. File-list clipboard access is unavailable.
+
+Browser permission queries cover camera, microphone, and location where supported. Prompts for those features come from browser acquisition APIs. Browser notification authorization can be requested during an active user gesture. HuxerUI local notification delivery and BufferReference payload bridging remain unavailable.
 
 See [Local notifications](/docs/guides/local-notifications/) for shared usage and platform configuration, and [System API](/docs/reference/system/) for exact contracts.
 

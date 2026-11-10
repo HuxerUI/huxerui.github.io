@@ -56,4 +56,6 @@ CaptureSnapshot returns UiSnapshot with an owning ToString representation of can
 
 UiTestFailure reports missing/ambiguous targets, unavailable actions and bounded-wait failures. Invalid arguments use invalid_argument; wrong-thread/reentrant operations use logic_error. Application exceptions preserve their type. A frame/input/configuration-processing exception invalidates the session; subsequent operations fail. Query mismatches and PumpUntil timeouts alone do not invalidate a healthy session. Queries fail after fixture destruction.
 
+UiTest uses the strict frame path so a test can assert the original composition exception. The [window error page](/docs/guides/application-and-windows/#handle-a-composition-failure) is a separate behavior of the built-in platform hosts.
+
 See [Testing and delivery](/docs/tooling/testing-and-delivery/) for CMake integration and a runnable application test.

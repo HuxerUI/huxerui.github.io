@@ -12,6 +12,8 @@
 #elif defined(_WIN32)
 #include <huxerui/windows/external_texture.h>
 #include <huxerui/windows/platform_registry.h>
+
+#undef DrawText
 #elif defined(__APPLE__)
 #include <TargetConditionals.h>
 #if TARGET_OS_IPHONE
@@ -273,6 +275,33 @@ static_assert(requires(testing::UiTest& ui, testing::UiNodeQuery query, testing:
   { query.ScrollBy({0.0F, 20.0F}) } -> std::same_as<Point>;
   { query.ScrollUntil(testing::UiSelector::Key("row")) } -> std::same_as<testing::UiNodeQuery>;
   { snapshot.Diff(snapshot) } -> std::same_as<std::string>;
+});
+
+static_assert(requires(const Clipboard& clipboard, ClipboardContent content) {
+  { clipboard.WriteContentAsync(content) } -> std::same_as<Task<bool>>;
+  { clipboard.ReadTextAsync() } -> std::same_as<Task<IoResult<std::string>>>;
+  { clipboard.ReadRichTextAsync() } -> std::same_as<Task<IoResult<AttributedText>>>;
+  { clipboard.ReadImageAsync() } -> std::same_as<Task<IoResult<ImageAsset>>>;
+  { clipboard.ReadFilesAsync() } -> std::same_as<Task<IoResult<std::vector<FileReference>>>>;
+});
+
+static_assert(requires(const FileReference& reference, RandomAccessStream& stream, std::span<std::byte> buffer) {
+  { reference.OpenRead() } -> std::same_as<IoResult<InputStream>>;
+  { reference.OpenRandomAccess() } -> std::same_as<IoResult<RandomAccessStream>>;
+  { stream.ReadAt(0, buffer) } -> std::same_as<IoResult<std::size_t>>;
+  { stream.Size() } -> std::same_as<IoResult<std::optional<std::uint64_t>>>;
+});
+
+static_assert(requires(TextMeasurer& measurer, PaintContext& paint, const AttributedText& text,
+                       const TextLayout& layout) {
+  { measurer.CreateTextLayout(text, TextStyle::Default(), 240.0F) } -> std::same_as<TextLayout>;
+  { layout.HitTest(Point{}) } -> std::same_as<TextPosition>;
+  { layout.InlineObjectRect(0) } -> std::same_as<std::optional<Rect>>;
+  paint.DrawText(Point{}, layout);
+});
+
+static_assert(requires(ScrollView view, ScrollController controller) {
+  { std::move(view).ScrollBothAxes().Controller(Axis::Horizontal, controller) } -> std::same_as<ScrollView>;
 });
 
 } // namespace

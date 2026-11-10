@@ -61,12 +61,28 @@ export const examples: Example[] = [
     documentation: "/docs/components/selection-area/",
   },
   {
+    slug: "custom_editor",
+    title: "Custom editor",
+    eyebrow: "Interactive paragraph layout",
+    description: "Edit and format rich text with keyboard and IME input, undo history, and selection geometry built from TextLayout.",
+    source: "examples/custom_editor/main.cpp",
+    documentation: "/docs/guides/extensions/#build-a-custom-text-editor",
+  },
+  {
     slug: "virtual_grid",
     title: "VirtualGrid",
     eyebrow: "Adaptive virtualization",
     description: "An adaptive 10,000-item grid with spans, fixed row extents, and stateful visible cells.",
     source: "examples/virtual_grid/main.cpp",
     documentation: "/docs/components/virtual-grid/",
+  },
+  {
+    slug: "virtual_table",
+    title: "Virtual table",
+    eyebrow: "Two-axis virtualization",
+    description: "Scroll a million logical cells in two dimensions, jump to the far corner, and change cell density while retaining your position.",
+    source: "examples/virtual_table/main.cpp",
+    documentation: "/docs/guides/extensions/#virtualize-two-axes",
   },
   {
     slug: "navigation",

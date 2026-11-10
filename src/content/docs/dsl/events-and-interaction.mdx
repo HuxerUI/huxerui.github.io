@@ -117,6 +117,32 @@ SearchBox().On<SearchRequested>([](std::string query) {
 `EventEmitter` is a weak connection to the component's current event hub.
 `IsConnected()` reports whether the declaring scope still has a live hub.
 
+## Focus a mounted control
+
+Bind a `ViewHandle` to the editor and request focus from an event. The state update and focus request can happen directly in that event.
+
+```cpp compile="request-view-focus"
+#include <huxerui/huxerui.h>
+
+using namespace huxerui;
+
+[[huxerui::composable]]
+View SearchForm() {
+  auto query = UseState(TextEditingValue{});
+  auto editor = UseViewHandle();
+
+  return Column {
+    TextField(query)
+        .Label("Search")
+        .OnChanged([query](const TextEditingValue& next) { query = next; })
+        .With(editor),
+    Button("Focus search").OnClick([editor] { editor.RequestFocus(); }),
+  }.With(Spacing(8.0F));
+}
+```
+
+The same handle can anchor a [Popup](/docs/components/popup/) or supply a [scene transition origin](/docs/guides/animation/#run-a-scene-transition). See [mounted view handles](/docs/reference/modifier/#mounted-view-handles) for lifetime and focus eligibility.
+
 ## Interaction visuals
 
 Hover, focus, focus-visible, pressed, and enabled are runtime interaction facts.
