@@ -17,6 +17,7 @@ Include platform headers explicitly; the portable umbrella does not make a backe
 | `<huxerui/ios/platform_registry.h>` | `ios` | `UIViewController*` / `UIView*`. |
 | `<huxerui/macos/platform_registry.h>` | `macos` | AppKit host context / `NSView*`. |
 | `<huxerui/windows/platform_registry.h>` | `windows` | Parent `HWND` / child `HWND`. |
+| `<huxerui/linux/platform_registry.h>` | `linux` | Borrowed `GtkWindow*` / unparented `GtkWidget*` owned by the retained instance. |
 | `<huxerui/web/platform_registry.h>` | `web` | Browser event loop / detached `HTMLElement` in `emscripten::val`. |
 
 Register with `ApplicationContext::RegisterPlatformView`. Direct C++ properties/controllers keep their exact types. Do not return temporary platform views or retain borrowed callback contexts.
@@ -72,11 +73,15 @@ The concrete acquisition interfaces include `android::GlFrame`, `windows::D3D11F
 
 Install `windows::InstallInstallerSession` once in the installer's window_hooks and enter through `RunInstallerApplication()` from the generated bootstrapper entry. `UseInstaller()` returns `InstallerHandle`; its status supplies product state, phase, progress, failure, and any outstanding prompt.
 
-`Install(InstallerInstallOptions)`, `Repair()`, `Uninstall()`, and `Cancel()` request engine operations. Installation options can override absolute destination and desktop shortcut choice. `ChooseDestinationAsync(initial)` returns an optional directory; cancellation is empty. `Respond(prompt_id, choice)` answers the identified prompt; stale IDs are ignored. Do not use this service from an ordinary executable.
+`Install(InstallerInstallOptions)`, `Repair()`, `Uninstall()`, and `Cancel()` request engine operations. Installation options can override absolute destination and desktop shortcut choice. `ChooseDestinationAsync(initial)` returns an optional directory; cancellation is empty. `Respond(prompt_id, choice)` answers the identified prompt; stale IDs are ignored. Use this service inside the generated installer. The product states distinguish a fresh install, upgrade, downgrade and the exact same registered version. For an `InstallerPromptKind::Restart` prompt, Yes requests a restart and No defers it. Both choices close the installer.
+
+## Borrow a platform window
+
+`GetPlatformWindow(const WindowHandle&)` is available from the platform registry headers on Windows, macOS, Linux, and iOS. In the respective namespaces it returns an `HWND`, `NSWindow*`, `GtkWindow*`, or `UIWindow*`. Use it on the owning application thread and treat the handle as borrowed. The query returns null for a window without a live attachment. Query again after deferred operations instead of caching the result across window closure.
+
+On Android, `android::GetWindowView` in `<huxerui/android/jni.h>` returns a JNI local reference to the live HuxerUIView. Use and release it on the Android main thread in the current JNI reference frame. On Web, `web::GetWindowRootElement` in `<huxerui/web/platform_registry.h>` returns an `emscripten::val` holding the root HTMLElement. Use and release it on the browser main thread. Both queries return an empty value if the attachment is gone. HuxerUI owns placement and removal.
 
 ## Boundary classification
-
-Linux currently has no public PlatformView factory header; a GTK renderer does not imply that arbitrary GTK controls can be embedded through the shared component.
 
 Runtime/UiWindow host implementation machinery are not ordinary app APIs. Names in `huxerui::detail` remain internal even when templates mention them. See [platform capabilities](/docs/platforms/) for implementation status and validation limits.
 

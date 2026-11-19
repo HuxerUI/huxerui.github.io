@@ -96,7 +96,7 @@ export const examples: Example[] = [
     slug: "dock_layout",
     title: "Docking workspace",
     eyebrow: "Application-owned workspace",
-    description: "Rearrange retained editor panels, resize split regions, and keep one controlled docking tree authoritative.",
+    description: "Rearrange editor panels, resize split regions, and see how a custom tab bar works with a controlled docking tree.",
     source: "examples/dock_layout/main.cpp",
     documentation: "/docs/components/dock-layout/",
   },
@@ -107,6 +107,14 @@ export const examples: Example[] = [
     description: "The browser producer publishes live VideoFrame content into HuxerUI Image composition.",
     source: "examples/external_texture/main.cpp",
     documentation: "/docs/guides/external-texture/",
+  },
+  {
+    slug: "bitmap",
+    title: "Bitmap editor",
+    eyebrow: "Image processing",
+    description: "Open a PNG or JPEG, crop it to a square, preview the result, and write a PNG to the application's temporary storage.",
+    source: "examples/bitmap/main.cpp",
+    documentation: "/docs/reference/bitmap/",
   },
 ];
 

@@ -21,6 +21,8 @@ Register through `ApplicationContext::RegisterPlatformView<Properties>(name, fac
 
 ## Factory lifetime
 
+For GTK use `<huxerui/linux/platform_registry.h>` and supply an unparented `GtkWidget` held by the retained instance. The [embedding walkthrough](/docs/guides/platform-view/#embed-a-gtk-widget) covers GTK ownership and signal handling.
+
 A typed factory owns create, view extraction, update, and disposal callbacks, with optional controller connect/disconnect operations. Callbacks run on the platform UI thread. The factory's retained instance keeps the platform view and its state alive until unmount; do not keep raw HuxerUI nodes in that instance.
 
 Unknown names, incompatible properties/controllers, and malformed bridge values are integration errors. Validate these paths alongside compatible updates and unmount/remount.

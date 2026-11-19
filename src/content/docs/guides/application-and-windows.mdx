@@ -76,7 +76,19 @@ UseWindow returns the current window's handle. IsOpen is observable during compo
 
 OpenWindow is a side effect: invoke it from an event or later application work, outside composition and installation. The factory runs in the new window, with a new root Environment. Apply an explicit theme or resource policy inside it when needed; the opening window's local providers are not inherited.
 
-Windows, macOS and Linux implement programmatic top-level window creation in the current revision. Android, iOS and Web do not expose equivalent programmatic creation through this API. Query SupportsMultipleWindows and offer an in-window alternative. An externally attached mobile scene is not proof of OpenWindow support.
+Use `SupportsMultipleWindows()` before offering the synchronous desktop `OpenWindow()` action on Windows, macOS or Linux. Android and Web applications can offer an in-window inspector.
+
+## Request an iOS window
+
+On iOS and iPadOS, opt into multiple scenes in the generated [Info.plist](/docs/platforms/ios/#scene-configuration). In an event handler, use `CanOpenWindow()` to check eligibility and launch `OpenWindowAsync(content, options)` in an application task. The task returns the new handle after UIKit connects and initializes the scene. Handle a rejected request by preserving the original content. UIKit decides placement and size. These methods are available only in iOS and iPadOS builds.
+
+See the [docking workspace source](https://github.com/HuxerUI/HuxerUI/tree/fcd2e01d5c9261b0efc99b02d5bd2eac329d1be6/examples/dock_layout) for an iOS scene request and a synchronous desktop counterpart that share a workspace model.
+
+## Configure a floating desktop window
+
+Call `WindowSupport()` before requesting transparency, always-on-top, non-activating behavior, or pointer pass-through on a desktop host. Use `WindowOptions` to set the initial behavior. For an open window, `SetAlwaysOnTop` and `SetPointerPassThrough` report whether the host accepted a change. A non-activating window can still receive pointer input. Keep a separate reachable control to turn off pointer pass-through.
+
+The [Desktop Lyrics source](https://github.com/HuxerUI/HuxerUI/tree/fcd2e01d5c9261b0efc99b02d5bd2eac329d1be6/examples/desktop_lyrics) uses these options with a small overlay. See the [Window API](/docs/reference/window/) for fullscreen and other live operations.
 
 ## Close, hide and quit
 
@@ -128,4 +140,4 @@ UseApplicationTaskScope returns a task owner that survives UI retirement. Applic
 
 State reads and writes remain on the application thread. RunWorker receives ordinary input snapshots and returns a result to that thread. Retaining State, a task scope or an application handle does not revive a stopped application.
 
-Continue with [Lifecycle and activation](/docs/guides/lifecycle-and-activation/), [Tasks](/docs/guides/tasks/), and [Window API](/docs/reference/window/). The [desktop example source](https://github.com/HuxerUI/HuxerUI/tree/d9f0822f2d33855954083f87bd071d6ac709a9d0/examples/multi_window) demonstrates real native windows.
+Continue with [Lifecycle and activation](/docs/guides/lifecycle-and-activation/), [Tasks](/docs/guides/tasks/), and [Window API](/docs/reference/window/). The [desktop example source](https://github.com/HuxerUI/HuxerUI/tree/fcd2e01d5c9261b0efc99b02d5bd2eac329d1be6/examples/multi_window) demonstrates real native windows.

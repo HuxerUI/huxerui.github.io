@@ -150,12 +150,24 @@ For repeatable CI, pin the HuxerUI SDK and external platform SDK versions rather
 Use debug builds for diagnostics and release builds for performance and packaging:
 
 ```bash
-huxerui build windows --profile debug
-huxerui build windows --profile release
+huxerui build windows --config debug
+huxerui build windows --config release
 ```
 
 A release build is not proof of a valid installer, store archive, or signed binary.
 Run the packaged application from its staged directory so missing runtime libraries and resource packages are visible before distribution.
+
+## Profile a running application
+
+For layout diagnosis, open the DEBUG overlay and enable **Layout guides** to inspect bounds, padding, spacing, clipping, and scroll viewports. The setting belongs to the current window.
+
+To capture a performance trace, select a HuxerUI source checkout and enable instrumentation for a release build:
+
+```bash
+huxerui run windows --config release --sdk ../HuxerUI --profile
+```
+
+Enable `AppOptions::show_debug_overlay` if the DEBUG ribbon is hidden in release builds. In the panel, choose **Start recording**, reproduce the interaction, then choose **Stop recording** and **Export trace**. Open the resulting trace in Perfetto. Source CMake builds can set `HUXERUI_ENABLE_PROFILING=ON`. Existing Android or iOS shells must forward this setting as the current templates do.
 
 ## Package per platform
 
@@ -174,7 +186,7 @@ Apply signing and publication after this boundary:
 | macOS | Bundle signing, notarization, and distribution packaging. |
 | iOS | Xcode archive, provisioning validation, and App Store export. |
 | Android | Release signing and Play-compatible bundle or APK workflow. |
-| Linux | Distribution-specific package or portable archive. |
+| Linux | AppImage, DEB, or RPM. Verify installation and launch on the target distribution. |
 | Web | Deploy the generated site with correct MIME types, caching, and cross-origin policy. |
 
 ## Release checklist

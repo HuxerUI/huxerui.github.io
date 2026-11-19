@@ -255,6 +255,7 @@ export default defineConfig({
                 { label: "Application and services", link: "/docs/reference/app/" },
                 { label: "Window", link: "/docs/reference/window/" },
                 { label: "Tasks", link: "/docs/reference/task/" },
+                { label: "System tasks", link: "/docs/reference/system-task/" },
                 { label: "Navigation", link: "/docs/reference/navigation/" },
                 { label: "Presentation and layers", link: "/docs/reference/presentation/" },
                 { label: "Theme", link: "/docs/reference/theme/" },
@@ -280,6 +281,7 @@ export default defineConfig({
               items: [
                 { label: "Layout and virtualization", link: "/docs/reference/layout/" },
                 { label: "Paint and render scene", link: "/docs/reference/paint/" },
+                { label: "Bitmap", link: "/docs/reference/bitmap/" },
                 { label: "Path and vector", link: "/docs/reference/vector/" },
                 { label: "Semantics", link: "/docs/reference/semantics/" },
                 { label: "PlatformView", link: "/docs/reference/platform-view/" },

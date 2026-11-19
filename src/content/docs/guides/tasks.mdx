@@ -113,6 +113,8 @@ void InstallSync(ApplicationContext& context) {
 
 UseTaskScope remains the right owner for work useful only while a component is mounted. Neither scope permits State access from worker code. TaskScope::Post queues external callbacks and drops delivery after that scope closes; HuxerUI awaitables already restore their execution context.
 
+For work that needs OS admission or background scheduling, use [System tasks](/docs/reference/system-task/). An application-owned TaskScope lasts across windows while the process is alive.
+
 ## Adapt a callback API
 
 AwaitCallback retains a starter and supplies a copyable CallbackCompletion. This example wraps a library's single-read contract instead of introducing another UI dispatcher:

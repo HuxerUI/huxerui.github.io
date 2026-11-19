@@ -1,6 +1,6 @@
 export const components = [
   { page: "split-layout", header: "view.h", symbols: ["SplitLayout", "SplitChange", "OnChanged"] },
-  { page: "dock-layout", header: "view.h", symbols: ["DockLayout", "DockTree", "DockItem", "DockPlacement"] },
+  { page: "dock-layout", header: "view.h", symbols: ["DockLayout", "DockTree", "DockItem", "DockPlacement", "DockTabBarContext", "TabBar", "Workspace"] },
   { page: "select", header: "view.h", symbols: ["Select"] },
   { page: "combo-box", header: "view.h", symbols: ["ComboBox"] },
   { page: "date-picker", header: "view.h", symbols: ["DatePicker"] },
@@ -35,7 +35,7 @@ export const components = [
   { page: "radio-button", header: "view.h", symbols: ["RadioButton", "OnChanged"] },
   { page: "row", header: "view.h", symbols: ["Row"] },
   { page: "scope", header: "view.h", symbols: ["Scope"] },
-  { page: "scroll-view", header: "view.h", symbols: ["ScrollView", "ScrollController", "ScrollBothAxes"] },
+  { page: "scroll-view", header: "view.h", symbols: ["ScrollView", "ScrollController", "ScrollBothAxes", "FillViewport"] },
   { page: "segmented-button", header: "view.h", symbols: ["SegmentedButton", "SegmentedButtonItem"] },
   { page: "selection-area", header: "view.h", symbols: ["SelectionArea"] },
   { page: "slider", header: "view.h", symbols: ["Slider", "OnChanged"] },
@@ -44,7 +44,7 @@ export const components = [
   { page: "start-drawer", header: "navigation.h", symbols: ["StartDrawer"] },
   { page: "switch", header: "view.h", symbols: ["Switch", "OnChanged"] },
   { page: "tabs", header: "view.h", symbols: ["Tabs", "TabItem"] },
-  { page: "text", header: "view.h", symbols: ["Text", "TextRole"] },
+  { page: "text", header: "view.h", symbols: ["Text", "TextRole", "TextOverflow", "LineLimit", "StartEllipsis", "MiddleEllipsis"] },
   { page: "text-field", header: "view.h", symbols: ["TextField", "TextEditingValue"] },
   { page: "toast", header: "presentation.h", symbols: ["ToastHandle", "UseToast"] },
   { page: "tooltip", header: "presentation.h", symbols: ["Tooltip"] },
@@ -57,6 +57,8 @@ export const components = [
 export const modules = [
   { page: "stream", headers: ["stream.h"], symbols: ["IoErrorCode", "IoError", "IoResult", "InputStream", "OutputStream", "AsyncInputStream", "AsyncOutputStream", "RandomAccessStream"] },
   { page: "system", headers: ["system.h"], symbols: ["Permission", "PermissionStatus", "PermissionSettingsTarget", "Limited", "SystemDisabled", "LocalNotification", "LocalNotificationHandle", "NotificationActivation", "LocalNotificationCapabilities", "LocalNotificationOperationStatus", "TemplateNotificationPresentation"] },
+  { page: "bitmap", headers: ["bitmap.h"], symbols: ["Bitmap", "PixelFormat", "ImageEncodeOptions", "FromRgba8", "CopyPixels", "Crop", "Resize", "Transform", "EncodeAsync", "SaveAsync"] },
+  { page: "system-task", headers: ["system_task.h"], symbols: ["BackgroundTask", "ContinuedTask", "OngoingTask", "TaskState", "TaskStopped", "ScheduleAsync", "RequestStop", "Cleanup"] },
   { page: "testing", headers: ["testing/ui_test.h"], symbols: ["UiTest", "UiTestOptions", "UiSelector", "UiSemanticSelector", "UiNodeQuery", "UiSemanticQuery", "UiSnapshot", "UiTestFailure", "UiScrollOptions", "PumpAndSettle", "ScrollUntil", "UpdateWindowLifecycleState"] },
   { page: "data", headers: ["data.h"], symbols: ["Bytes", "Uri", "Result", "BufferReference"] },
   { page: "gesture", headers: ["gesture.h"], symbols: ["GestureSettings", "MultiTapGesture", "LongPressGesture", "DragGesture", "TransformGesture", "DragSource", "DropTarget"] },
@@ -79,7 +81,7 @@ export const modules = [
   { page: "semantics", headers: ["semantics.h"], symbols: ["Semantics", "SemanticRole", "SemanticActionKind", "SemanticAction", "SemanticBuilder", "SemanticNode", "SemanticFrame"] },
   { page: "state-and-environment", headers: ["state.h", "environment.h"], symbols: ["State", "StateList", "UseState", "ViewportClass", "ViewportBreakpoints", "Environment", "UseEnvironment", "ThemeBrightness", "UseSystemThemeBrightness"] },
   { page: "task", headers: ["task.h"], symbols: ["Task", "TaskHandle", "TaskScope", "UseTaskScope", "UseApplicationTaskScope", "AwaitCallback", "CallbackCompletion", "Delay", "RunWorker", "WorkerSequence"] },
-  { page: "text-and-input", headers: ["text.h", "text_input.h", "validation.h", "clipboard.h"], symbols: ["Font", "FontFamily", "SoftwareKeyboardPolicy", "TextStyle", "TextLayoutMetrics", "TextLayout", "TextLineMetrics", "TextInlineObject", "CreateTextLayout", "TextSelection", "TextEditingValue", "TextInputConfiguration", "TextInputClient", "PlatformTextInput", "ValidationResult", "Clipboard", "ClipboardContent", "WriteContentAsync", "ReadRichTextAsync"] },
+  { page: "text-and-input", headers: ["text.h", "text_input.h", "validation.h", "clipboard.h"], symbols: ["Font", "FontFamily", "SoftwareKeyboardPolicy", "TextStyle", "TextLayoutMetrics", "TextLayout", "TextLineMetrics", "TextInlineObject", "CreateTextLayout", "TextSelection", "TextEditingValue", "TextInputConfiguration", "TextInputClient", "PlatformTextInput", "ValidationResult", "Clipboard", "ClipboardItem", "ClipboardReadOptions", "WriteItemAsync", "ReadItemAsync", "SupportsSynchronousText"] },
   { page: "theme", headers: ["theme.h"], symbols: ["ColorScheme", "InteractionScheme", "ThemeSpec", "ButtonStyle", "TextFieldStyle", "ThemeDefinition", "MaterialTheme", "FlatTheme"] },
   { page: "vector", headers: ["vector.h"], symbols: ["Path", "PathFillRule", "StrokeCap", "StrokeJoin", "VectorAsset", "VectorBuilder"] },
   { page: "view", headers: ["view.h"], symbols: ["View", "Views", "ForEach", "Button", "TextField"] },
@@ -87,6 +89,9 @@ export const modules = [
 ];
 
 export const publicHeaders = [
+  { path: "bitmap.h", audience: "application", documentation: "reference/bitmap.mdx" },
+  { path: "system_task.h", audience: "application-and-platform-integration", documentation: "reference/system-task.mdx" },
+  { path: "linux/platform_registry.h", audience: "platform-integration", documentation: "reference/platform-specific.mdx" },
   { path: "stream.h", audience: "application", documentation: "reference/stream.mdx" },
   { path: "system.h", audience: "application-and-platform-integration", documentation: "reference/system.mdx" },
   { path: "testing/ui_test.h", audience: "testing", documentation: "reference/testing.mdx" },
@@ -307,6 +312,9 @@ export const declarationContracts = [
 export const memberContracts = [
   { header: "app.h", type: "ApplicationHandle", declarations: [
     "bool SupportsMultipleWindows() const;",
+    "WindowCapabilities WindowSupport() const;",
+    "bool CanOpenWindow() const;",
+    "Task<WindowHandle> OpenWindowAsync(ViewFactory content, WindowOptions options = {}) const;",
     "WindowHandle OpenWindow(ViewFactory content, WindowOptions options = {}) const;",
     "const std::optional<ApplicationActivation>& StartupActivation() const noexcept;",
     "Task<bool> OpenPermissionSettingsAsync(Permission permission, PermissionSettingsTarget target = PermissionSettingsTarget::Application) const;",
@@ -317,9 +325,11 @@ export const memberContracts = [
   ] },
   { header: "window.h", type: "WindowHandle", declarations: [
     "bool IsOpen() const;", "WindowLifecycleState LifecycleState() const;",
+    "bool IsFullscreen() const;", "void SetFullscreen(bool fullscreen) const;",
+    "bool SetPointerPassThrough(bool enabled) const;", "bool SetAlwaysOnTop(bool enabled) const;",
     "void ShowKeyboard() const;", "void HideKeyboard() const;",
   ] },
-  { header: "modifier.h", type: "ViewHandle", declarations: ["bool RequestFocus() const;"] },
+  { header: "modifier.h", type: "ViewHandle", declarations: ["bool RequestFocus(bool focus_visible = false) const;"] },
   { header: "presentation.h", type: "PopupHandle", declarations: [
     "LayerId Show(const ViewHandle& target, ViewFactory content, PopupOptions options = {}) const;",
   ] },
@@ -330,7 +340,33 @@ export const memberContracts = [
     "void RunFromView(const ViewHandle& target, TransitionSpec transition, std::function<void()> mutation) const;",
   ] },
   { header: "view.h", type: "SplitLayout", declarations: ["SplitLayout Orientation(Axis axis) &&;"] },
-  { header: "view.h", type: "DockLayout", declarations: ["DockLayout(std::vector<DockItem> items, DockTree tree);"] },
+  { header: "view.h", type: "DockLayout", declarations: [
+    "DockLayout(std::vector<DockItem> items, DockTree tree);",
+    "DockLayout TabBar(std::function<View(const DockTabBarContext&)> factory) &&;",
+    "DockLayout Workspace(std::string workspace_id, std::string layout_id) &&;",
+  ] },
+  { header: "view.h", type: "Text", declarations: [
+    "Text LineLimit(std::size_t maximum) &&;", "Text Overflow(TextOverflow overflow) &&;",
+  ] },
+  { header: "view.h", type: "ScrollView", declarations: ["ScrollView FillViewport() &&;"] },
+  { header: "clipboard.h", type: "Clipboard", declarations: [
+    "bool SupportsSynchronousText() const noexcept;",
+    "Task<bool> WriteItemAsync(ClipboardItem item) const;",
+    "Task<IoResult<ClipboardItem>> ReadItemAsync(ClipboardReadOptions options = {}) const;",
+  ] },
+  { header: "bitmap.h", type: "Bitmap", declarations: [
+    "Bitmap Crop(std::uint32_t x, std::uint32_t y, std::uint32_t width, std::uint32_t height) const;",
+    "Task<Bytes> EncodeAsync(ImageEncodeOptions options = {}) const;",
+    "Task<bool> SaveAsync(File destination, ImageEncodeOptions options) const;",
+  ] },
+  { header: "external_texture.h", type: "ExternalTexture", declarations: [
+    "virtual Task<std::optional<Bitmap>> SnapshotAsync() const;",
+  ] },
+  { header: "file.h", type: "FileReference", declarations: [
+    "Task<IoResult<void>> RememberAsync(std::string key) const;",
+    "static Task<IoResult<FileReference>> RestoreAsync(std::string key);",
+    "static Task<IoResult<void>> ForgetAsync(std::string key);",
+  ] },
   { header: "text.h", type: "FontFamily", declarations: [
     "static FontFamily FromResources(std::vector<RawResource> resources);",
     "static FontFamily FromFiles(std::vector<File> files);",
@@ -338,6 +374,7 @@ export const memberContracts = [
   ] },
   { header: "resource.h", type: "Resources", declarations: [
     "ResourceConfiguration Configuration() const;",
+    "static Resources OpenPackage(const File& directory);",
     "std::string GetString(const StringVariant& value) const;",
   ] },
   { header: "testing/ui_test.h", type: "UiNodeQuery", declarations: [

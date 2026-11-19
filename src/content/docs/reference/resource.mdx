@@ -31,13 +31,17 @@ Prefer `Text::Format(resource, ...)` for `Text`, `UseString(resource, ...)` for 
 
 These methods require the original application thread and live application, and do not subscribe composition. Use UseString, UseImage and UseVectorImage when a View should react to locale/density changes. Application-only work uses application defaults; a window event/task preserves its original window/local Locale context.
 
+### Load an independent resource package
+
+Pass a compiled package directory as a `File` to `Resources::OpenPackage(directory)` when resolving data for an external package rather than the running application. This resolver can be used outside a Runtime, including from worker threads. Keep package contents stable as the resolver opens payloads on demand, and keep the resolver alive for future uncached reads from its `RawAsset` values. Open streams, resolved strings and resolved images have independent lifetimes. A missing or malformed index fails during opening.
+
 ## `RawAsset`
 
 Factories: `FromBytes`, `CopyBytes`, and `FromSharedBytes`. Metadata: `MimeType`, `HasValue`, and equality. `ReadBytes(cache = false)` and `ReadString(cache = false)` return owned complete contents. `OpenRead()` returns InputStream; `OpenReadAsync()` returns `Task<AsyncInputStream>`.
 
 ## `ImageAsset`
 
-Factories: `FromFile`, `FromEncoded`, and `CopyEncoded`, each with optional scale. Queries: `EncodedBytes`, `Format`, `MimeType`, pixel width/height, `Scale`, `IntrinsicSize`, `HasValue`, and handle equality. `ImageFormat` is `Png` or `Jpeg`; `ImageSampling` is `Nearest` or `Linear`.
+Factories: `FromFile(const File&, scale = 1.0F)`, `FromEncoded`, and `CopyEncoded`. Use `DecodeAsync()` when you need [Bitmap pixels](/docs/reference/bitmap/) for editing or export. Queries: `EncodedBytes`, `Format`, `MimeType`, pixel width/height, `Scale`, `IntrinsicSize`, `HasValue`, and handle equality. `ImageFormat` is `Png` or `Jpeg`; `ImageSampling` is `Nearest` or `Linear`.
 
 ## Resolution
 

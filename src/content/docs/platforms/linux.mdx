@@ -24,7 +24,11 @@ Keep UI work on the GTK main context. GtkIMContext handles composition and surro
 
 System tray presentation depends on the desktop's status-item host. Query availability and keep a visible-window fallback. External file drops use FileReference and share the [file reception API](/docs/reference/file/#external-file-drops).
 
-The pinned revision has no public Linux PlatformView factory or repository-owned semantic accessibility bridge. GTK ownership alone does not supply those shared-component contracts.
+Use `<huxerui/linux/platform_registry.h>` to [embed GTK widgets](/docs/guides/platform-view/#embed-a-gtk-widget). The shared HuxerUI semantic tree does not yet have a Linux accessibility bridge.
+
+## Distribute on Linux
+
+`huxerui package linux` builds an AppImage. Use `--format deb` or `--format rpm` for native packages. Check [format-specific prerequisites](/docs/tooling/cli/#package-artifacts) when preparing a distribution build host.
 
 ## Verification boundary
 

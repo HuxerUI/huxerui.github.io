@@ -38,11 +38,15 @@ WindowHandle::IsOpen observes whether its original window remains open. Hidden a
 
 ShowKeyboard requests the software keyboard for the focused editor. HideKeyboard dismisses it while preserving focus, selection and the editing session. Both run on the application thread and remain requests to the platform. TextInputConfiguration::keyboard_policy selects SoftwareKeyboardPolicy::Automatic or Manual.
 
-UseApplication().OpenWindow creates a native window only where SupportsMultipleWindows reports support. UseWindow requires the current original window context; an application-only callback has no default window. See [application/window ownership](/docs/guides/application-and-windows/).
+UseApplication().OpenWindow creates a desktop window where SupportsMultipleWindows reports support. iOS and iPadOS use the asynchronous scene API instead. UseWindow requires the current original window context; an application-only callback has no default window. See [application/window ownership](/docs/guides/application-and-windows/).
 
 ## Platform contract
 
-`WindowOptions` is read when the platform shell creates its window.
+WindowOptions is read when the platform shell creates its window. Desktop options include `transparent_background`, `always_on_top`, `activatable`, `pointer_pass_through`, and `resizable`. Query `ApplicationHandle::WindowSupport()` first. `WindowCapabilities::non_activating` corresponds to requesting `activatable = false`. An unsupported option can cause `OpenWindow()` to fail.
+
+`IsFullscreen()` observes the state confirmed by the host. `SetFullscreen(bool)` requests a change on the application thread. Completion can be asynchronous and the request can be refused. On Web, request entry directly from a user action. `SetAlwaysOnTop(bool)` and `SetPointerPassThrough(bool)` change supported desktop options on a live window and return whether the host accepted the change.
+
+Use the [platform handle API](/docs/reference/platform-specific/#borrow-a-platform-window) when a native integration needs the actual window object.
 `WindowMetrics` is host-submitted observable geometry expressed in logical units.
 `SafeAreaPadding` consumes only selected insets not already consumed by an ancestor, so nested safe-area containers do not double-pad content.
 

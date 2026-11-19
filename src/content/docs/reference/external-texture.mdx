@@ -27,6 +27,12 @@ Platform subclasses own mailbox format, synchronization, and publication. Their 
 
 Subclassing the shared class does not automatically teach a renderer a new GPU format; the renderer must explicitly support the concrete mailbox type. Prefer the [provided platform types](/docs/reference/platform-specific/) and follow their thread and ownership contracts.
 
+## Capture pixels
+
+Call `SnapshotAsync()` on the owning UI thread and await the returned `Task<std::optional<Bitmap>>`. It retains the latest frame at the call site, so subsequent publication or producer shutdown cannot substitute a newer frame. The default absence result is `std::nullopt` before the first publication. Readback produces a bitmap at the frame's pixel dimensions with scale 1. A producer or frame that cannot be read back reports a runtime error when awaited.
+
+The built-in Windows PixelTexture and D3D11Texture, Apple PixelBufferTexture and MetalTexture, Linux GdkTexture, GlTexture and PixelTexture, Android BitmapTexture, GlTexture and SurfaceStreamTexture, and Web VideoFrameTexture provide readback implementations. A particular frame or GPU operation can still fail. Use snapshots for export, inspection, or occasional processing. Keep ordinary live presentation on the producer path.
+
 ## Frame acquisition
 
 Concrete GPU and platform producers expose `AcquireFrame()`. Acquisition returns the latest completed publication using the platform's retained resource type. A frame can outlive a later publication or the producer itself. Keep it alive through consumer work and release it under the owning API's rules. See [published frame ownership by platform](/docs/guides/external-texture/#acquire-a-published-frame).

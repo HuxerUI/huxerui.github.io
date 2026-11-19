@@ -43,6 +43,18 @@ Text("Warning")
 
 `TextRole::Body`, `Label`, and `Title` select defaults from the current typography and color scheme.
 
+## Limit visible lines
+
+Set `LineLimit(maximum)` to bound the number of visible lines. A limit of one disables wrapping. Larger limits wrap at the available width and cap the visible paragraph. Pair it with an overflow policy when fitting text beside other controls:
+
+```cpp fragment
+Text("Quarterly planning report")
+    .LineLimit(1)
+    .Overflow(TextOverflow::MiddleEllipsis)
+```
+
+`TextOverflow::Clip` is the default. `Ellipsis` marks omission at the end of the last visible line. `StartEllipsis` and `MiddleEllipsis` require a line limit of one. Omission respects grapheme boundaries, the accessible label keeps the full text, and visible links and selection still refer to the original UTF-16 ranges.
+
 ## Selection and accessibility
 
 Text exposes text semantics automatically.
@@ -52,7 +64,7 @@ Wrap a subtree in [`SelectionArea`](/docs/components/selection-area/) to enable 
 
 - Constructors: `Text(StringResource|string|string_view|const char*, TextRole = Body)` and `Text(State<T>, TextRole = Body)`.
 - Static factories: `Text::Format(...)`, including role-first and resource overloads.
-- Fluent method: `.Style(TextStyle)`.
+- Fluent methods: `.Style(TextStyle)`, `.LineLimit(maximum)`, and `.Overflow(TextOverflow)`.
 - Common modifiers: `Foreground`, `FontSize`, `Padding`, `Frame`, `Semantics`.
 
 See [Text and input API](/docs/reference/text-and-input/) for fonts, layout options, metrics, runs, and measurement.

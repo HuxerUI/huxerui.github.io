@@ -58,6 +58,8 @@ The platform producers listed below expose `AcquireFrame()` for external process
 
 Before the first publication, the platform result is empty. Follow the concrete header for context, format, and synchronization requirements. The [ExternalTexture Web example](/examples/external_texture/) demonstrates publication into Image.
 
+If a feature needs editable pixels rather than a retained platform frame, use [SnapshotAsync() and Bitmap](/docs/reference/external-texture/#capture-pixels).
+
 ## Separate layout from frames
 
 Intrinsic size is set once in logical DIPs. The published pixel dimensions may change without changing that layout intent. Replace the texture identity if logical size really changes.

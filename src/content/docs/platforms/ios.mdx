@@ -19,6 +19,10 @@ Platform views are registered through `<huxerui/ios/platform_registry.h>`. Exter
 Build and device validation require macOS with Xcode; non-macOS hosts can edit shared code but cannot validate the iOS adapter.
 The website's cross-platform contract checks do not verify UIKit accessibility, keyboard behavior, UIView composition, signing, or device safe-area behavior.
 
+## Scene configuration
+
+Keep `UIApplicationSceneManifest` in `platform/ios/App/Info.plist`, including in single-window applications. The generated manifest sets `UIApplicationSupportsMultipleScenes` to false. Set that key to true inside the manifest dictionary to enable multiple scenes, then follow the [scene request flow](/docs/guides/application-and-windows/#request-an-ios-window). Existing projects should update the manifest and scene startup together using the current generated shell.
+
 ## System capability boundaries
 
 Local notifications use User Notifications. An embedded Notification Content Extension owns template UI; HUXGetLocalNotificationData reads its submitted payload. Clicks enter OnActivation even when launching the process. This does not supply remote push registration.
@@ -54,6 +58,6 @@ The SDK balances security-scoped access it acquires for that copy. Retain the HU
 
 ## Window and appearance policy
 
-UIKit attachments share application services, while each UiWindow retains its own focus, presentation, resource context and system-theme preference. The shared OpenWindow API does not create arbitrary iOS scenes. Use host scene configuration for native attachment policy.
+UIKit attachments share application services, while each UiWindow retains its own focus, presentation, resource context and system-theme preference. Use the asynchronous scene API to request another UIKit window. Each connected scene gets its own HuxerUI window lifetime.
 
 Manual software-keyboard requests preserve focus and selection; actual UIKit keyboard visibility and accessibility behavior still require a real iOS host. Custom families use static font data with platform fallback. See [Fonts and typography](/docs/guides/fonts-and-typography/).

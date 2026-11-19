@@ -187,6 +187,8 @@ Prepare one paragraph snapshot with `CreateTextLayout` for the current text, typ
 
 The [Custom editor example](/examples/custom_editor/) connects this geometry to a retained `TextInputClient`. The editor owns edits, selection, undo, and composition state. The platform text-input path delivers session-scoped IME commands through the client. Keep the paint callback read-only and retain layout values on the UI thread.
 
+For app-defined clipboard behavior, see [TextInputClient editing actions](/docs/reference/text-and-input/#clipboard), including preserving user activation on Web.
+
 See [Text and input API](/docs/reference/text-and-input/#lay-out-a-paragraph-for-interaction) for geometry queries and the [inline object example](/docs/reference/paint/#draw-a-laid-out-paragraph) for painting a reserved paragraph object.
 
 ## Emit semantic output with typed events

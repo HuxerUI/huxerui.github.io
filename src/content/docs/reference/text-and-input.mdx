@@ -80,19 +80,18 @@ Queries use UTF-16 offsets and paragraph-local logical coordinates from the top-
 
 ## Clipboard
 
-Obtain the application-owned `Clipboard` with `UseApplication().Clipboard()` and start its operations on the application thread. `IsAvailable()` reports synchronous plain-text support for `ReadText()` and `WriteText(text)`. Check each typed operation's result independently.
+Obtain the application-owned `Clipboard` with `UseApplication().Clipboard()`. Start operations on the application thread in response to a user action. `SupportsSynchronousText()` describes whether `ReadText()` and `WriteText(text)` are available. An individual operation can still fail.
+
+A `ClipboardItem` can carry UTF-8 plain text, HTML, an encoded `ImageAsset`, and custom MIME representations of the same content. `ClipboardItem::FromAttributedText` produces HTML and a plain-text fallback, which also satisfies Android's requirement for HTML publication.
 
 | Operation | Contract |
 | --- | --- |
-| `WriteContent(content)`, `WriteContentAsync(content)` | Publish one `ClipboardContent` value and return acceptance as `bool` or `Task<bool>`. The variant accepts UTF-8 text, `AttributedText`, `ImageAsset`, `std::vector<File>`, or `std::vector<FileReference>`. Malformed text, an empty image, or an empty file list throws `std::invalid_argument`. |
-| `ReadTextAsync()` | Returns `Task<IoResult<std::string>>`. An empty stored string is a successful read. |
-| `ReadRichTextAsync()` | Returns `Task<IoResult<AttributedText>>`. Supported styling and links are preserved. If rich text is absent, the result uses the plain-text representation of the same clipboard contents. |
-| `ReadImageAsync()` | Returns `Task<IoResult<ImageAsset>>` for encoded raster content. An image file in a file list is still a file. |
-| `ReadFilesAsync()` | Returns `Task<IoResult<std::vector<FileReference>>>` for the complete, ordered list of copied entries. The references are read-only and preserve available provider access. A failed entry fails the read. |
+| `WriteItem(item)`, `WriteItemAsync(item)` | Publish all representations as one item. Rejection returns false. An empty item, conflicting MIME names, invalid UTF-8, embedded nulls in text or HTML, or an empty image throws `std::invalid_argument`. |
+| `ReadItemAsync(ClipboardReadOptions)` | Returns `Task<IoResult<ClipboardItem>>` for one system item. The defaults request text and HTML. Set `image` or specify `custom_mime_types` when needed. Use `ToAttributedText()` on a successful item to parse supported styles and links or fall back to plain text. |
+| `ReadTextAsync()`, `ReadImageAsync()` | Read a single representation. An empty stored string counts as successful text. An image file in a file list remains a file. |
+| `WriteFiles(files)`, `ReadFilesAsync()` | Publish or read a nonempty file list separately from a multi-format item. Reads return the complete ordered list as read-only `FileReference` values or fail the entire operation. The system can revoke provider access when clipboard contents change. |
 
-Missing content, denied access, unsupported formats, and oversized content report distinct `IoErrorCode` values. File publication preserves the source and can retain access for delayed delivery. The operating system can revoke a clipboard grant after its contents change. Inspect the resulting references and open them through the [file API](/docs/reference/file/).
-
-On Web, start the operation directly in the user action, before launching or suspending a task. A secure browser context can provide text, rich text through HTML and a plain-text alternative, and PNG images. File-list operations report unsupported or a rejected publication. Browser-managed TextField shortcuts use the browser's editing path. On platforms with synchronous writes, `WriteContentAsync()` may publish during the call and report the result through its task. Canceling delivery does not undo a publication that has started.
+File and format capabilities vary by platform. On Web, invoke the asynchronous method inside the click or key handler, before handing off its returned task. A secure browser context can provide text, HTML and PNG, subject to user activation, permissions and supported formats. Web does not expose file-list clipboard access. Browser-managed TextField shortcuts use the browser's editing path. Canceling the returned task suppresses delivery of the result and may leave an already-started publication intact.
 
 ```cpp compile="application-clipboard"
 #include <huxerui/huxerui.h>
@@ -116,14 +115,16 @@ View CopyHeading() {
       const AttributedText heading{
         TextSpan("Build ready").Style({.font_weight = FontWeight::Bold}),
       };
-      tasks.Launch(ReportClipboardWrite(clipboard->WriteContentAsync(heading), status));
+      tasks.Launch(ReportClipboardWrite(clipboard->WriteItemAsync(ClipboardItem::FromAttributedText(heading)), status));
     }),
     Text(status),
   }.With(Spacing(8.0F));
 }
 ```
 
-`TextEditingAction` provides `Cut`, `Copy`, `Paste`, and `SelectAll` for the focused text client. `TextSelectionMenuLabels` supplies localized labels. Editing actions retain their own selection, secure-input, and platform policies.
+A custom `TextInputClient` can override `GetTextEditingActionStatus(action, clipboard)` to determine whether `Cut`, `Copy`, `Paste`, or `SelectAll` is available. Keep that query side-effect free. Handle the action in `PerformTextEditingAction(action, clipboard)`. Start clipboard reads or writes inside the call when browser user activation is needed. For deferred paste, keep owned data and check that the original edit session and selection are still valid before applying the result. Respect read-only and secure input when exposing actions.
+
+`TextSelectionMenuLabels` overrides localized labels through the environment without changing which actions are available.
 
 ## Complete controlled TextField example
 

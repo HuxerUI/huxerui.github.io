@@ -119,13 +119,20 @@ Acquire a remote library from an immutable revision:
 huxerui_use_library(notes
         TARGET Charts::Charts
         URL https://github.com/example/charts.git
-        REVISION 0123456789abcdef0123456789abcdef01234567
+        COMMIT 0123456789abcdef0123456789abcdef01234567
 )
 ```
 
-Remote URLs must use HTTPS, omit embedded credentials, and provide a full commit SHA.
-`PATH` and `URL` are mutually exclusive.
+Remote URLs must use HTTPS and omit embedded credentials. Supply a full SHA with `COMMIT` for reproducible builds, or specify a release with `TAG`. `PATH` and `URL` are mutually exclusive, as are `COMMIT` and `TAG`.
 The library target remains the identity used by the application; acquisition is not a second dependency model.
+
+A library can also call `huxerui_use_library` on its own target. Use `PUBLIC` when the dependency's types or headers are part of the library's public interface:
+
+```cmake
+huxerui_use_library(charts TARGET PlotData::PlotData PATH ../plot_data PUBLIC)
+```
+
+Android and iOS discover platform packages through reachable library declarations before compiling. Keep declarations and aliases visible during the `HUXERUI_LIBRARY_GRAPH_ONLY` configure. Guard host-native setup that requires a compiler or platform SDK with `if (NOT HUXERUI_LIBRARY_GRAPH_ONLY)`. iOS Swift packages live under `platform/ios/<Swift product>/`, for example `platform/ios/Charts/Package.swift` for `Charts::Charts`. Rerun the platform CLI build or `huxerui open ios` after editing dependencies.
 
 ## Add resources to an existing target
 

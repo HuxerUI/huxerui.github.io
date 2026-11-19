@@ -17,13 +17,17 @@ For the CMake/SDK workflow, prepare:
 
 Platform builds also require their platform SDK: Visual Studio on Windows, Xcode on Apple platforms, the Android SDK and NDK for Android, or Emscripten for Web.
 
+## Install the SDK
+
+Get the **0.5.0** archive for your development host from [Downloads](/downloads/), or use the installer linked from the release. Keep the archive's directory structure, add its `bin` directory to `PATH`, and check the install with `huxerui --version`. The Android arm64-v8a host archive is for running the CLI in Termux. For Android development from a desktop, use that desktop's SDK archive.
+
 ## Build the documented revision
 
-This manual follows the source commit shown beside each page title. New APIs can precede a public SDK release; the Downloads page reports released artifacts independently. Build the documented source revision when following these examples.
+To build the framework from source, check out the commit used for this manual and its Web examples:
 
 ```bash
 git clone https://github.com/HuxerUI/HuxerUI.git
-git -C HuxerUI checkout d9f0822f2d33855954083f87bd071d6ac709a9d0
+git -C HuxerUI checkout fcd2e01d5c9261b0efc99b02d5bd2eac329d1be6
 ```
 
 For a host-only CMake package, configure from a supported developer environment. On Windows use an MSVC Developer PowerShell with Ninja available; on macOS use Xcode command-line tools; Linux requires the GTK/system dependencies in its platform guide:
@@ -43,7 +47,7 @@ For a desktop module project use [C++ Modules and mcpp](/docs/tooling/cpp-module
 ## Select an SDK
 
 The CLI first honors an explicit `HUXERUI_HOME` and otherwise discovers the SDK relative to its own executable.
-Set `HUXERUI_HOME` when you keep multiple SDKs or use a source checkout intentionally.
+Use `huxerui sdk list` and `huxerui sdk use 0.5.0` in a managed installation. Use `HUXERUI_HOME` to point the CLI at a manually extracted SDK, or `--sdk <path>` to select an SDK or source checkout for one build.
 
 ```powershell
 $env:HUXERUI_HOME = "D:\Environment\HuxerUI"

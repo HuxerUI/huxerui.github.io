@@ -277,10 +277,11 @@ static_assert(requires(testing::UiTest& ui, testing::UiNodeQuery query, testing:
   { snapshot.Diff(snapshot) } -> std::same_as<std::string>;
 });
 
-static_assert(requires(const Clipboard& clipboard, ClipboardContent content) {
-  { clipboard.WriteContentAsync(content) } -> std::same_as<Task<bool>>;
+static_assert(requires(const Clipboard& clipboard, ClipboardItem item) {
+  { clipboard.WriteItemAsync(item) } -> std::same_as<Task<bool>>;
   { clipboard.ReadTextAsync() } -> std::same_as<Task<IoResult<std::string>>>;
-  { clipboard.ReadRichTextAsync() } -> std::same_as<Task<IoResult<AttributedText>>>;
+  { clipboard.ReadItemAsync() } -> std::same_as<Task<IoResult<ClipboardItem>>>;
+  { item.ToAttributedText() } -> std::same_as<IoResult<AttributedText>>;
   { clipboard.ReadImageAsync() } -> std::same_as<Task<IoResult<ImageAsset>>>;
   { clipboard.ReadFilesAsync() } -> std::same_as<Task<IoResult<std::vector<FileReference>>>>;
 });

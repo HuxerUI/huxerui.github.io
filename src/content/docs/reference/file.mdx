@@ -35,6 +35,8 @@ A capability for a selected, activated, or copied entry. Inspect `Name`, optiona
 
 Keep the reference or its open stream alive while using provider access. When available, synchronous operations can block and are suitable for a worker. A reference does not grant access beyond the original selection or clipboard grant.
 
+`RememberAsync(key)`, `RestoreAsync(key)`, and `ForgetAsync(key)` return `Task<IoResult<...>>` with a void payload except for restore, which returns a `FileReference`. Restored authority stays within the original grant. See [reopening a file](/docs/guides/files/#reopen-a-file-next-time) for capabilities and fallback.
+
 ## `FilePicker`
 
 `FilePickerFilter` contains name, extensions, and content types. `SaveFileOptions` contains suggested name and filter. Capability queries are `CanOpenFiles` and `CanSaveFiles`; operations are `OpenFileAsync`, `OpenFilesAsync`, and `SaveFileAsync`.

@@ -29,10 +29,12 @@ View Document() {
 Set `.ScrollAxis(Axis::Horizontal)` for horizontal content.
 `.Controller(ScrollController)` connects imperative coordination without moving the scroll offset into component state.
 
+Use `FillViewport()` when a short page should cover a bounded viewport along the scroll axis. It gives the content a minimum size and still lets larger content scroll. For example, a short empty state can center within the viewport without changing the scroll behavior of a longer document.
+
 ## Coordinate through a controller
 
 `ScrollController` reports `ScrollMetrics` and supports `ScrollTo`, `ScrollBy`, and virtual-layout `ScrollToItem`.
-Create a scope-stable controller with `UseScrollController(initial_offset)`.
+Create a scope-stable controller with `UseScrollController(initial_offset)`. A controller can still move the content of a disabled ScrollView, even though user interaction is disabled.
 
 ## Scroll in two dimensions
 
@@ -73,7 +75,7 @@ ScrollView exposes scroll-view role, extent, current offset, and semantic scroll
 ## API
 
 - Constructor: `explicit ScrollView(View content)`.
-- Fluent methods: `.ScrollAxis(Axis)` or `.ScrollBothAxes()`. Use `.Controller(ScrollController)` for one axis and `.Controller(Axis, ScrollController)` for a specific axis in two-axis mode.
+- Fluent methods: `.ScrollAxis(Axis)` or `.ScrollBothAxes()`. Use `.FillViewport()` to extend short content. Use `.Controller(ScrollController)` for one axis and `.Controller(Axis, ScrollController)` for a specific axis in two-axis mode.
 - Common modifiers: `ScrollBar`, `Frame`, `Grow`, `Background`.
 
 Use [`VirtualList`](/docs/components/virtual-list/) or [`VirtualGrid`](/docs/components/virtual-grid/) for large collections.

@@ -39,4 +39,6 @@ Attach `DragSource(record_id)` to a source and `DropTarget::Accepts<RecordId>()`
 
 This operation stays within HuxerUI. Receiving files from another application uses [FileDropTarget](/docs/reference/file/#external-file-drops), which returns access-bearing `FileReference` values.
 
-[Read the gesture example source](https://github.com/HuxerUI/HuxerUI/tree/d9f0822f2d33855954083f87bd071d6ac709a9d0/examples/gestures) or consult the [gesture API](/docs/reference/gesture/) for thresholds, coordinates, and cancellation.
+For typed mouse drag-and-drop between participating windows of one application, set `.Scope(DragDropScope::Application)` on the source and target. Windows, macOS, and Linux support this transport. Keep payloads scoped to the application and use the receiving node's local coordinates for drop targeting. Ordinary drag-and-drop remains window-local by default. See [DockLayout](/docs/components/dock-layout/#dock-across-windows) for a controlled example.
+
+[Read the gesture example source](https://github.com/HuxerUI/HuxerUI/tree/fcd2e01d5c9261b0efc99b02d5bd2eac329d1be6/examples/gestures) or consult the [gesture API](/docs/reference/gesture/) for thresholds, coordinates, and cancellation.

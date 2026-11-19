@@ -1,0 +1,54 @@
+---
+title: Bitmap API
+description: Decode, edit, draw, and export immutable raster pixels.
+---
+
+`Bitmap` in `<huxerui/bitmap.h>` represents decoded sRGB RGBA8 pixels with straight alpha. Use `ImageResource` or `ImageAsset` directly for ordinary display. Decode an `ImageAsset` to a bitmap when you need pixel access, transforms, or export.
+
+## Load and inspect pixels
+
+`co_await ImageAsset::DecodeAsync()` decodes an encoded asset into owned pixels. `Bitmap::FromRgba8(width, height, Bytes, scale)` takes an owned, tightly packed buffer. `CopyPixels` copies from top-down RGBA, BGRA, or ARGB rows with an explicit stride and `Bitmap::PixelFormat`. Dimensions and scale must be positive. A default bitmap has no pixels.
+
+`PixelWidth()` and `PixelHeight()` measure the raster. `IntrinsicSize()` divides both by `Scale()` for layout. `Pixels()` borrows tightly packed RGBA bytes for as long as a bitmap copy retains that storage. Copies share immutable storage and compare by storage identity.
+
+## Edit and display
+
+| Operation | Behavior |
+| --- | --- |
+| `Crop(x, y, width, height)` | Copies a nonempty, in-bounds rectangle in top-left pixel coordinates. |
+| `Resize(width, height, sampling)` | Resamples to positive pixel dimensions, using linear sampling by default or `ImageSampling::Nearest`. |
+| `Transform(matrix, width, height, sampling)` | Maps source pixels into an output canvas. The matrix must be finite and invertible. Pixels outside the source are transparent. |
+
+Edits preserve scale. Invalid dimensions, crop bounds or transforms throw `std::invalid_argument`. Editing a missing bitmap throws `std::logic_error`. Crop, resize and transform do synchronous work. Move intensive processing off the application thread with [RunWorker](/docs/guides/tasks/#move-cpu-processing-to-a-worker).
+
+Pass a bitmap to `Image(bitmap)` for layout or to `PaintContext::DrawImage` and `DrawImageRect` for a custom canvas.
+
+## Encode and save
+
+`EncodeAsync(ImageEncodeOptions)` returns `Task<Bytes>`. `SaveAsync(File, options)` writes the encoded result and returns `Task<bool>` for the write outcome. The format is explicit and independent of the file extension. PNG preserves alpha. JPEG uses `jpeg_quality` (0–100) and composites transparent pixels over `jpeg_background`. Invalid options fail before the task starts. Encoding failure surfaces when awaited.
+
+```cpp compile="bitmap-thumbnail"
+#include <huxerui/huxerui.h>
+
+#include <algorithm>
+
+using namespace huxerui;
+
+Task<Bitmap> SaveSquareThumbnail(File original, File destination) {
+  const Bitmap full = co_await ImageAsset::FromFile(original).DecodeAsync();
+  const auto side = std::min(full.PixelWidth(), full.PixelHeight());
+  const Bitmap thumbnail =
+      full.Crop((full.PixelWidth() - side) / 2, (full.PixelHeight() - side) / 2, side, side)
+          .Resize(128, 128);
+  if (!co_await thumbnail.SaveAsync(destination, {.format = ImageFormat::Png})) {
+    co_return Bitmap{};
+  }
+  co_return thumbnail;
+}
+
+View ThumbnailPreview(const Bitmap& bitmap) {
+  return bitmap.HasValue() ? View(Image(bitmap).Fit(ImageFit::Contain)) : View(Text("No thumbnail"));
+}
+```
+
+Use [Bitmap editor](/examples/bitmap/) to try loading, cropping, and saving an image to the example's temporary storage. To capture pixels from a live producer, see [ExternalTexture snapshots](/docs/reference/external-texture/#capture-pixels).

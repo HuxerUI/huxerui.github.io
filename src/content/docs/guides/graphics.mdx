@@ -38,6 +38,8 @@ Text geometry must come from HuxerUI measurement.
 Paragraph drawing lays out the supplied text inside its rectangle. Positioned runs instead use the supplied baseline origins; a run cannot contain a line break.
 Prefer attributed `Text` for rich paragraphs that need shaping, selection, links, and accessibility. Positioned runs are a lower-level tool when the caller already owns that geometry.
 
+For decoded raster input, [Bitmap](/docs/reference/bitmap/) supports pixel access, crop, resize and export. Pass it to `PaintContext::DrawImage` inside a painter.
+
 ## Build paths and vectors
 
 `Path` builds line, curve, arc, and closed contours with a fill rule. `VectorBuilder` combines paths into a reusable `VectorAsset`. Prefer `Image(VectorAsset)` for reusable icons and `Canvas` for size-dependent or animated custom drawing.

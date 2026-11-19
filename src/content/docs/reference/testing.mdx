@@ -52,7 +52,7 @@ UpdateWindowLifecycleState injects Active, Inactive or Background for the fixtur
 
 ## Snapshots and failures
 
-CaptureSnapshot returns UiSnapshot with an owning ToString representation of canonical semantic/render structure. It is not JSON or a screenshot. It excludes platform handles, external texture pixels and PlatformView descendants; ordinary text and encoded image content are not anonymized. The test runner owns baseline files and approvals. UiSnapshot supports equality and Diff(expected), which reports bounded named structural changes from the expected snapshot to the actual value rather than comparing serialized text lines.
+CaptureSnapshot returns UiSnapshot with an owning ToString representation of canonical semantic/render structure. It is not JSON or a screenshot. It excludes platform handles, external texture pixels and PlatformView descendants; ordinary text and image content, including Bitmap pixels, are not anonymized. The test runner owns baseline files and approvals. UiSnapshot supports equality and Diff(expected), which reports bounded named structural changes from the expected snapshot to the actual value rather than comparing serialized text lines.
 
 UiTestFailure reports missing/ambiguous targets, unavailable actions and bounded-wait failures. Invalid arguments use invalid_argument; wrong-thread/reentrant operations use logic_error. Application exceptions preserve their type. A frame/input/configuration-processing exception invalidates the session; subsequent operations fail. Query mismatches and PumpUntil timeouts alone do not invalidate a healthy session. Queries fail after fixture destruction.
 

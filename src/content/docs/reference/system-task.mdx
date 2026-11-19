@@ -1,0 +1,104 @@
+---
+title: System tasks
+description: Submit operating-system scheduled work and observable user-started jobs, with explicit admission and cancellation.
+---
+
+Include `<huxerui/system_task.h>`. Use [TaskScope](/docs/guides/tasks/) for ordinary asynchronous application work. Use a system task when the operation needs platform admission, scheduling, or ongoing execution policy. The application owns any durable inputs, checkpoints, and results.
+
+## Choose a declaration
+
+| Declaration | Use it for | Submit and control |
+| --- | --- | --- |
+| `BackgroundTask` | Deferrable finite work, such as refreshing an index. | Await `ScheduleAsync()` or pass a `Schedule` with supported constraints. The handler returns `Completed` or `Retry`. Query the current request with `GetState()` and withdraw it with `RequestStop()`. |
+| `ContinuedTask` | A finite job the user starts in the foreground, such as exporting a report. | Call `Start(instance_id, presentation, policy)` directly in the initiating action. Each business ID tracks one request. Use `GetState(id)` and `RequestStop(id)` for that instance. |
+| `OngoingTask` | One user-started session such as an ongoing transfer or monitoring stream. | Call `Start(presentation)` from a foreground action. Use `GetState()` and `RequestStop()` for the current session. |
+
+Install each declaration or a copy in `AppOptions::system_tasks`. The declaration owns its identifier and handler. Identifiers must be unique in the application and match the platform's registrations. The handler runs on the application thread after the platform admits it. Calls that control a request belong in event handlers or tasks, outside composition and installation.
+
+`GetCapabilities()` reports whether the host implements that task kind and can launch the process to run it. Admission may still depend on configuration, authorization, power, or foreground state. `Start` submits before returning, while scheduling runs when its returned task is awaited. Accepted requests may remain `Pending`. An identical active request can return `NoChange`.
+
+## Start and observe an export
+
+This application publishes a notes file after staging its contents. The submission result is separate from execution status, which the view observes through `GetState`. Set the configured identifier to match your application and platform configuration.
+
+```cpp compile="continued-file-export"
+#include <huxerui/huxerui.h>
+
+#include <exception>
+#include <stdexcept>
+#include <string>
+
+using namespace huxerui;
+
+Task<void> RemovePartial(File partial) {
+  if (!co_await partial.DeleteAsync()) {
+    throw std::runtime_error("Unable to remove the incomplete export");
+  }
+}
+
+const ContinuedTask export_notes("dev.example.notes.export", [](ContinuedTask::Context context) -> Task<void> {
+  const File directory = UseApplication().Directories().temporary_directory;
+  const File partial = directory.Child("notes.pending");
+  const File complete = directory.Child("notes.txt");
+  std::exception_ptr failure;
+  try {
+    context.ThrowIfStopRequested();
+    if (!co_await partial.WriteStringAsync("Meeting notes\n")) {
+      throw std::runtime_error("Unable to stage the notes");
+    }
+    context.ThrowIfStopRequested();
+    if (!co_await partial.MoveToAsync(complete, true)) {
+      throw std::runtime_error("Unable to publish the notes");
+    }
+    static_cast<void>(context.ReportProgress({.completed = 1, .total = 1}));
+  } catch (...) {
+    failure = std::current_exception();
+  }
+  if (failure) {
+    co_await context.Cleanup(RemovePartial(partial));
+    std::rethrow_exception(failure);
+  }
+});
+
+View App() {
+  auto message = UseState(std::string{});
+  const auto execution = export_notes.GetState("notes").value_or(TaskState{});
+  const bool supported = export_notes.GetCapabilities().supported;
+  return Column {
+    Button("Export notes")
+        .With(Enabled(supported && !execution.IsActive()))
+        .OnClick([message] {
+          const auto submitted = export_notes.Start("notes", {"Export notes", "Writing a text file"});
+          message = submitted.Succeeded() ? "Export submitted" : submitted.Error().message;
+        }),
+    Button("Stop export")
+        .With(Enabled(execution.IsActive()))
+        .OnClick([message] {
+          const auto stopped = export_notes.RequestStop("notes");
+          message = stopped.Succeeded() ? "Stop requested" : stopped.Error().message;
+        }),
+    Text(execution.Status() == TaskStatus::Completed ? "Notes exported" : ""),
+    Text(message),
+  }.With(Padding(20.0F), Spacing(8.0F));
+}
+
+const Application application{App, {.system_tasks = {export_notes}}};
+```
+
+`RequestStop` requests withdrawal or cooperative cancellation. Use `WaitAsync` to observe the selected request's eventual outcome. A successful observation can contain a `Failed` or `Interrupted` execution. Canceling the observer does not stop the work. `TaskState` holds an owned snapshot of lifecycle, progress, presentation, and any error. A retained snapshot can be read after the request ends.
+
+Participating awaits throw `TaskStopped` on stop. Pass `Context::StopToken()` to worker operations, and use `ThrowIfStopRequested()` between synchronous work units. After catching a stop or failure, `Context::Cleanup()` can await one cleanup task within the remaining budget. Its failures propagate normally. Report nondecreasing completed units and a positive total when known.
+
+## Platform admission
+
+| Host | BackgroundTask | ContinuedTask | OngoingTask |
+| --- | --- | --- | --- |
+| Android | JobScheduler, including eligible process launch | Foreground service | Foreground service |
+| iOS and iPadOS | BGProcessingTask, including eligible process launch | iOS 26 or newer, built with the iOS 26 SDK or newer | Unavailable |
+| macOS | NSBackgroundActivityScheduler while the process lives | Process-local | Process-local |
+| Windows and Linux | Unavailable | Process-local | Process-local |
+| Web | Unavailable | Unavailable | Unavailable |
+
+On Android, declare the corresponding job or foreground service, task IDs, service type, and required permissions in the host shell. On iOS, background processing needs the processing mode and permitted scheduler identifiers. Continued processing IDs need the application bundle prefix, with the corresponding wildcard in `BGTaskSchedulerPermittedIdentifiers`. For the sample's `dev.example.notes.export`, the bundle identifier is `dev.example.notes` and the permitted entry is `dev.example.notes.export.*`. On desktop, keep the application running after its last window closes if these tasks still need process time.
+
+The [System Tasks example](https://github.com/HuxerUI/HuxerUI/tree/fcd2e01d5c9261b0efc99b02d5bd2eac329d1be6/examples/system_tasks) includes Android and iOS shell configuration and works through file export, maintenance, and a streaming HTTP session.

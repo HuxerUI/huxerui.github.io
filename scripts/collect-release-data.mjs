@@ -15,7 +15,7 @@ if (process.env.GITHUB_TOKEN) {
 }
 
 function classifyAsset(name) {
-  const match = name.match(/^huxerui-sdk-.+-(windows|macos|linux)-([^.]+)\.(zip|tar\.gz)$/);
+  const match = name.match(/^huxerui-sdk-.+-(windows|macos|linux|android)-([^.]+)\.(zip|tar\.gz)$/);
   if (!match) {
     return undefined;
   }

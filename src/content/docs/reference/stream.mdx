@@ -72,6 +72,28 @@ Each stream permits one outstanding operation. The slot is reserved when the ope
 
 Cancellation requests underlying cancellation and suppresses completion, but a platform operation may finish before releasing its resources. No operation promises rollback. Async continuations follow their Task execution context; async does not imply a dedicated worker thread.
 
+## Adapt a reader or writer
+
+Use `InputStream::FromReader` or `AsyncInputStream::FromReader` for an application-owned source. The synchronous reader fills a borrowed span and returns a byte count. The asynchronous reader receives a stop token and a maximum byte count and returns owned bytes. Zero bytes mean EOF in both cases. A short nonzero read is allowed.
+
+`OutputStream::FromWriter` and `AsyncOutputStream::FromWriter` require the callback to accept the full chunk on success. The optional close callback finalizes the destination. A discarded, unclosed stream calls the optional abort callback, which must not throw. Async writers take ownership of their chunk and receive a stop token. Keep the stream alive until its operation completes and keep overlapping operations off the same stream.
+
+```cpp compile="callback-stream"
+#include <huxerui/huxerui.h>
+
+#include <memory>
+#include <vector>
+
+using namespace huxerui;
+
+OutputStream CollectBytes(std::shared_ptr<std::vector<std::byte>> buffer) {
+  return OutputStream::FromWriter([buffer](std::span<const std::byte> chunk) {
+    buffer->insert(buffer->end(), chunk.begin(), chunk.end());
+    return IoResult<void>::Success();
+  });
+}
+```
+
 ## Copy a file with bounded memory
 
 ```cpp compile="stream-file-copy"

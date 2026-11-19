@@ -29,7 +29,7 @@ Descriptor and erased storage types live in `huxerui::detail`; custom retained b
 
 `UseViewHandle()` remembers a `ViewHandle` at the current composition call site and occurrence. Bind it to one view with `.With(target)`. Copies share the same window-local target and can be passed to focus, presentation, and scene-transition operations. Reconciliation may transfer the binding to a replacement. Removing the binding disconnects the target.
 
-`RequestFocus()` is an application-thread operation. It succeeds when the eligible target owns focus after the call, including when it already had focus. A missing, disabled, input-excluded, or modal-ineligible target returns false without queuing a request. Calls during a focus-change notification also return false. Calls during composition, from another thread, or from another application's context throw `std::logic_error`.
+`RequestFocus(bool focus_visible = false)` is an application-thread operation. The default transfers focus without a focus ring. Pass `true` for actions such as a keyboard shortcut that intentionally moves visible focus. It succeeds when the eligible target owns focus after the call, including when it already had focus. A missing, disabled, input-excluded, or modal-ineligible target returns false without queuing a request. Calls during a focus-change notification also return false. Calls during composition, from another thread, or from another application's context throw `std::logic_error`.
 
 Binding a handle does not make its view focusable. Built-in controls retain their usual focus policy. A custom control may opt in through `Focusable(true)`. Logical focus and operating-system keyboard display are separate outcomes.
 

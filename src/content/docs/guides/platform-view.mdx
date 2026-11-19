@@ -3,7 +3,7 @@ title: PlatformView
 description: Integrate native controls while preserving HuxerUI layout and typed events.
 ---
 
-`PlatformView` embeds a registered platform control. The application supplies typed, equality-comparable properties and binds typed events; a application hook installs the matching platform-specific factory.
+`PlatformView` embeds a registered platform control. The application supplies typed, equality-comparable properties and binds typed events; an application hook installs the matching platform-specific factory.
 
 ## Keep values controlled
 
@@ -49,6 +49,12 @@ Each adapter converts placement, visibility, clipping, and input at its native b
 Test the actual overlap pattern used by the product on every target backend.
 At minimum cover resize, scrolling, temporary hiding, unmount/remount, focus transfer, keyboard/IME behavior, accessibility, and an HuxerUI overlay both before and after the platform slot.
 Platform differences are acceptable only when documented by the component that relies on them.
+
+## Embed a GTK widget
+
+On Linux, include `<huxerui/linux/platform_registry.h>` and register `linux::PlatformViewFactory<Properties, Instance>` in the application hook. The factory receives a borrowed `GtkWindow*`. In the retained instance, hold a strong GObject reference to an unparented `GtkWidget`, such as a `GtkEntry`. HuxerUI parents it and applies placement and visibility. A widget with its own `GdkSurface`, such as a `GtkWindow`, cannot be the embedded root.
+
+Keep creation, property updates, GTK signal delivery, and disposal on the application thread. The [Linux text-field example](https://github.com/HuxerUI/HuxerUI/blob/fcd2e01d5c9261b0efc99b02d5bd2eac329d1be6/examples/platform_view/platform_text_field_linux.cpp) shows how to connect a controlled text value and avoid emitting a redundant edit during a property update.
 
 ## Choose PlatformView or ExternalTexture
 

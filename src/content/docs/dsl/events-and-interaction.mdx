@@ -136,7 +136,7 @@ View SearchForm() {
         .Label("Search")
         .OnChanged([query](const TextEditingValue& next) { query = next; })
         .With(editor),
-    Button("Focus search").OnClick([editor] { editor.RequestFocus(); }),
+    Button("Focus search").OnClick([editor] { editor.RequestFocus(true); }),
   }.With(Spacing(8.0F));
 }
 ```

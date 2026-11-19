@@ -37,6 +37,19 @@ Applications implement the static measurement contract on `Layout<Derived>` and 
 
 Attach a controller through `ScrollView::Controller` or the matching virtual component method. Each controller observes one axis. With two-axis scrolling, use `Controller(Axis, controller)` and a distinct controller per axis.
 
+## Allocate limited Row and Column space
+
+Set `LayoutPriority(value)` on a child of a bounded `Row` or `Column` to control how children shrink. Higher priorities retain space first. Children without an explicit priority count as zero once any child opts in, including a child with explicit priority zero. Use `Grow` when distributing extra space.
+
+```cpp fragment
+Row {
+  Text(title).LineLimit(1).Overflow(TextOverflow::Ellipsis),
+  Button("Open").With(LayoutPriority(1.0F)),
+}
+```
+
+Custom layouts can read `child.LayoutValueOr<LayoutPriority>(0.0F)` and define their own policy.
+
 ## Virtual layout
 
 - `GridColumns::Fixed(count)` and `GridColumns::Adaptive(minimum_width)` create the two public column policies; `Resolve(available_width, spacing)` returns the effective count.

@@ -84,7 +84,7 @@ A valid HuxerUI SDK does not imply that Android Studio, Xcode, Emscripten, or an
 
 ## Upgrade safely
 
-Install a new SDK into a new directory, point `HUXERUI_HOME` at it, and run `doctor` plus a clean configure of the application.
+For a managed install, use `huxerui sdk list`, `huxerui sdk use <version>`, or `huxerui sdk update` as described in [the CLI reference](/docs/tooling/cli/#update-an-installed-sdk). For manually extracted archives, install into a separate directory and point `HUXERUI_HOME` at it. In both cases, run `doctor` and configure the application against the selected SDK.
 Do not overlay files from different HuxerUI versions: stale CMake exports, generators, or platform artifacts can create a package that appears valid but is internally inconsistent.
 
 Commit application source and platform shells, not generated `.huxerui/` build state or copied SDK files.

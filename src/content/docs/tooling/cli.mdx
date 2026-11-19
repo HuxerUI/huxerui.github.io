@@ -9,18 +9,20 @@ It discovers the SDK, validates the current host, and delegates each build to th
 ## Command map
 
 ```text
-huxerui create app <name> [--build cmake|mcpp] [--template <name>] [--id <project-id>] [-p|--platform <platform-list>]
-huxerui create library <name> [--build cmake|mcpp] [--template <name>] [--namespace <cpp-namespace>] [--target <public-cmake-target>] [-p|--platform <platform-list>]
+huxerui create app <name> [--build cmake|mcpp] [--template <name>] [--id <project-id>] [-p|--platform <platform-list>] [--agent <agent-list>]
+huxerui create library <name> [--build cmake|mcpp] [--template <name>] [--namespace <cpp-namespace>] [--target <public-cmake-target>] [-p|--platform <platform-list>] [--agent <agent-list>]
 huxerui platform add <platform-list>
-huxerui doctor [platform-list]
-huxerui setup <platform-list> [--yes]
+huxerui doctor [platform-list] [--operation build|run|package|devices] [--json]
+huxerui setup <platform-list> [--operation build|run|package|devices] [--yes]
 huxerui devices [platform]
 huxerui build [platform-list] [build-options]
-huxerui run <platform> [build-options]
-huxerui package <platform-list> [build-options]
-huxerui open ios
-huxerui update [--check] [--version <version>] [--yes]
-huxerui mcpp build [--source <path>] [--release] [--locked] [--offline] [--verbose]
+huxerui run <platform> [build-options] [--watch]
+huxerui package <platform-list> [build-options] [-f|--format appimage|deb|rpm]
+huxerui open ios [--sdk <path>]
+huxerui sdk list
+huxerui sdk use <version> [--yes]
+huxerui sdk update [--check] [--yes]
+huxerui mcpp build [--project <dir>] [--release] [--locked] [--offline] [--verbose]
 huxerui --version
 ```
 
@@ -43,6 +45,8 @@ huxerui create library rich_text --namespace rich_text --target RichText::RichTe
 
 Generated projects keep shared C++ under `src/`, resources under `resources/`, and host-specific integration under `platform/<id>/`.
 The CLI scans the shared source tree; adding a source file does not require a second list in every platform shell.
+
+Project creation also installs the application-development Skill. The default writes to `.agents/skills`. Use `--agent claude` or `--agent zcode` for those editors' directories, `--agent all` for all three, or `--agent none` to skip it.
 
 Add a platform later without replacing application-owned files:
 
@@ -71,6 +75,8 @@ It reports the selected HuxerUI SDK, external tools, host restrictions, and proj
 ```bash
 huxerui doctor
 huxerui doctor android,web
+huxerui doctor android --operation run --json
+huxerui doctor linux --operation package --format deb
 ```
 
 `setup` performs supported prerequisite installation or configuration.
@@ -81,8 +87,9 @@ huxerui setup android,web
 huxerui setup web --yes
 ```
 
-The SDK is resolved from `HUXERUI_HOME` first, then relative to the running CLI executable.
-Use an explicit environment variable when testing a source checkout or keeping multiple SDK versions.
+Use `--operation` to check dependencies for the action you intend to perform. `--json` returns the diagnosis in a machine-readable form. `setup` rechecks prerequisites as it applies the selected plan.
+
+The CLI discovers the installed SDK through `HUXERUI_HOME` or its executable location. `--sdk <path>` overrides it for a single build, run, package, or `open ios` invocation and accepts either an installed SDK or a source checkout.
 
 ## Select devices
 
@@ -106,20 +113,24 @@ huxerui run android --device emulator-5554
 
 ```bash
 huxerui build
-huxerui build windows,web --profile release
+huxerui build windows,web --config release
 ```
 
 `run` accepts exactly one platform because it launches one application instance:
 
 ```bash
 huxerui run windows
-huxerui run web --profile release
+huxerui run web --config release
 ```
 
 Windows selects an MSVC-compatible generator automatically; `--generator` is intended for other supported CMake workflows.
 Android and iOS builds are driven through their platform projects rather than a generic desktop generator.
 
-The shared build options are `--device <id>`, `--profile debug|release`, `--generator <name>`, `--source <checkout>`, `--abi <abi-list>`, `--optimization default|size|minsize`, and `--lto on|off`. Platform drivers validate the options they can use.
+Build and run default to `debug`. Use `--config release` for an optimized build. The short forms are `b`, `r`, and `pkg` for build, run, and package. Shared options include `--device <id>`, `--generator <name>`, and `--sdk <path>`. On Android, `--java-home <path>` selects the JDK for the current invocation.
+
+Use `huxerui run web --watch` or `huxerui run windows --watch` while editing. A successful rebuild refreshes the page or relaunches the application with a fresh session. A failed rebuild leaves the last successful instance running. Press Ctrl+C to end the watch session.
+
+Use [runtime profiling](/docs/tooling/testing-and-delivery/#profile-a-running-application) when you need `--profile` with a source checkout.
 
 ## Select target ABIs
 
@@ -129,8 +140,8 @@ The shared build options are `--device <id>`, `--profile debug|release`, `--gene
 | --- | --- |
 | Android | `arm64-v8a` and `x86_64` in one APK. Termux supports only `arm64-v8a`. |
 | Windows | `x86_64`. |
-| Linux | `aarch64` or `x86_64`. Packaging both publishes separate artifacts in `dist/linux/<abi>`. Run accepts one ABI. A non-host build needs `--source` and a target `CMAKE_TOOLCHAIN_FILE`. |
-| macOS | `arm64` or `x86_64`. A universal build needs `--source` and universal dependencies. |
+| Linux | `aarch64` or `x86_64`. Packaging both publishes separate artifacts in `dist/linux/<abi>`. Run accepts one ABI. A non-host build needs `--sdk <checkout>` and a target `CMAKE_TOOLCHAIN_FILE`. |
+| macOS | `arm64` or `x86_64`. A universal build needs `--sdk <checkout>` and universal dependencies. |
 | iOS | `arm64` on devices. A simulator can select `arm64` or `x86_64` as supported by Xcode. |
 | Web | `wasm32`. |
 
@@ -138,11 +149,11 @@ The shared build options are `--device <id>`, `--profile debug|release`, `--gene
 
 ## Tune release size
 
-`--optimization size` selects the toolchain's size optimization and `minsize` requires `-Oz` support. `--lto on` enables link-time optimization when supported. Both affect release configurations of source targets. Use `--source` to rebuild the framework with these choices. An installed SDK library keeps its published optimization settings.
+`--optimization size` selects the toolchain's size optimization and `minsize` requires `-Oz` support. `--lto on` enables link-time optimization when supported. Both affect release configurations of source targets. Use `--sdk <checkout>` to rebuild the framework with these choices. An installed SDK library keeps its published optimization settings.
 
 ```bash
-huxerui build web --profile release --optimization minsize --lto on
-huxerui package android --abi arm64 --source ../HuxerUI --optimization size --lto on
+huxerui build web --config release --optimization minsize --lto on
+huxerui package android --abi arm64 --sdk ../HuxerUI --optimization size --lto on
 ```
 
 See [CMake build options](/docs/tooling/cmake/#release-optimization) for direct builds.
@@ -150,24 +161,26 @@ See [CMake build options](/docs/tooling/cmake/#release-optimization) for direct 
 ## Package artifacts
 
 `package` builds first and then replaces `dist/<platform>` with the platform driver's distributable artifacts.
-Its default profile is `release`:
+Its default configuration is `release`:
 
 ```bash
 huxerui package windows,web
-huxerui package android --device emulator-5554 --profile debug
+huxerui package android --device emulator-5554 --config debug
 ```
 
 Packaging is not code signing or store submission.
 The produced files are the input to the platform's signing, notarization, store, or deployment workflow.
 
-Linux AppImage packaging requires `appimagetool`, `patchelf` 0.19.0 or later, and binutils. Generated Android projects use a development signing configuration by default. Supply your own release signing configuration before publishing the APK.
+When Linux is the only selected platform, `--format` (`-f`) selects `appimage` (default), `deb`, or `rpm`. All three require `patchelf` 0.19.0 or later and binutils. AppImage requires `appimagetool`, DEB requires CPack and `dpkg-shlibdeps`, and RPM requires CPack and `rpmbuild`. Build DEBs and RPMs in the intended distribution family.
+
+Generated Android projects use a development signing configuration by default. Supply your own release signing configuration before publishing the APK.
 
 ## Open the iOS project
 
 Generate the current library integration and open the Xcode project from a macOS host:
 
 ```bash
-huxerui open ios
+huxerui open ios [--sdk <path>]
 ```
 
 Use Xcode for signing, capabilities, device provisioning, and archive distribution; keep shared source and library ownership in the HuxerUI project.
@@ -175,24 +188,25 @@ Use Xcode for signing, capabilities, device provisioning, and archive distributi
 ## Update an installed SDK
 
 ```bash
-huxerui update --check
-huxerui update
-huxerui update --version 0.2.0 --yes
+huxerui sdk list
+huxerui sdk use 0.5.0
+huxerui sdk update --check
+huxerui sdk update
 ```
 
-The update command operates on an installed SDK, not a source checkout. --check inspects availability without installing; --version selects a release and --yes skips confirmation. Without --version it resolves the current release. Keep active builds and tools out of the destination during replacement.
+`list` shows the installed versions. `use` selects the requested version, installing it when needed. `update` selects the latest published release. `--check` only checks for an update, and `--yes` skips the installer confirmation for `use` or `update`. The commands operate on an SDK installation.
 
-On Windows the running CLI cannot replace itself directly: it starts an update worker and prints an update.log location. A successful initial exit means handoff, not completed installation. Inspect that log and rerun --version after the worker finishes. Handled publication failures restore the old SDK, but abrupt termination is not an atomic-update guarantee.
+On Windows, the CLI hands installation to a separate process so the active executable can exit. Wait for completion and run `huxerui --version` again to confirm the selected SDK.
 
 ## Standalone mcpp builds
 
 ```bash
-huxerui mcpp build --source path/to/project --release --locked
+huxerui mcpp build --project path/to/project --release --locked
 ```
 
 This is a direct frontend for an installed mcpp executable and a project containing mcpp.toml. It forwards --release, --locked, --offline and --verbose to mcpp build in that directory. It does not generate platform shells, translate huxerui.toml, install mcpp, or run the CMake application workflow.
 
-The [module examples](https://github.com/HuxerUI/HuxerUI/tree/d9f0822f2d33855954083f87bd071d6ac709a9d0/mcpp/examples) demonstrate the supported module build rules, composable transformation, resources and library consumption. This command forwards an existing mcpp project build; project generation and normal use are covered by [C++ Modules and mcpp](/docs/tooling/cpp-modules-and-mcpp/).
+The [module examples](https://github.com/HuxerUI/HuxerUI/tree/fcd2e01d5c9261b0efc99b02d5bd2eac329d1be6/mcpp/examples) demonstrate the supported module build rules, composable transformation, resources and library consumption. This command forwards an existing mcpp project build; project generation and normal use are covered by [C++ Modules and mcpp](/docs/tooling/cpp-modules-and-mcpp/).
 
 ## Exit behavior
 

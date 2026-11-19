@@ -51,6 +51,28 @@ Use `Name`, `Size`, and `ContentType` as hints; validate the bytes you actually 
 An edit workflow normally keeps the original reference while the document is open, writes an application-owned temporary file, then calls `ReplaceWithAsync` only when `CanWrite()` is true.
 If replacement is unavailable, offer `SaveFileAsync` and let the platform picker choose a destination.
 
+## Reopen a file next time
+
+Remember a selected reference when the user chooses to keep opening the same document. The key is a nonempty, case-sensitive UTF-8 string shared across application windows. Reusing a key replaces its stored authorization. Distinguish restore from picking. If a grant no longer works, surface a separate **Choose file** action so Web pickers can open under a fresh user gesture:
+
+```cpp compile="remember-document"
+#include <huxerui/huxerui.h>
+
+using namespace huxerui;
+
+Task<IoResult<FileReference>> RestoreDocument() {
+  return FileReference::RestoreAsync("workspace.document");
+}
+
+Task<IoResult<void>> RememberDocument(FileReference document) {
+  return document.RememberAsync("workspace.document");
+}
+```
+
+Check both results. Open the restored reference only on success. After picking a replacement, call `RememberDocument` to update the stored grant and tell the user whether the selection can be restored on the next launch. Call `FileReference::ForgetAsync(key)` when clearing the recent document. It removes the record while already-open streams keep their usual lifetime.
+
+Android needs a persistable provider grant. iOS and macOS use security-scoped bookmarks, and sandboxed macOS apps need the app-scoped bookmark entitlement in addition to the file-access entitlement. On Web, only storable file system handles qualify. Temporary upload copies cannot be remembered, and browser permission may need to be granted again. Windows and Linux report `Unsupported` for this API. For ordinary local files on those hosts, an application can save the filesystem path and handle access failures when reopening it.
+
 ## Work with application files
 
 Use `File` for application-owned paths.

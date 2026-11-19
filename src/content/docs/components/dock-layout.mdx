@@ -75,6 +75,16 @@ Invalid IDs, invalid split structure or inconsistent declarations throw invalid_
 
 DockLayout composes themed tabs, split regions and ordinary panel Views. Theme-derived Tabs styling follows the surrounding Theme; panel content remains normal UI with its own layout, focus and semantics.
 
-Docking stays inside this workspace. Use [application windows](/docs/guides/application-and-windows/) for a new native window and NavigationStack for document/page history. PlatformView and ExternalTexture retain their own composition restrictions inside a panel.
+## Customize the tab bar
+
+Use `TabBar(factory)` to build a bar for each group. Its `DockTabBarContext` borrows the ordered `Items()` and selected ID from `Selected()` during the call. Return `DefaultBar()` to keep the built-in behavior for a group, or use `BindTabDrag(id, view)` and `BindTabDrop(id, view)` on your own tabs to enable dragging and before/after insertion. Custom bars own their selection, closing, keyboard, and accessibility behavior. Only explicitly bound zones in the bar accept drops.
+
+## Dock across windows
+
+Call `Workspace(workspace_id, layout_id)` with a shared workspace ID and a distinct stable ID for each layout. In the receiving layout's `DockEvents::TransferRequested` handler, update both trees in the same application state update. Move the panel declaration with its placement. Use `DockTree::Tabs()` when the receiving layout is empty. A panel transferred to another layout mounts there, so draft content or document selection that should follow it belongs in shared application state.
+
+Mouse transfers between open windows are supported on Windows, macOS, and Linux. On Windows, bind `DockEvents::DetachRequested` to handle release outside the application. Create the destination window before removing the source panel. For other hosts with multi-window support, offer a move action that explicitly opens a window.
+
+Use [application windows](/docs/guides/application-and-windows/) for a new native window and NavigationStack for document/page history. PlatformView and ExternalTexture retain their own composition restrictions inside a panel.
 
 [Run the workspace example](/examples/dock_layout/) or start with [SplitLayout](/docs/components/split-layout/) for a simpler resizable arrangement.
