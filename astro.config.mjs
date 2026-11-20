@@ -166,6 +166,7 @@ export default defineConfig({
             },
           ],
         },
+        { label: "Official libraries", link: "/docs/libraries/" },
         {
           label: "Application guides",
           items: [

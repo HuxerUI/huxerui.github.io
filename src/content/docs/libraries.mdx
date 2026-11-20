@@ -1,0 +1,54 @@
+---
+title: Official libraries
+description: Find HuxerUI libraries for editors, data, media, and device integration, with links to their releases and setup instructions.
+---
+
+Add individual libraries as your application needs them. Each project documents its own public headers, supported platforms, and build prerequisites.
+
+**Release** links to published GitHub releases. **Source** indicates a project available from a source checkout. Check the selected library revision's requirements before pairing it with your HuxerUI SDK.
+
+## Editors and documents
+
+| Library | Use it for | Availability |
+| --- | --- | --- |
+| [Lib-CodeEditor](https://github.com/HuxerUI/Lib-CodeEditor) | Editing source code with highlighting, completion, and search. | [Release](https://github.com/HuxerUI/Lib-CodeEditor/releases) |
+| [Lib-Markdown](https://github.com/HuxerUI/Lib-Markdown) | Parsing Markdown and displaying CommonMark and GFM content as themed HuxerUI views. | [Release](https://github.com/HuxerUI/Lib-Markdown/releases) |
+| [Lib-PDF](https://github.com/HuxerUI/Lib-PDF) | Opening PDFs, rendering pages asynchronously, and finding or extracting text. | [Release](https://github.com/HuxerUI/Lib-PDF/releases) |
+| [Lib-RichEditor](https://github.com/HuxerUI/Lib-RichEditor) | Editing structured documents and exchanging them as Markdown or JSON. | [Release](https://github.com/HuxerUI/Lib-RichEditor/releases) |
+| [Lib-WebView](https://github.com/HuxerUI/Lib-WebView) | Embedding web pages and handling navigation, JavaScript evaluation, and messages between the page and application. | [Release](https://github.com/HuxerUI/Lib-WebView/releases) |
+
+## Data and application services
+
+| Library | Use it for | Availability |
+| --- | --- | --- |
+| [Lib-Charts](https://github.com/HuxerUI/Lib-Charts) | Displaying interactive charts with tooltips, selection, and animated updates. | [Release](https://github.com/HuxerUI/Lib-Charts/releases) |
+| [Lib-DataTable](https://github.com/HuxerUI/Lib-DataTable) | Presenting large tables with virtualized rows, resizable columns, and application-controlled editing and sorting. | Source |
+| [Lib-PluginKit](https://github.com/HuxerUI/Lib-PluginKit) | Defining typed plugin interfaces and loading packages into a desktop host or a separate worker process. | Source |
+| [Lib-QRCode](https://github.com/HuxerUI/Lib-QRCode) | Creating QR codes and barcodes, decoding images, and exporting codes as SVG. | Source |
+| [Lib-SQLite](https://github.com/HuxerUI/Lib-SQLite) | Storing C++ records in SQLite with typed queries, transactions, and schema migrations. | [Release](https://github.com/HuxerUI/Lib-SQLite/releases) |
+
+## Media and device integration
+
+| Library | Use it for | Availability |
+| --- | --- | --- |
+| [Lib-AVKit](https://github.com/HuxerUI/Lib-AVKit) | Editing an audio and video timeline and compositing its output. File workflows depend on the selected build profile. | Source |
+| [Lib-AudioCapture](https://github.com/HuxerUI/Lib-AudioCapture) | Capturing timestamped PCM microphone frames for recording or synchronization. | Source |
+| [Lib-Camera](https://github.com/HuxerUI/Lib-Camera) | Showing camera previews, taking photos, and recording video. | Source |
+| [Lib-Live2D](https://github.com/HuxerUI/Lib-Live2D) | Rendering Live2D Cubism characters and controlling their motions and expressions. | [Release](https://github.com/HuxerUI/Lib-Live2D/releases) |
+| [Lib-Lottie](https://github.com/HuxerUI/Lib-Lottie) | Playing Lottie animations with playback, seek, and loop controls. | Source |
+| [Lib-Map](https://github.com/HuxerUI/Lib-Map) | Embedding AMap or Baidu Map views on Android and iOS. | Source |
+| [Lib-Media](https://github.com/HuxerUI/Lib-Media) | Playing and processing audio or video. Playback, codecs, and container support vary by backend. | Source |
+
+## Add a library
+
+In a CMake application, call `huxerui_use_library` after creating the app target. This example adds the published SQLite library to an app named `notes`:
+
+```cmake
+huxerui_use_library(notes
+        TARGET HuxerUI::SQLite
+        URL "https://github.com/HuxerUI/Lib-SQLite.git"
+        TAG "v0.1.0"
+)
+```
+
+Include `<huxerui/sqlite.h>` in the source files that use SQLite. This release supports desktop and mobile targets. For a library available from source, use `COMMIT` with a full commit SHA or `PATH` with a local checkout. See [CMake library integration](/docs/tooling/cmake/#use-a-huxerui-library) for dependency setup.

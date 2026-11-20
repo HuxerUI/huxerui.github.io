@@ -10,6 +10,7 @@ export const site = {
 export const navigation = [
   { label: "Docs", href: "/docs/" },
   { label: "Components", href: "/components/" },
+  { label: "Libraries", href: "/docs/libraries/" },
   { label: "Examples", href: "/examples/" },
   { label: "Platforms", href: "/platforms/" },
   { label: "Downloads", href: "/downloads/" },

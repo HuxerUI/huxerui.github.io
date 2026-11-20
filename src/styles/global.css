@@ -673,13 +673,6 @@ main {
   .platform-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
-}
-
-@media (max-width: 720px) {
-  :root {
-    --content: calc(100% - 32px);
-    --header-height: 60px;
-  }
 
   .nav-toggle {
     display: flex;
@@ -719,6 +712,13 @@ main {
 
   .theme-toggle {
     align-self: end;
+  }
+}
+
+@media (max-width: 720px) {
+  :root {
+    --content: calc(100% - 32px);
+    --header-height: 60px;
   }
 }
 
