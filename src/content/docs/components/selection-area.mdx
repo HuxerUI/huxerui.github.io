@@ -86,7 +86,7 @@ View Article() {
 
 The fixed document's IDs never reorder. Real mutable documents need semantic block IDs preserved across insertions and moves, not current indices. The source is an immutable, synchronous snapshot; publish a replacement when its text changes. Do not read files or start network work from its methods.
 
-Each rendered Text must represent the full block returned by the source. A reconciliation Key and a TextBlockId have different jobs even when the same stable ID is convenient for both. [Streaming text](/examples/streaming_text/) demonstrates a larger virtual document.
+Each rendered Text must represent the full block returned by the source. A reconciliation Key and a TextBlockId have different jobs even when the same stable ID is convenient for both. The [streaming text example source](https://github.com/HuxerUI/HuxerUI/tree/fcd2e01d5c9261b0efc99b02d5bd2eac329d1be6/examples/streaming_text) demonstrates a larger virtual document.
 
 ## Source contract and failure modes
 

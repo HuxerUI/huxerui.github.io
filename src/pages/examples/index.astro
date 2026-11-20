@@ -1,41 +1,27 @@
 ---
+import DemoFrame from "../../components/DemoFrame.astro";
 import BaseLayout from "../../layouts/BaseLayout.astro";
-import { examples } from "../../data/examples";
 import { site } from "../../data/site";
 import sourceConfig from "../../../huxerui-source.json";
+
+const source = `${site.repository}/tree/${sourceConfig.ref}/examples`;
 ---
 
-<BaseLayout title="Examples" description="Explore selected HuxerUI showcases: responsive interfaces, custom motion, rich text, and live graphics.">
+<BaseLayout title="UI Gallery" description="Try HuxerUI controls, layouts, themes, and motion in the browser.">
   <div class="page-shell">
     <header class="page-hero">
+      <h1>UI Gallery</h1>
       <div>
-        <div class="eyebrow">Selected C++ showcases</div>
-        <h1>See what HuxerUI can do.</h1>
+        <p>Try the controls, resize the layout, and switch between Material and Flat. The gallery runs HuxerUI compiled to WebAssembly.</p>
+        <div class="button-row">
+          <a class="card-link" href={`${site.repository}/blob/${sourceConfig.ref}/examples/ui_gallery/main.cpp`}>View C++ source</a>
+          <a class="card-link" href="/docs/components/">Component reference</a>
+        </div>
       </div>
-      <p>
-        Start with UI Gallery, then explore custom transitions, rich text, large collections, and live graphics. Each showcase runs
-        as a real C++ application compiled to WebAssembly.
-      </p>
     </header>
-    <section class="section" aria-label="Online examples">
-      <div class="example-grid">
-        {examples.map((example) => (
-          <article class:list={["example-card", example.featured && "example-card--featured"]}>
-            <div class="eyebrow">{example.eyebrow}</div>
-            <h2>{example.title}</h2>
-            <p>{example.description}</p>
-            <a class="card-link" href={`/examples/${example.slug}/`}>Open example</a>
-          </article>
-        ))}
-      </div>
-    </section>
-    <section class="section" aria-labelledby="learning-examples">
-      <h2 id="learning-examples">Looking for a focused learning example?</h2>
-      <p>Start with the documentation for short, explained examples. The source repository also includes focused programs for individual components and services.</p>
-      <div class="button-row">
-        <a class="button" href="/docs/get-started/first-application/">Build your first application</a>
-        <a class="button" href={`${site.repository}/tree/${sourceConfig.ref}/examples`}>Browse example sources</a>
-      </div>
-    </section>
+    <DemoFrame slug="ui_gallery" title="UI Gallery" />
+    <div class="button-row gallery-source">
+      <a class="card-link" href={source}>Browse example source</a>
+    </div>
   </div>
 </BaseLayout>

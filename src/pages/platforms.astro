@@ -7,32 +7,27 @@ import { platforms } from "../data/platforms";
   <div class="page-shell">
     <header class="page-hero">
       <div>
-        <div class="eyebrow">Platform adapters, shared runtime</div>
-        <h1>Native integration without six UI codebases.</h1>
+        <h1>Platforms</h1>
       </div>
       <p>
-        Shared C++ owns composition through RenderScene. Each adapter owns the platform window or host view, event conversion,
-        text and system services, and rendering surface.
+        The shared runtime handles composition and layout. Each backend connects it to the platform's windowing, input, text services, and renderer.
       </p>
     </header>
     <section class="section" aria-label="Platform support">
       <div class="platform-grid">
         {platforms.map((platform) => (
           <article class="platform-card">
-            <span class="platform-code">{platform.code}</span>
-            <h2>{platform.name}</h2>
-            <p><strong>{platform.stack}</strong></p>
+            <h2>{platform.status === "Supported" ? <a href={`/docs/platforms/${platform.name.toLowerCase()}/`}>{platform.name}</a> : platform.name}</h2>
+            {platform.stack && <p class="platform-stack">{platform.stack}</p>}
             <p>{platform.detail}</p>
-            <span class:list={["status", platform.status === "Planned" && "status--planned"]}>{platform.status}</span>
           </article>
         ))}
       </div>
     </section>
     <aside class="callout">
-      <h2>Verify the exact boundary</h2>
+      <h2>Platform capabilities</h2>
       <p>
-        Backend details and known limitations change as the framework evolves. The platform guides document setup,
-        integration boundaries, and current behavior for each supported target.
+        Compare supported features, platform restrictions, and setup requirements.
       </p>
       <a class="card-link" href="/docs/platforms/">Read platform guides</a>
     </aside>

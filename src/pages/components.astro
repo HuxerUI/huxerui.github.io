@@ -7,12 +7,10 @@ import { componentGroups } from "../data/components";
   <div class="page-shell">
     <header class="page-hero">
       <div>
-        <div class="eyebrow">Public UI surface</div>
-        <h1>Components with one behavioral core.</h1>
+        <h1>Components</h1>
       </div>
       <p>
-        HuxerUI components are controlled View factories backed by shared state, input, semantics, layout, and theme contracts.
-        The catalog maps directly to the current public API and its component-specific behavior.
+        Browse the controls, layouts, and presentation APIs included in HuxerUI.
       </p>
     </header>
     <section class="section" aria-label="Component groups">
@@ -28,12 +26,11 @@ import { componentGroups } from "../data/components";
       </div>
     </section>
     <aside class="callout">
-      <h2>Need a custom primitive?</h2>
+      <h2>Custom components</h2>
       <p>
-        Start with ordinary component functions. HuxerUI also exposes custom layouts, retained NodeExtensions, root services,
-        PlatformModule, PlatformView, and platform-neutral PaintCommands at narrower extension boundaries.
+        Use ordinary C++ functions to compose controls. When you need a custom layout, drawing, or retained behavior, use the framework's extension APIs.
       </p>
-      <a class="card-link" href="/docs/reference/view/">Explore the View API</a>
+      <a class="card-link" href="/docs/guides/extensions/">Read the extension guide</a>
     </aside>
   </div>
 </BaseLayout>

@@ -1,179 +1,103 @@
 ---
-import DemoFrame from "../components/DemoFrame.astro";
 import BaseLayout from "../layouts/BaseLayout.astro";
-import { componentGroups } from "../data/components";
+import galleryDark from "../assets/ui-gallery-dark.webp";
+import galleryLight from "../assets/ui-gallery-light.webp";
 import { platforms } from "../data/platforms";
 
-const heroCode = `<span class="comment">// Ordinary C++ becomes a retained interface.</span>
-[[huxerui::composable]]
-<span class="type">View</span> <span class="function">Counter</span>() {
-  <span class="type">auto</span> count = <span class="function">UseState</span>(<span class="number">0</span>);
+const supportedPlatforms = platforms.filter((platform) => platform.status === "Supported");
 
-  <span class="type">return</span> <span class="function">Column</span> {
-    <span class="function">Text::Format</span>(<span class="string">"Count: {}"</span>, count),
-    <span class="function">Button</span>(<span class="string">"+1"</span>).<span class="function">OnClick</span>([count] {
-      count += <span class="number">1</span>;
+const counter = `<span class="code-attribute">[[huxerui::composable]]</span>
+<span class="code-type">View</span> Counter() {
+  <span class="code-keyword">auto</span> count = UseState(<span class="code-number">0</span>);
+
+  <span class="code-keyword">return</span> <span class="code-type">Column</span> {
+    Text::Format(<span class="code-string">"Count: {}"</span>, count),
+    <span class="code-type">Button</span>(<span class="code-string">"Increment"</span>).OnClick([count] {
+      count += <span class="code-number">1</span>;
     }),
-  }.<span class="function">With</span>(
-      <span class="function">Padding</span>(<span class="number">24.0F</span>),
-      <span class="function">Spacing</span>(<span class="number">12.0F</span>)
-  );
-}
-
-<span class="type">View</span> <span class="function">App</span>() {
-  <span class="type">return</span> <span class="function">Counter</span>();
+  }.With(Padding(<span class="code-number">24.0F</span>), Spacing(<span class="code-number">12.0F</span>));
 }`;
 ---
 
 <BaseLayout>
-  <section class="hero">
-    <div class="hero-copy">
-      <div class="eyebrow">Modern C++ · One shared runtime</div>
-      <h1>
-        <span class="hero-title-line">Cross-platform UI.</span>
-        <span class="hero-title-line hero-title-accent">Rebuilt for C++.</span>
-      </h1>
-      <p>
-        HuxerUI unifies desktop, mobile, and Web through one declarative application model—with shared composition, state, layout,
-        rendering, and animation, plus deep platform integration.
-      </p>
-      <div class="hero-actions">
-        <a class="button button--primary" href="/docs/get-started/create-a-project/">Start building</a>
-        <a class="button" href="/examples/ui_gallery/">Run the Web demo</a>
-      </div>
-      <div class="hero-proof" aria-label="Project highlights">
-        <span>C++20</span>
-        <span>Six platform backends</span>
-        <span>MIT licensed</span>
-      </div>
-    </div>
-    <div class="code-window" aria-label="HuxerUI counter example">
-      <div class="window-bar">
-        <span class="window-dots" aria-hidden="true"><i></i><i></i><i></i></span>
-        counter.cpp
-      </div>
-      <pre><code set:html={heroCode}></code></pre>
-    </div>
-  </section>
-
-  <div class="platform-ticker" aria-label="Supported platforms">
-    <div>
-      {platforms.filter((platform) => platform.status === "Supported").map((platform) => <span>{platform.name}</span>)}
-    </div>
-  </div>
-
-  <section class="section section-shell">
-    <div class="section-heading">
-      <div>
-        <div class="eyebrow">Shared where it matters</div>
-        <h2>One model from declaration to pixels.</h2>
-      </div>
-      <p>
-        Application code stays platform-neutral. Each backend owns the native lifecycle, input services, text system, and renderer.
-      </p>
-    </div>
-    <div class="feature-grid">
-      <article class="feature-card">
-        <span class="feature-number">01</span>
-        <h3>Declarative C++</h3>
-        <p>Compose transient Views with ordinary functions, typed state, events, themes, and modifiers.</p>
-      </article>
-      <article class="feature-card">
-        <span class="feature-number">02</span>
-        <h3>Retained runtime</h3>
-        <p>Reconciliation, incremental layout, animation, input, and scene retention remain shared and testable.</p>
-      </article>
-      <article class="feature-card">
-        <span class="feature-number">03</span>
-        <h3>Platform-native integration</h3>
-        <p>Connect windows, IME, accessibility, files, HTTP, PlatformViews, and texture producers through explicit adapters.</p>
-      </article>
-    </div>
-  </section>
-
-  <section class="section section--tinted">
-    <div class="section-shell">
-      <div class="component-stage">
-        <div class="component-copy">
-          <div class="eyebrow">A coherent component system</div>
-          <h3>Controls that share behavior—not just a look.</h3>
-          <p>
-            Material and Flat themes resolve the same controlled components, accessibility semantics, pointer and keyboard paths,
-            and transient interaction model.
-          </p>
-          <a class="card-link" href="/components/">Explore components</a>
-        </div>
-        <div class="ui-card" aria-label="Illustration of HuxerUI controls">
-          <h4>Workspace settings</h4>
-          <div class="ui-controls">
-            <span class="ui-button">Apply</span>
-            <span class="ui-button ui-button--quiet">Preview</span>
-          </div>
-          <div class="ui-field">Project name</div>
-          <div class="ui-slider"></div>
+  <div class="page-shell">
+    <section class="hero" aria-labelledby="intro">
+      <div class="hero-copy">
+        <h1 id="intro">Declarative UI<br />for C++20</h1>
+        <p>HuxerUI is an open-source framework for desktop, mobile, and Web. Write views as C++ functions and share application code across platforms.</p>
+        <div class="button-row">
+          <a class="button button--primary" href="/docs/get-started/installation/">Get started</a>
+          <a class="button" href="/examples/">Open UI Gallery</a>
         </div>
       </div>
-    </div>
-  </section>
+      <figure class="code-window">
+        <figcaption>counter.cpp</figcaption>
+        <pre><code set:html={counter}></code></pre>
+      </figure>
+    </section>
 
-  <section class="section section-shell">
-    <div class="section-heading">
-      <div>
-        <div class="eyebrow">Built into the framework</div>
-        <h2>More than a widget catalog.</h2>
-      </div>
-      <p>Navigation, presentation, resources, tasks, files, and extensibility use the same ownership model.</p>
-    </div>
-    <div class="card-grid">
-      {componentGroups.slice(0, 6).map((group) => (
-        <article class="content-card">
-          <h3>{group.name}</h3>
-          <p>{group.description}</p>
-          <ul>{group.items.slice(0, 5).map((item) => <li>{item}</li>)}</ul>
-          <a class="card-link" href={group.href}>Read the guide</a>
-        </article>
-      ))}
-    </div>
-  </section>
+    <nav class="platform-list" aria-label="Supported platforms">
+      <span>Supported platforms</span>
+      <ul>
+        {supportedPlatforms.map((platform) => (
+          <li><a href={`/docs/platforms/${platform.name.toLowerCase()}/`}>{platform.name}</a></li>
+        ))}
+      </ul>
+    </nav>
 
-  <section class="section section--tinted">
-    <div class="section-shell">
+    <section class="section" aria-labelledby="gallery">
       <div class="section-heading">
         <div>
-          <div class="eyebrow">Run the same runtime in your browser</div>
-          <h2>HuxerUI, compiled to WebAssembly.</h2>
+          <h2 id="gallery">UI Gallery</h2>
+          <p>Try the controls, layouts, and themes in a C++ application running in your browser.</p>
         </div>
-        <p>The preview is one independently loaded application. Other demos stay dormant until you open their own URL.</p>
+        <a class="card-link" href="/examples/">Run the Web demo</a>
       </div>
-      <DemoFrame slug="ui_gallery" title="UI Gallery" compact />
-      <div class="button-row">
-        <a class="button button--primary" href="/examples/">Explore the showcases</a>
-        <a class="button" href="/docs/platforms/web/">Read the Web guide</a>
-      </div>
-    </div>
-  </section>
+      <figure class="gallery-figure">
+        <div class="gallery-images">
+          <img class="gallery-image gallery-image--light" src={galleryLight.src} alt="HuxerUI UI Gallery with toggles, tabs, and a theme selector" width={galleryLight.width} height={galleryLight.height} loading="lazy" decoding="async" />
+          <img class="gallery-image gallery-image--dark" src={galleryDark.src} alt="HuxerUI UI Gallery with toggles, tabs, and a theme selector" width={galleryDark.width} height={galleryDark.height} loading="lazy" decoding="async" />
+        </div>
+        <figcaption>Material theme in the WebAssembly build</figcaption>
+      </figure>
+    </section>
 
-  <section class="section section-shell">
-    <div class="section-heading">
+    <section class="section framework" aria-labelledby="architecture">
       <div>
-        <div class="eyebrow">SDK, CLI, and CMake</div>
-        <h2>Start with the SDK or build from source.</h2>
+        <h2 id="architecture">Framework architecture</h2>
+        <p>A shared runtime drives the interface. Each backend connects it to the host's windowing, input, text, and graphics APIs.</p>
       </div>
-      <p>Host SDK archives include the CLI, CMake package, host tools, resources, and packaged Android and Web artifacts.</p>
-    </div>
-    <div class="component-stage">
-      <div class="component-copy">
-        <h3>From an empty directory to a runnable app.</h3>
-        <div class="command">huxerui create app hello --platform windows,macos,linux,web,android,ios</div>
-        <a class="card-link" href="/docs/get-started/create-a-project/">Follow the quick start</a>
+      <dl class="framework-list">
+        <div>
+          <dt><a href="/docs/dsl/fundamentals/">Composition</a></dt>
+          <dd>Compose views with typed modifiers and events. State changes recompose the scopes that read them.</dd>
+        </div>
+        <div>
+          <dt><a href="/docs/guides/extensions/">Retained runtime</a></dt>
+          <dd>The runtime keeps mounted nodes and coordinates layout, input, animation, and drawing.</dd>
+        </div>
+        <div>
+          <dt><a href="/docs/platforms/">Platform integration</a></dt>
+          <dd>Use typed APIs to embed platform views, access services, or present frames from a texture producer.</dd>
+        </div>
+      </dl>
+    </section>
+
+    <section class="section framework" aria-labelledby="first-app">
+      <div>
+        <h2 id="first-app">Build your first app</h2>
+        <p>Install the SDK and Web prerequisites, then create and run a starter project.</p>
+        <div class="button-row">
+          <a class="button button--primary" href="/downloads/">Download SDK</a>
+          <a class="button" href="/docs/get-started/create-a-project/">Read the quick start</a>
+        </div>
       </div>
-      <div class="ui-card">
-        <div class="eyebrow">SDK workflow</div>
-        <h4>Diagnose. Configure. Build.</h4>
-        <div class="command">huxerui doctor</div>
-        <div class="command">huxerui run windows</div>
-        <a class="button button--primary" href="/downloads/">Download the SDK</a>
-      </div>
-    </div>
-  </section>
+      <figure class="code-window">
+        <figcaption>Terminal</figcaption>
+        <pre><code>huxerui create app hello --platform web
+cd hello
+huxerui run web</code></pre>
+      </figure>
+    </section>
+  </div>
 </BaseLayout>

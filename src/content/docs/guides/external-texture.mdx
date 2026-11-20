@@ -56,7 +56,7 @@ The platform producers listed below expose `AcquireFrame()` for external process
 | iOS and macOS `MetalTexture` | In Objective-C++, `AcquireFrame(origin)` returns the retained texture and its origin together. Sample on the owning Metal device. ARC manages the reference, or balance it with `release` without ARC. |
 | Web `VideoFrameTexture` | A separate VideoFrame clone on the browser main thread. Before publication it returns `undefined` and a failed clone returns `null`. Close a valid clone on that thread after GPU use. |
 
-Before the first publication, the platform result is empty. Follow the concrete header for context, format, and synchronization requirements. The [ExternalTexture Web example](/examples/external_texture/) demonstrates publication into Image.
+Before the first publication, the platform result is empty. Follow the concrete header for context, format, and synchronization requirements. The [ExternalTexture example source](https://github.com/HuxerUI/HuxerUI/tree/fcd2e01d5c9261b0efc99b02d5bd2eac329d1be6/examples/external_texture) demonstrates publication into Image.
 
 If a feature needs editable pixels rather than a retained platform frame, use [SnapshotAsync() and Bitmap](/docs/reference/external-texture/#capture-pixels).
 

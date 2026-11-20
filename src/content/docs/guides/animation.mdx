@@ -127,7 +127,7 @@ TransitionSpec DialogPageEffect() {
 }
 ```
 
-Optional Paint records decoration above both sides. Use TransitionSample fragments for sliced visuals without duplicating mounted content. Neither Evaluate nor Paint may mutate State, call composition hooks, or schedule animations. See [Transition effects](/docs/reference/animation/#transition-effects) and the [Transition Studio](/examples/transition/) for more elaborate effects.
+Optional Paint records decoration above both sides. Use TransitionSample fragments for sliced visuals without duplicating mounted content. Neither Evaluate nor Paint may mutate State, call composition hooks, or schedule animations. See [Transition effects](/docs/reference/animation/#transition-effects) and the [Transition Studio source](https://github.com/HuxerUI/HuxerUI/tree/fcd2e01d5c9261b0efc99b02d5bd2eac329d1be6/examples/transition) for more elaborate effects.
 
 ## Animate a local layout change
 
@@ -162,7 +162,7 @@ The toggle stays outside the scope, so it remains available during motion. Attac
 
 In NavigationStack, SharedElement/SharedBounds match between pages automatically; no local scope is required. Prefer SharedElement for a cover image that does not change and SharedBounds for a summary that expands into different text. Text scales/crossfades rather than reflowing at every intermediate size. Missing or unsuitable content uses ordinary drawing, not a broken placeholder.
 
-For a custom travel path, BoundsTransform accepts a pure Rect-to-Rect evaluator with progress. Preserve both endpoints and handle finite overshoot. Prepare images, scroll position, and realized content before starting; PlatformView and ExternalTexture are not captured shared visuals. See [Shared transitions](/examples/shared_transition/) for navigation and local demonstrations.
+For a custom travel path, BoundsTransform accepts a pure Rect-to-Rect evaluator with progress. Preserve both endpoints and handle finite overshoot. Prepare images, scroll position, and realized content before starting; PlatformView and ExternalTexture are not captured shared visuals. See [shared transitions example source](https://github.com/HuxerUI/HuxerUI/tree/fcd2e01d5c9261b0efc99b02d5bd2eac329d1be6/examples/shared_transition) for navigation and local demonstrations.
 
 ## Respect reduced motion
 

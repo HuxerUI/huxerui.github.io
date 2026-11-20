@@ -10,7 +10,7 @@ export default defineConfig({
     sitemap(),
     starlight({
       title: "HuxerUI",
-      description: "Declarative, native, cross-platform UI in modern C++.",
+      description: "Declarative cross-platform UI in modern C++.",
       disable404Route: true,
       logo: {
         light: "./src/assets/logo-light.png",

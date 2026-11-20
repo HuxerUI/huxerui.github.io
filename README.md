@@ -39,10 +39,10 @@ Before the first tagged SDK release, the page presents an explicit unpublished s
 
 ## Interactive examples
 
-The Pages deployment builds the curated showcases selected by `huxerui-source.json`, with presentation metadata in `src/data/examples.ts`. Keep the two catalogs aligned. Prefer examples that demonstrate distinct framework capabilities through a complete interactive experience; basic component and service examples belong in the documentation and linked source repository, not additional online demo pages.
+The Pages deployment builds UI Gallery from the `webExamples` list in `huxerui-source.json`. Other examples remain available as source links in the documentation.
 
 `scripts/stage-web-examples.mjs` copies each HTML, ES module, Wasm binary, and optional resource payload into its own ignored `public/demos/<name>` directory.
-Each example route lazy-loads only its selected application.
+The Examples page loads UI Gallery. The home page shows a screenshot of the gallery and does not load the WebAssembly application.
 The deployment resolves the repository and ref selected by `huxerui-source.json` into `.cache/huxerui`; this source checkout is used only to build the interactive examples.
 
 To stage an existing local Web build:
